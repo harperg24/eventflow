@@ -72,8 +72,11 @@ export default function Dashboard() {
   const [newTaskDue,  setNewTaskDue]  = useState("");
   const [editingTask, setEditingTask] = useState(null); // {id, text, due_date}
   const [taskFilter,  setTaskFilter]  = useState("all"); // all | pending | done
-  // Check-in QR
-  const [qrGuest,     setQrGuest]     = useState(null); // guest object to show QR for
+  // Check-in QR + search
+  const [qrGuest,        setQrGuest]        = useState(null);
+  const [checkInSearch,  setCheckInSearch]  = useState("");
+  const [checkInFilter,  setCheckInFilter]  = useState("all"); // all | in | out
+  const [eventQrOpen,    setEventQrOpen]    = useState(false); // guest object to show QR for
   const [qrScanning,  setQrScanning]  = useState(false);
   const [scanResult,  setScanResult]  = useState(null); // {success, name}
   const [showEdit, setShowEdit] = useState(false);
@@ -183,6 +186,17 @@ export default function Dashboard() {
     await checkInGuest(guestId);
   };
 
+  const handleUnCheckIn = async (guestId) => {
+    setGuests(gs => gs.map(g => g.id === guestId ? { ...g, checked_in: false, checked_in_at: null } : g));
+    await supabase.from("guests").update({ checked_in: false, checked_in_at: null }).eq("id", guestId);
+  };
+
+  // Event-wide QR — points to /checkin/event/:eventId, guests pick themselves
+  const getEventQRUrl = () => {
+    const url = window.location.origin + "/checkin/event/" + eventId;
+    return "https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=" + encodeURIComponent(url);
+  };
+
   const handleQRCheckIn = async (guestId) => {
     const guest = guests.find(g => g.id === guestId);
     if (!guest) { setScanResult({ success: false, name: "Guest not found" }); return; }
@@ -205,7 +219,7 @@ export default function Dashboard() {
       // Work out which guests to target
       const toInvite = selectedGuests.length
         ? guests.filter(g => selectedGuests.includes(g.id) && g.email)
-        : guests.filter(g => g.email);
+        : guests.filter(g => g.email && !g.invited_at); // only uninvited when no selection
 
       if (!toInvite.length) {
         setInviteResult({ success: false, message: "No guests with email addresses found. Add emails to your guests first." });
@@ -1725,113 +1739,182 @@ export default function Dashboard() {
         )}
 
         {/* ── CHECK-IN ── */}
-        {activeNav === "checkin" && (
-          <div className="fade-up">
-            <style>{`
-              @keyframes scanPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 50% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } }
-              .scan-result-in { animation: slideDown 0.2s ease; }
-              @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-            `}</style>
+        {activeNav === "checkin" && (() => {
+          const q = checkInSearch.toLowerCase();
+          const attending_guests = guests.filter(g => g.status === "attending");
+          const filtered = attending_guests.filter(g =>
+            !q ||
+            (g.name  || "").toLowerCase().includes(q) ||
+            (g.email || "").toLowerCase().includes(q) ||
+            (g.phone || "").toLowerCase().includes(q)
+          );
+          const notIn = filtered.filter(g => !g.checked_in);
+          const inGuests = filtered.filter(g => g.checked_in);
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-              <div>
-                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Check-in</h1>
-                <p style={{ color: "#5a5a72", fontSize: 14 }}>{checkedIn} of {attending} checked in tonight</p>
+          const GuestRow = ({ g }) => (
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderBottom: "1px solid #0a0a14", transition: "background 0.15s" }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
+              onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "#13131f", border: `1.5px solid ${g.checked_in ? "#10b981" : "#1e1e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, transition: "all 0.2s" }}>
+                {(g.name || g.email || "?")[0].toUpperCase()}
               </div>
-              <button onClick={() => setQrScanning(true)}
-                style={{ display: "flex", alignItems: "center", gap: 8, background: "#13131f", border: "1px solid #1e1e2e", color: "#e2d9cc", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#e2d9cc"; }}>
-                📷 Scan QR
-              </button>
-            </div>
-
-            {/* Scan result flash */}
-            {scanResult && (
-              <div className="scan-result-in" style={{ marginBottom: 16, padding: "14px 18px", background: scanResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${scanResult.success ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 20 }}>{scanResult.success ? "✓" : "⚠"}</span>
-                <span style={{ fontSize: 14, color: scanResult.success ? "#10b981" : "#ef4444", fontWeight: 500 }}>
-                  {scanResult.success ? `${scanResult.name} checked in!` : scanResult.name}
-                </span>
-              </div>
-            )}
-
-            {/* Progress */}
-            <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#5a5a72", marginBottom: 8 }}>
-                <span>Checked in</span>
-                <span style={{ color: "#10b981", fontWeight: 600 }}>{checkedIn} / {attending}</span>
-              </div>
-              <div className="progress-bar" style={{ height: 8 }}>
-                <div className="progress-fill" style={{ width: attending ? `${(checkedIn/attending)*100}%` : "0%", background: "linear-gradient(90deg,#10b981,#059669)" }} />
-              </div>
-            </div>
-
-            {/* Guest list */}
-            <div className="card" style={{ overflow: "hidden" }}>
-              {guests.filter(g => g.status === "attending").length === 0 && (
-                <div style={{ padding: "40px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>No confirmed guests yet.</div>
-              )}
-              {guests.filter(g => g.status === "attending").map((g, i, arr) => (
-                <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderBottom: i < arr.length - 1 ? "1px solid #0a0a14" : "none", transition: "background 0.15s" }}
-                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
-                  onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-
-                  {/* Avatar */}
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "#13131f", border: `1.5px solid ${g.checked_in ? "#10b981" : "#1e1e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, transition: "all 0.2s" }}>
-                    {(g.name || g.email || "?")[0].toUpperCase()}
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: g.checked_in ? "#5a8a72" : "#e2d9cc" }}>{g.name || g.email}</div>
-                    <div style={{ fontSize: 11, color: "#3a3a52", display: "flex", gap: 8 }}>
-                      {g.dietary && g.dietary !== "None" && <span>🍃 {g.dietary}</span>}
-                      {g.checked_in && g.checked_in_at && <span>✓ {new Date(g.checked_in_at).toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })}</span>}
-                    </div>
-                  </div>
-
-                  {/* QR button */}
-                  <button onClick={() => setQrGuest(g)}
-                    style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#3a3a52", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="#5a5a72"; e.currentTarget.style.color="#5a5a72"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#3a3a52"; }}
-                    title="Show QR code for this guest">
-                    QR
-                  </button>
-
-                  {/* Check in button */}
-                  <button onClick={() => !g.checked_in && handleCheckIn(g.id)}
-                    style={{ background: g.checked_in ? "rgba(16,185,129,0.12)" : "transparent", border: `1.5px solid ${g.checked_in ? "#10b981" : "#2e2e42"}`, borderRadius: 8, padding: "7px 16px", color: g.checked_in ? "#10b981" : "#5a5a72", cursor: g.checked_in ? "default" : "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", fontWeight: 500 }}
-                    onMouseEnter={e => { if (!g.checked_in) { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}}
-                    onMouseLeave={e => { if (!g.checked_in) { e.currentTarget.style.borderColor="#2e2e42"; e.currentTarget.style.color="#5a5a72"; }}}>
-                    {g.checked_in ? "✓ In" : "Check in"}
-                  </button>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: g.checked_in ? "#5a8a72" : "#e2d9cc" }}>{g.name || g.email}</div>
+                <div style={{ fontSize: 11, color: "#3a3a52", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {g.email && <span>{g.email}</span>}
+                  {g.phone && <span>· {g.phone}</span>}
+                  {g.dietary && g.dietary !== "None" && <span>· 🍃 {g.dietary}</span>}
+                  {g.checked_in && g.checked_in_at && <span style={{ color: "#10b981" }}>· ✓ {new Date(g.checked_in_at).toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })}</span>}
                 </div>
-              ))}
+              </div>
+              <button onClick={() => setQrGuest(g)}
+                style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#3a3a52", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s", flexShrink: 0 }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor="#5a5a72"; e.currentTarget.style.color="#5a5a72"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#3a3a52"; }}>
+                QR
+              </button>
+              {g.checked_in ? (
+                <button onClick={() => handleUnCheckIn(g.id)}
+                  style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid #10b981", borderRadius: 8, padding: "7px 14px", color: "#10b981", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
+                  onMouseEnter={e => { e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background="rgba(16,185,129,0.1)"; e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                  title="Undo check-in">
+                  ✓ In
+                </button>
+              ) : (
+                <button onClick={() => handleCheckIn(g.id)}
+                  style={{ background: "transparent", border: "1.5px solid #2e2e42", borderRadius: 8, padding: "7px 14px", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="#2e2e42"; e.currentTarget.style.color="#5a5a72"; }}>
+                  Check in
+                </button>
+              )}
+            </div>
+          );
+
+          return (
+            <div className="fade-up">
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+                <div>
+                  <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Check-in</h1>
+                  <p style={{ color: "#5a5a72", fontSize: 14 }}>{checkedIn} of {attending} checked in tonight</p>
+                </div>
+                <button onClick={() => setEventQrOpen(true)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, background: "#13131f", border: "1px solid #1e1e2e", color: "#e2d9cc", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#e2d9cc"; }}>
+                  📷 Event QR Code
+                </button>
+              </div>
+
+              {/* Scan flash */}
+              {scanResult && (
+                <div style={{ marginBottom: 16, padding: "14px 18px", background: scanResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${scanResult.success ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 20 }}>{scanResult.success ? "✓" : "⚠"}</span>
+                  <span style={{ fontSize: 14, color: scanResult.success ? "#10b981" : "#ef4444", fontWeight: 500 }}>
+                    {scanResult.success ? `${scanResult.name} checked in!` : scanResult.name}
+                  </span>
+                </div>
+              )}
+
+              {/* Progress */}
+              <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#5a5a72", marginBottom: 8 }}>
+                  <span>Checked in</span>
+                  <span style={{ color: "#10b981", fontWeight: 600 }}>{checkedIn} / {attending}</span>
+                </div>
+                <div className="progress-bar" style={{ height: 8 }}>
+                  <div className="progress-fill" style={{ width: attending ? `${(checkedIn/attending)*100}%` : "0%", background: "linear-gradient(90deg,#10b981,#059669)" }} />
+                </div>
+              </div>
+
+              {/* Search + filter */}
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "#3a3a52", fontSize: 13, pointerEvents: "none" }}>🔍</span>
+                  <input value={checkInSearch} onChange={e => setCheckInSearch(e.target.value)}
+                    placeholder="Search by name, email, phone…"
+                    style={{ width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px 10px 38px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }} />
+                </div>
+                {["all","in","out"].map(f => (
+                  <button key={f} onClick={() => setCheckInFilter(f)}
+                    style={{ background: checkInFilter === f ? "rgba(16,185,129,0.12)" : "transparent", border: `1px solid ${checkInFilter === f ? "rgba(16,185,129,0.3)" : "#1e1e2e"}`, color: checkInFilter === f ? "#10b981" : "#5a5a72", borderRadius: 7, padding: "9px 14px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s", textTransform: "capitalize" }}>
+                    {f === "in" ? "✓ In" : f === "out" ? "Not in" : "All"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Not yet checked in */}
+              {checkInFilter !== "in" && (
+                <div className="card" style={{ overflow: "hidden", marginBottom: 16 }}>
+                  {notIn.length === 0
+                    ? <div style={{ padding: "28px", textAlign: "center", color: "#3a3a52", fontSize: 13 }}>
+                        {checkInSearch ? "No matches." : "Everyone is checked in! 🎉"}
+                      </div>
+                    : notIn.map(g => <GuestRow key={g.id} g={g} />)
+                  }
+                </div>
+              )}
+
+              {/* Checked in section */}
+              {checkInFilter !== "out" && inGuests.length > 0 && (
+                <>
+                  <div style={{ fontSize: 11, color: "#3a3a52", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8, paddingLeft: 4 }}>
+                    Checked in · {inGuests.length}
+                  </div>
+                  <div className="card" style={{ overflow: "hidden" }}>
+                    {inGuests.map(g => <GuestRow key={g.id} g={g} />)}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Event QR Modal — one QR for all guests to scan */}
+        {eventQrOpen && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+            onClick={() => setEventQrOpen(false)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 20, padding: "36px 32px", textAlign: "center", maxWidth: 340, width: "100%" }}>
+              <div style={{ fontFamily: "'Playfair Display'", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{event?.name}</div>
+              <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 24 }}>Guests scan this to check themselves in</div>
+              <div style={{ background: "#fff", borderRadius: 14, padding: 14, display: "inline-block", marginBottom: 20 }}>
+                <img src={getEventQRUrl()} alt="Event QR" width="220" height="220" />
+              </div>
+              <p style={{ fontSize: 12, color: "#3a3a52", marginBottom: 20 }}>
+                Print this and display it at the entrance, or show guests on screen.
+              </p>
+              <button onClick={() => window.print()}
+                style={{ width: "100%", background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.3)", color: "#c9a84c", borderRadius: 9, padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 10 }}>
+                🖨 Print QR Code
+              </button>
+              <button onClick={() => setEventQrOpen(false)}
+                style={{ width: "100%", background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 9, padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Close
+              </button>
             </div>
           </div>
         )}
 
-        {/* QR Guest Modal */}
+        {/* Individual guest QR Modal */}
         {qrGuest && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
             onClick={() => setQrGuest(null)}>
             <div onClick={e => e.stopPropagation()} style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 18, padding: "32px", textAlign: "center", maxWidth: 320, width: "100%" }}>
               <div style={{ fontFamily: "'Playfair Display'", fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{qrGuest.name || qrGuest.email}</div>
-              <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 24 }}>Show this QR code at the door</div>
+              <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 24 }}>Individual QR for this guest</div>
               <div style={{ background: "#fff", borderRadius: 12, padding: 12, display: "inline-block", marginBottom: 20 }}>
                 <img src={getQRUrl(qrGuest.id)} alt="QR Code" width="180" height="180" />
               </div>
-              {qrGuest.checked_in
-                ? <div style={{ fontSize: 13, color: "#10b981", marginBottom: 16 }}>✓ Already checked in</div>
-                : (
-                  <button onClick={() => { handleCheckIn(qrGuest.id); setQrGuest(g => ({ ...g, checked_in: true })); }}
-                    style={{ width: "100%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 9, padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 12 }}>
-                    ✓ Mark as Checked In
-                  </button>
-                )
-              }
+              {qrGuest.checked_in ? (
+                <div style={{ fontSize: 13, color: "#10b981", marginBottom: 16 }}>✓ Already checked in</div>
+              ) : (
+                <button onClick={() => { handleCheckIn(qrGuest.id); setQrGuest(g => ({ ...g, checked_in: true })); }}
+                  style={{ width: "100%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 9, padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 12 }}>
+                  ✓ Mark as Checked In
+                </button>
+              )}
               <button onClick={() => setQrGuest(null)}
                 style={{ width: "100%", background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 9, padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
                 Close
