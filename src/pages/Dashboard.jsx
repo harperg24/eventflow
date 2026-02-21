@@ -193,8 +193,10 @@ export default function Dashboard() {
   };
 
   // Generate a QR code URL for a guest using a public QR API
-  const getQRUrl = (guestId) =>
-    \`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=\${encodeURIComponent(\`\${window.location.origin}/checkin/\${guestId}\`)}\`;
+  const getQRUrl = (guestId) => {
+    const url = window.location.origin + "/checkin/" + guestId;
+    return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" + encodeURIComponent(url);
+  };
 
   const handleSendInvites = async () => {
     setInviting(true);
