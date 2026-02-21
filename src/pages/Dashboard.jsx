@@ -7,7 +7,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import EditEventModal from "../components/EditEventModal";
 import {
   supabase,
-  fetchEvent, fetchGuests, fetchTasks, fetchBudget,
+  fetchEvent, fetchGuests, fetchTasks, fetchBudget, updateTask, deleteTask,
   fetchVendors, fetchSongs, fetchPolls,
   toggleTask, addTask, checkInGuest,
   addSong, voteSong, vetoSong,
@@ -26,6 +26,7 @@ const NAV = [
   { id: "playlist",  label: "Playlist",  icon: "♫" },
   { id: "polls",     label: "Polls",     icon: "◐" },
   { id: "vendors",   label: "Vendors",   icon: "◇" },
+  { id: "checklist", label: "Checklist", icon: "☑" },
   { id: "checkin",   label: "Check-in",  icon: "✓" },
 ];
 
@@ -68,6 +69,13 @@ export default function Dashboard() {
   const [newSong,  setNewSong]  = useState({ title: "", artist: "" });
   const [newPollQ, setNewPollQ] = useState("");
   const [newTaskText, setNewTaskText] = useState("");
+  const [newTaskDue,  setNewTaskDue]  = useState("");
+  const [editingTask, setEditingTask] = useState(null); // {id, text, due_date}
+  const [taskFilter,  setTaskFilter]  = useState("all"); // all | pending | done
+  // Check-in QR
+  const [qrGuest,     setQrGuest]     = useState(null); // guest object to show QR for
+  const [qrScanning,  setQrScanning]  = useState(false);
+  const [scanResult,  setScanResult]  = useState(null); // {success, name}
   const [showEdit, setShowEdit] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteResult, setInviteResult] = useState(null);
@@ -144,22 +152,49 @@ export default function Dashboard() {
   const copyLink = () => { navigator.clipboard.writeText(inviteLink); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   // ── Actions ───────────────────────────────────────────────
+  // ── Checklist handlers ──────────────────────────────────────
+  const handleAddTask = async () => {
+    if (!newTaskText.trim()) return;
+    const t = await addTask(eventId, newTaskText.trim(), newTaskDue || null);
+    setTasks(ts => [...ts, t]);
+    setNewTaskText("");
+    setNewTaskDue("");
+  };
+
+  const handleUpdateTask = async () => {
+    if (!editingTask?.text?.trim()) return;
+    await updateTask(editingTask.id, editingTask.text.trim(), editingTask.due_date || null);
+    setTasks(ts => ts.map(t => t.id === editingTask.id ? { ...t, text: editingTask.text, due_date: editingTask.due_date } : t));
+    setEditingTask(null);
+  };
+
+  const handleDeleteTask = async (id) => {
+    setTasks(ts => ts.filter(t => t.id !== id));
+    await deleteTask(id);
+  };
+
   const handleToggleTask = async (id, done) => {
     setTasks(ts => ts.map(t => t.id === id ? { ...t, done } : t)); // optimistic
     await toggleTask(id, done);
   };
 
-  const handleAddTask = async () => {
-    if (!newTaskText.trim()) return;
-    const t = await addTask(eventId, newTaskText);
-    setTasks(ts => [...ts, t]);
-    setNewTaskText("");
-  };
-
   const handleCheckIn = async (guestId) => {
-    setGuests(gs => gs.map(g => g.id === guestId ? { ...g, checked_in: true } : g)); // optimistic
+    setGuests(gs => gs.map(g => g.id === guestId ? { ...g, checked_in: true, checked_in_at: new Date().toISOString() } : g));
     await checkInGuest(guestId);
   };
+
+  const handleQRCheckIn = async (guestId) => {
+    const guest = guests.find(g => g.id === guestId);
+    if (!guest) { setScanResult({ success: false, name: "Guest not found" }); return; }
+    if (guest.checked_in) { setScanResult({ success: false, name: `${guest.name} already checked in` }); return; }
+    await handleCheckIn(guestId);
+    setScanResult({ success: true, name: guest.name || guest.email });
+    setTimeout(() => setScanResult(null), 3000);
+  };
+
+  // Generate a QR code URL for a guest using a public QR API
+  const getQRUrl = (guestId) =>
+    \`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=\${encodeURIComponent(\`\${window.location.origin}/checkin/\${guestId}\`)}\`;
 
   const handleSendInvites = async () => {
     setInviting(true);
@@ -1566,38 +1601,239 @@ export default function Dashboard() {
         )}
 
         {/* CHECK-IN */}
+        {/* ── CHECKLIST ── */}
+        {activeNav === "checklist" && (
+          <div className="fade-up">
+            <style>{`
+              .task-row { display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid #0a0a14; transition: background 0.15s; }
+              .task-row:last-child { border-bottom: none; }
+              .task-row:hover { background: rgba(255,255,255,0.02); }
+              .task-row:hover .task-actions { opacity: 1; }
+              .task-actions { opacity: 0; display: flex; gap: 6px; transition: opacity 0.15s; }
+              .cl-field { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 10px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: 'DM Sans',sans-serif; transition: border-color 0.2s; }
+              .cl-field:focus { border-color: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+              .cl-field::placeholder { color: #2e2e42; }
+            `}</style>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+              <div>
+                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Checklist</h1>
+                <p style={{ color: "#5a5a72", fontSize: 14 }}>
+                  {tasks.filter(t => t.done).length} of {tasks.length} done
+                </p>
+              </div>
+              {/* Filter tabs */}
+              <div style={{ display: "flex", gap: 6 }}>
+                {["all", "pending", "done"].map(f => (
+                  <button key={f} onClick={() => setTaskFilter(f)}
+                    style={{ background: taskFilter === f ? "rgba(201,168,76,0.15)" : "transparent", border: `1px solid ${taskFilter === f ? "rgba(201,168,76,0.3)" : "#1e1e2e"}`, color: taskFilter === f ? "#c9a84c" : "#5a5a72", borderRadius: 7, padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", textTransform: "capitalize", transition: "all 0.15s" }}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Progress */}
+            <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#5a5a72", marginBottom: 8 }}>
+                <span>Progress</span>
+                <span style={{ color: "#c9a84c" }}>{tasks.length ? Math.round((tasks.filter(t=>t.done).length/tasks.length)*100) : 0}%</span>
+              </div>
+              <div style={{ height: 6, background: "#1a1a28", borderRadius: 99, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: tasks.length ? `${(tasks.filter(t=>t.done).length/tasks.length)*100}%` : "0%", background: "linear-gradient(90deg,#c9a84c,#10b981)", borderRadius: 99, transition: "width 0.4s" }} />
+              </div>
+            </div>
+
+            {/* Add task */}
+            <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <input className="cl-field" placeholder="Add a checklist item…" value={newTaskText}
+                  style={{ flex: 1 }}
+                  onChange={e => setNewTaskText(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleAddTask()} />
+                <input className="cl-field" type="date" value={newTaskDue}
+                  style={{ width: 150 }}
+                  onChange={e => setNewTaskDue(e.target.value)} />
+                <button className="btn-gold" onClick={handleAddTask}>Add</button>
+              </div>
+            </div>
+
+            {/* Task list */}
+            <div className="card" style={{ overflow: "hidden" }}>
+              {tasks.filter(t =>
+                taskFilter === "all" ? true :
+                taskFilter === "done" ? t.done : !t.done
+              ).length === 0 && (
+                <div style={{ padding: "40px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>
+                  {taskFilter === "done" ? "Nothing completed yet." : taskFilter === "pending" ? "All done! 🎉" : "No checklist items yet — add one above."}
+                </div>
+              )}
+              {tasks
+                .filter(t => taskFilter === "all" ? true : taskFilter === "done" ? t.done : !t.done)
+                .map(t => (
+                  <div key={t.id} className="task-row">
+                    {/* Checkbox */}
+                    <div onClick={() => handleToggleTask(t.id, !t.done)}
+                      style={{ width: 20, height: 20, border: `1.5px solid ${t.done ? "#c9a84c" : "#2e2e42"}`, borderRadius: 5, background: t.done ? "#c9a84c" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#080810", flexShrink: 0, cursor: "pointer", transition: "all 0.2s" }}>
+                      {t.done ? "✓" : ""}
+                    </div>
+
+                    {/* Text / edit inline */}
+                    {editingTask?.id === t.id ? (
+                      <div style={{ flex: 1, display: "flex", gap: 8, alignItems: "center" }}>
+                        <input className="cl-field" value={editingTask.text} autoFocus
+                          style={{ flex: 1 }}
+                          onChange={e => setEditingTask(et => ({ ...et, text: e.target.value }))}
+                          onKeyDown={e => { if (e.key === "Enter") handleUpdateTask(); if (e.key === "Escape") setEditingTask(null); }} />
+                        <input className="cl-field" type="date" value={editingTask.due_date || ""}
+                          style={{ width: 140 }}
+                          onChange={e => setEditingTask(et => ({ ...et, due_date: e.target.value }))} />
+                        <button className="btn-gold" style={{ padding: "8px 14px", fontSize: 12 }} onClick={handleUpdateTask}>Save</button>
+                        <button onClick={() => setEditingTask(null)} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
+                      </div>
+                    ) : (
+                      <>
+                        <span style={{ flex: 1, fontSize: 14, color: t.done ? "#3a3a52" : "#e2d9cc", textDecoration: t.done ? "line-through" : "none", transition: "all 0.2s" }}>{t.text}</span>
+                        {t.due_date && (
+                          <span style={{ fontSize: 11, color: new Date(t.due_date) < new Date() && !t.done ? "#ef4444" : "#3a3a52", flexShrink: 0 }}>
+                            {new Date(t.due_date).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}
+                          </span>
+                        )}
+                        <div className="task-actions">
+                          <button onClick={() => setEditingTask({ id: t.id, text: t.text, due_date: t.due_date || "" })}
+                            style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor="#c9a84c"; e.currentTarget.style.color="#c9a84c"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>
+                            Edit
+                          </button>
+                          <button onClick={() => handleDeleteTask(t.id)}
+                            style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>
+                            ×
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        )}
+
+        {/* ── CHECK-IN ── */}
         {activeNav === "checkin" && (
           <div className="fade-up">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
+            <style>{`
+              @keyframes scanPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); } 50% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } }
+              .scan-result-in { animation: slideDown 0.2s ease; }
+              @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+            `}</style>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
                 <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Check-in</h1>
                 <p style={{ color: "#5a5a72", fontSize: 14 }}>{checkedIn} of {attending} checked in tonight</p>
               </div>
+              <button onClick={() => setQrScanning(true)}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "#13131f", border: "1px solid #1e1e2e", color: "#e2d9cc", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#e2d9cc"; }}>
+                📷 Scan QR
+              </button>
             </div>
-            <div className="card" style={{ padding: "18px 22px", marginBottom: 16 }}>
+
+            {/* Scan result flash */}
+            {scanResult && (
+              <div className="scan-result-in" style={{ marginBottom: 16, padding: "14px 18px", background: scanResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${scanResult.success ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{scanResult.success ? "✓" : "⚠"}</span>
+                <span style={{ fontSize: 14, color: scanResult.success ? "#10b981" : "#ef4444", fontWeight: 500 }}>
+                  {scanResult.success ? `${scanResult.name} checked in!` : scanResult.name}
+                </span>
+              </div>
+            )}
+
+            {/* Progress */}
+            <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#5a5a72", marginBottom: 8 }}>
-                <span>Checked in</span><span style={{ color: "#10b981" }}>{checkedIn} / {attending}</span>
+                <span>Checked in</span>
+                <span style={{ color: "#10b981", fontWeight: 600 }}>{checkedIn} / {attending}</span>
               </div>
               <div className="progress-bar" style={{ height: 8 }}>
                 <div className="progress-fill" style={{ width: attending ? `${(checkedIn/attending)*100}%` : "0%", background: "linear-gradient(90deg,#10b981,#059669)" }} />
               </div>
             </div>
-            <div className="card">
+
+            {/* Guest list */}
+            <div className="card" style={{ overflow: "hidden" }}>
+              {guests.filter(g => g.status === "attending").length === 0 && (
+                <div style={{ padding: "40px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>No confirmed guests yet.</div>
+              )}
               {guests.filter(g => g.status === "attending").map((g, i, arr) => (
-                <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 20px", borderBottom: i < arr.length - 1 ? "1px solid #0f0f1a" : "none" }}>
+                <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderBottom: i < arr.length - 1 ? "1px solid #0a0a14" : "none", transition: "background 0.15s" }}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+
+                  {/* Avatar */}
                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "#13131f", border: `1.5px solid ${g.checked_in ? "#10b981" : "#1e1e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, transition: "all 0.2s" }}>
-                    {(g.name || g.email)[0].toUpperCase()}
+                    {(g.name || g.email || "?")[0].toUpperCase()}
                   </div>
+
+                  {/* Info */}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 500, color: g.checked_in ? "#5a8a72" : "#e2d9cc" }}>{g.name || g.email}</div>
-                    {g.dietary && g.dietary !== "None" && <div style={{ fontSize: 12, color: "#3a3a52" }}>🍃 {g.dietary}</div>}
+                    <div style={{ fontSize: 11, color: "#3a3a52", display: "flex", gap: 8 }}>
+                      {g.dietary && g.dietary !== "None" && <span>🍃 {g.dietary}</span>}
+                      {g.checked_in && g.checked_in_at && <span>✓ {new Date(g.checked_in_at).toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })}</span>}
+                    </div>
                   </div>
+
+                  {/* QR button */}
+                  <button onClick={() => setQrGuest(g)}
+                    style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#3a3a52", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="#5a5a72"; e.currentTarget.style.color="#5a5a72"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#3a3a52"; }}
+                    title="Show QR code for this guest">
+                    QR
+                  </button>
+
+                  {/* Check in button */}
                   <button onClick={() => !g.checked_in && handleCheckIn(g.id)}
-                    style={{ background: g.checked_in ? "rgba(16,185,129,0.15)" : "transparent", border: `1.5px solid ${g.checked_in ? "#10b981" : "#2e2e42"}`, borderRadius: 8, padding: "7px 16px", color: g.checked_in ? "#10b981" : "#5a5a72", cursor: g.checked_in ? "default" : "pointer", font: "13px 'DM Sans'", transition: "all 0.2s", fontWeight: 500 }}>
+                    style={{ background: g.checked_in ? "rgba(16,185,129,0.12)" : "transparent", border: `1.5px solid ${g.checked_in ? "#10b981" : "#2e2e42"}`, borderRadius: 8, padding: "7px 16px", color: g.checked_in ? "#10b981" : "#5a5a72", cursor: g.checked_in ? "default" : "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif", transition: "all 0.2s", fontWeight: 500 }}
+                    onMouseEnter={e => { if (!g.checked_in) { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}}
+                    onMouseLeave={e => { if (!g.checked_in) { e.currentTarget.style.borderColor="#2e2e42"; e.currentTarget.style.color="#5a5a72"; }}}>
                     {g.checked_in ? "✓ In" : "Check in"}
                   </button>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* QR Guest Modal */}
+        {qrGuest && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+            onClick={() => setQrGuest(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 18, padding: "32px", textAlign: "center", maxWidth: 320, width: "100%" }}>
+              <div style={{ fontFamily: "'Playfair Display'", fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{qrGuest.name || qrGuest.email}</div>
+              <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 24 }}>Show this QR code at the door</div>
+              <div style={{ background: "#fff", borderRadius: 12, padding: 12, display: "inline-block", marginBottom: 20 }}>
+                <img src={getQRUrl(qrGuest.id)} alt="QR Code" width="180" height="180" />
+              </div>
+              {qrGuest.checked_in
+                ? <div style={{ fontSize: 13, color: "#10b981", marginBottom: 16 }}>✓ Already checked in</div>
+                : (
+                  <button onClick={() => { handleCheckIn(qrGuest.id); setQrGuest(g => ({ ...g, checked_in: true })); }}
+                    style={{ width: "100%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 9, padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 12 }}>
+                    ✓ Mark as Checked In
+                  </button>
+                )
+              }
+              <button onClick={() => setQrGuest(null)}
+                style={{ width: "100%", background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 9, padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Close
+              </button>
             </div>
           </div>
         )}

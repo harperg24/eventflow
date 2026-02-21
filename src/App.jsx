@@ -10,6 +10,7 @@ import EventCreation from "./pages/EventCreation";
 import Dashboard     from "./pages/Dashboard";
 import RSVP          from "./pages/RSVP";
 import AuthCallback    from "./pages/AuthCallback";
+import CheckIn         from "./pages/CheckIn";
 
 export default function App() {
   const [session, setSession] = useState(undefined);
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/login"         element={session ? <Navigate to="/events" replace /> : <Auth />} />
         <Route path="/e/:slug"       element={<RSVP />} />
         <Route path="/auth/callback"     element={<AuthCallback />} />
+        <Route path="/checkin/:guestId"   element={<CheckIn />} />
 
         {/* Protected */}
         <Route path="/events"              element={session ? <EventList />     : <Navigate to="/login" replace />} />

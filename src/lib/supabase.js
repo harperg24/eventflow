@@ -231,6 +231,19 @@ export async function addTask(eventId, text, dueDate = null) {
   return data;
 }
 
+export async function updateTask(taskId, text, dueDate = null) {
+  const { error } = await supabase
+    .from('tasks')
+    .update({ text, due_date: dueDate || null })
+    .eq('id', taskId);
+  if (error) throw error;
+}
+
+export async function deleteTask(taskId) {
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+  if (error) throw error;
+}
+
 
 // ============================================================
 //  BUDGET
@@ -333,10 +346,20 @@ export async function fetchSongs(eventId) {
   return data;
 }
 
-export async function addSong(eventId, title, artist, addedBy = 'Organiser') {
+export async function addSong(eventId, title, artist, addedBy = 'Organiser', spotifyMeta = {}) {
   const { data, error } = await supabase
     .from('songs')
-    .insert({ event_id: eventId, title, artist, added_by: addedBy })
+    .insert({
+      event_id:    eventId,
+      title,
+      artist,
+      added_by:    addedBy,
+      spotify_id:  spotifyMeta.spotify_id  || null,
+      spotify_uri: spotifyMeta.spotify_uri || null,
+      preview_url: spotifyMeta.preview_url || null,
+      artwork_url: spotifyMeta.artwork_url || null,
+      duration_ms: spotifyMeta.duration_ms || null,
+    })
     .select()
     .single();
   if (error) throw error;
