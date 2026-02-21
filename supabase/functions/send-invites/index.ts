@@ -99,10 +99,19 @@ function inviteTemplate(guestName: string, eventName: string, eventDate: string,
       <h2 style="font-family:Georgia,serif;font-size:22px;font-weight:600;color:#c9a84c;margin:0 0 8px;">${eventName}</h2>
       ${eventDate ? `<p style="font-size:14px;color:#5a5a72;margin:0 0 32px;">${eventDate}</p>` : `<div style="margin-bottom:32px;"></div>`}
 
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+        href="${rsvpUrl}" style="height:50px;v-text-anchor:middle;width:200px;" arcsize="20%" fillcolor="#c9a84c">
+        <w:anchorlock/>
+        <center style="color:#080810;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">RSVP Now</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-->
       <a href="${rsvpUrl}"
-        style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#a8872e);color:#080810;font-size:15px;font-weight:600;padding:14px 36px;border-radius:10px;text-decoration:none;letter-spacing:0.02em;">
-        RSVP Now →
+        style="display:inline-block;background-color:#c9a84c;color:#080810;font-size:15px;font-weight:600;padding:14px 36px;border-radius:10px;text-decoration:none;letter-spacing:0.02em;mso-hide:all;">
+        RSVP Now &rarr;
       </a>
+      <!--<![endif]-->
 
       <p style="font-size:12px;color:#3a3a52;margin:28px 0 0;line-height:1.7;">
         Or copy this link into your browser:<br>

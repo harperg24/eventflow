@@ -126,8 +126,8 @@ export default function RSVP() {
   const [rError,   setRError]   = useState(null);
 
   // ── Playlist / poll state ──────────────────────────────
-  const [votedSongs, setVotedSongs] = useState(() => JSON.parse(localStorage.getItem(storageKey+"_songvotes") || "[]"));
-  const [votedPolls, setVotedPolls] = useState(() => JSON.parse(localStorage.getItem(storageKey+"_pollvotes") || "[]"));
+  const [votedSongs, setVotedSongs] = useState([]);
+  const [votedPolls, setVotedPolls] = useState([]);
   const [newSong,    setNewSong]    = useState({ title: "", artist: "" });
   const [songAdded,  setSongAdded]  = useState(false);
   const [spQuery,    setSpQuery]    = useState("");
@@ -160,6 +160,14 @@ export default function RSVP() {
         if (matched) {
           setSelectedGuestId(matched.id);
           setGuestToken(matched.invite_token);
+          // Load this guest's existing votes from DB so they persist across reloads
+          const token = matched.invite_token;
+          const [svRes, pvRes] = await Promise.all([
+            supabase.from("song_votes").select("song_id").eq("voter_token", token),
+            supabase.from("poll_votes").select("poll_option_id").eq("voter_token", token),
+          ]);
+          if (svRes.data) setVotedSongs(svRes.data.map((r) => r.song_id));
+          if (pvRes.data) setVotedPolls(pvRes.data.map((r) => r.poll_option_id));
           setGuestName(matched.name || "");
           // Prefill all form fields from their existing data
           setFName(matched.name || "");
@@ -208,6 +216,14 @@ export default function RSVP() {
     setFDietary(g.dietary || "");
     localStorage.setItem(storageKey + "_token", g.invite_token);
     localStorage.setItem(storageKey + "_name", g.name || "");
+    // Load existing votes from DB so they persist across reloads
+    Promise.all([
+      supabase.from("song_votes").select("song_id").eq("voter_token", g.invite_token),
+      supabase.from("poll_votes").select("poll_option_id").eq("voter_token", g.invite_token),
+    ]).then(([svRes, pvRes]) => {
+      if (svRes.data) setVotedSongs(svRes.data.map((r) => r.song_id));
+      if (pvRes.data) setVotedPolls(pvRes.data.map((r) => r.poll_option_id));
+    });
     setStep("rsvp");
   };
 
@@ -269,9 +285,7 @@ export default function RSVP() {
   const handleVoteSong = async (songId) => {
     if (votedSongs.includes(songId) || !guestToken) return; // one vote per song per guest
     setSongs(ss => [...ss.map(s => s.id === songId ? { ...s, votes: s.votes + 1 } : s)].sort((a,b) => b.votes - a.votes));
-    const nv = [...votedSongs, songId];
-    setVotedSongs(nv);
-    localStorage.setItem(storageKey + "_songvotes", JSON.stringify(nv));
+    setVotedSongs(v => [...v, songId]);
     await supabase.rpc("cast_song_vote", { p_song_id: songId, p_voter_token: guestToken });
   };
 
@@ -309,9 +323,7 @@ export default function RSVP() {
   const handleVotePoll = async (pollId, optionId) => {
     if (votedPolls.includes(pollId) || !guestToken) return;
     setPolls(ps => ps.map(p => p.id === pollId ? { ...p, poll_options: p.poll_options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o) } : p));
-    const nv = [...votedPolls, pollId];
-    setVotedPolls(nv);
-    localStorage.setItem(storageKey + "_pollvotes", JSON.stringify(nv));
+    setVotedPolls(v => [...v, pollId]);
     await supabase.rpc("cast_poll_vote", { p_option_id: optionId, p_voter_token: guestToken });
   };
 
