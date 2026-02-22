@@ -15,7 +15,7 @@ export default function TicketView() {
     const load = async () => {
       const { data } = await supabase
         .from("tickets")
-        .select("*, ticket_tiers(name), ticket_orders(buyer_name,buyer_email,quantity), events(name,date,venue)")
+        .select("*, ticket_tiers(name), events(name,date,venue_name)")
         .eq("qr_token", qrToken)
         .single();
       setTicket(data);
@@ -41,7 +41,7 @@ export default function TicketView() {
     </div>
   );
 
-  const ev = ticket.events;
+  const ev = ticket?.events;
   const eventDate = ev?.date ? new Date(ev.date).toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : null;
 
   return (
@@ -68,7 +68,7 @@ export default function TicketView() {
             <div style={{ fontSize: 12, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Your Ticket</div>
             <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, color: "#f0e8db", margin: "0 0 4px" }}>{ev?.name}</h1>
             {eventDate && <p style={{ fontSize: 13, color: "#c9a84c", margin: "0 0 4px" }}>{eventDate}</p>}
-            {ev?.venue && <p style={{ fontSize: 13, color: "#5a5a72", margin: 0 }}>📍 {ev.venue}</p>}
+            {ev?.venue_name && <p style={{ fontSize: 13, color: "#5a5a72", margin: 0 }}>📍 {ev.venue_name}</p>}
           </div>
 
           {/* Details */}
@@ -84,7 +84,7 @@ export default function TicketView() {
           </div>
           <div style={{ padding: "16px 28px", borderBottom: "1px dashed #1e1e2e" }}>
             <div style={{ fontSize: 11, color: "#3a3a52", marginBottom: 4 }}>HOLDER</div>
-            <div style={{ fontSize: 14 }}>{ticket.ticket_orders?.buyer_name}</div>
+            <div style={{ fontSize: 14, color: '#5a5a72' }}>Valid Ticket</div>
           </div>
 
           {/* QR */}

@@ -2046,12 +2046,20 @@ export default function Dashboard() {
                   <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Check-in</h1>
                   <p style={{ color: "#5a5a72", fontSize: 14 }}>{checkedIn} of {attending} checked in tonight</p>
                 </div>
-                <button onClick={() => setEventQrOpen(true)}
-                  style={{ display: "flex", alignItems: "center", gap: 8, background: "#13131f", border: "1px solid #1e1e2e", color: "#e2d9cc", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#e2d9cc"; }}>
-                  📷 Event QR Code
-                </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["ticketed","hybrid"].includes(event?.ticketing) && (
+                    <button onClick={() => navigate("/scanner/" + eventId)}
+                      style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.3)", color: "#c9a84c", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontWeight: 600 }}>
+                      🎟 Ticket Scanner
+                    </button>
+                  )}
+                  <button onClick={() => setEventQrOpen(true)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, background: "#13131f", border: "1px solid #1e1e2e", color: "#e2d9cc", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#e2d9cc"; }}>
+                    📷 Event QR Code
+                  </button>
+                </div>
               </div>
 
               {/* Scan flash */}
