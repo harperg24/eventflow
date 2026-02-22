@@ -76,7 +76,7 @@ export default function EventCreation() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be signed in to create an event.");
-      const newEvent = await createEvent({ ...event, type: eventCategory || "private" }, user.id);
+      const newEvent = await createEvent({ ...event, ticketing: eventCategory || "private" }, user.id);
 
       // Save ticket tiers if ticketed or hybrid
       if (eventCategory === "ticketed" || eventCategory === "hybrid") {

@@ -28,7 +28,7 @@ export default function TicketPage() {
       const { data: ev } = await supabase
         .from("events").select("*")
         .eq("invite_slug", slug)
-        .in("type", ["ticketed", "hybrid"])
+        .in("ticketing", ["ticketed", "hybrid"])
         .eq("published", true)
         .single();
 

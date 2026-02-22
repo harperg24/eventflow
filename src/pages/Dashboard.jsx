@@ -119,7 +119,7 @@ export default function Dashboard() {
         ]);
         setEvent(ev); setGuests(gs); setTasks(ts);
         // Load ticketing data for ticketed/hybrid events
-        if (ev && ["ticketed","hybrid"].includes(ev.type)) {
+        if (ev && ["ticketed","hybrid"].includes(ev.ticketing)) {
           const [{ data: tierData }, { data: orderData }] = await Promise.all([
             supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
             supabase.from("ticket_orders").select("*, ticket_tiers(name)").eq("event_id", eventId).order("created_at", { ascending: false }),
@@ -672,7 +672,7 @@ export default function Dashboard() {
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {NAV.filter(n => !n.ticketed || ["ticketed","hybrid"].includes(event?.type)).map(n => (
+          {NAV.filter(n => !n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing)).map(n => (
             <button key={n.id} className={`nav-item${activeNav === n.id ? " active" : ""}`} onClick={() => setActiveNav(n.id)}>
               <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{n.icon}</span>
               {n.label}
