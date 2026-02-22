@@ -171,9 +171,16 @@ export default function Dashboard() {
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestEmail, setNewGuestEmail] = useState("");
   const [editingGuest, setEditingGuest] = useState(null);
-  const [showVendorModal, setShowVendorModal] = useState(false);
-  const [editingVendor, setEditingVendor] = useState(null);
-  const [vendorForm, setVendorForm] = useState({ name: "", role: "", contact: "", phone: "", notes: "", status: "pending", icon: "🏢" });
+  const [showVendorModal,    setShowVendorModal]    = useState(false);
+  const [editingVendor,      setEditingVendor]      = useState(null);
+  const [vendorForm,         setVendorForm]         = useState({ name: "", role: "", contact: "", phone: "", notes: "", status: "pending", icon: "🏢" });
+  const [vendorInviteEmail,  setVendorInviteEmail]  = useState("");
+  const [vendorInviteNote,   setVendorInviteNote]   = useState("");
+  const [sendingInvite,      setSendingInvite]       = useState(false);
+  const [showDecisionModal,  setShowDecisionModal]  = useState(null); // vendor object
+  const [decisionMessage,    setDecisionMessage]    = useState("");
+  const [sendingDecision,    setSendingDecision]    = useState(false);
+  const [vendorView,         setVendorView]         = useState("list"); // list | invite
   const [deletingGuest, setDeletingGuest] = useState(null);
   const [selectedGuests, setSelectedGuests] = useState([]);
 
@@ -620,6 +627,59 @@ export default function Dashboard() {
   const handleDeleteVendor = async (id) => {
     setVendors(vs => vs.filter(v => v.id !== id));
     await supabase.from("vendors").delete().eq("id", id);
+  };
+
+  // ── Vendor invite ────────────────────────────────────────────
+  const FUNCTIONS_BASE = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1";
+  const ANON_KEY = supabase.supabaseKey || "";
+
+  const handleSendVendorInvite = async () => {
+    if (!vendorInviteEmail.trim()) return;
+    setSendingInvite(true);
+    try {
+      // Create vendor row first
+      const { data: newVendor, error } = await supabase.from("vendors").insert({
+        event_id: eventId,
+        email: vendorInviteEmail.trim(),
+        name: vendorInviteEmail.split("@")[0], // placeholder name
+        host_message: vendorInviteNote.trim() || null,
+        status: "invited",
+      }).select().single();
+      if (error) throw error;
+
+      // Send invite email
+      const res = await fetch(`${FUNCTIONS_BASE}/send-vendor-invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        body: JSON.stringify({ vendorId: newVendor.id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      setVendors(vs => [...vs, newVendor]);
+      setVendorInviteEmail("");
+      setVendorInviteNote("");
+      setVendorView("list");
+    } catch (e) { alert("Error: " + e.message); }
+    setSendingInvite(false);
+  };
+
+  const handleVendorDecision = async (decision) => {
+    if (!showDecisionModal) return;
+    setSendingDecision(true);
+    try {
+      const res = await fetch(`${FUNCTIONS_BASE}/vendor-decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        body: JSON.stringify({ vendorId: showDecisionModal.id, decision, message: decisionMessage }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setVendors(vs => vs.map(v => v.id === showDecisionModal.id ? { ...v, status: decision, host_message: decisionMessage } : v));
+      setShowDecisionModal(null);
+      setDecisionMessage("");
+    } catch (e) { alert("Error: " + e.message); }
+    setSendingDecision(false);
   };
 
   const handleVendorStatus = async (id, status) => {
@@ -1615,45 +1675,147 @@ export default function Dashboard() {
         {/* VENDORS */}
         {activeNav === "vendors" && (
           <div className="fade-up">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
+            <style>{`
+              .vd-field { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 13px; outline: none; font-family: 'DM Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .vd-field:focus { border-color: #c9a84c; }
+              .vd-field::placeholder { color: #2e2e42; }
+              .vd-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
+              .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; }
+              .status-submitted { background: rgba(129,140,248,0.12); color: #818cf8; border: 1px solid rgba(129,140,248,0.25); }
+              .status-invited   { background: rgba(245,158,11,0.12);  color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+              .status-confirmed { background: rgba(16,185,129,0.12);  color: #10b981; border: 1px solid rgba(16,185,129,0.25); }
+              .status-declined  { background: rgba(239,68,68,0.1);    color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+              .status-pending   { background: rgba(90,90,114,0.15);   color: #5a5a72; border: 1px solid rgba(90,90,114,0.25); }
+            `}</style>
+
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
                 <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Vendors</h1>
-                <p style={{ color: "#5a5a72", fontSize: 14 }}>{vendors.length} supplier{vendors.length !== 1 ? "s" : ""} · {vendors.filter(v => v.status === "confirmed").length} confirmed</p>
+                <p style={{ color: "#5a5a72", fontSize: 14 }}>
+                  {vendors.length} supplier{vendors.length !== 1 ? "s" : ""} ·{" "}
+                  {vendors.filter(v => v.status === "submitted").length > 0 && (
+                    <span style={{ color: "#818cf8" }}>{vendors.filter(v => v.status === "submitted").length} awaiting review · </span>
+                  )}
+                  {vendors.filter(v => v.status === "confirmed").length} confirmed
+                </p>
               </div>
-              <button className="btn-gold" onClick={openAddVendor}>+ Add Vendor</button>
+              <button className="btn-gold" onClick={() => setVendorView(v => v === "invite" ? "list" : "invite")}>
+                {vendorView === "invite" ? "← Back" : "+ Invite Vendor"}
+              </button>
             </div>
-            {vendors.length === 0 && (
-              <div className="card" style={{ padding: "48px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>No vendors yet — add your first supplier.</div>
+
+            {/* Invite panel */}
+            {vendorView === "invite" && (
+              <div style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 16, padding: "24px", marginBottom: 24 }}>
+                <h3 style={{ fontFamily: "'Playfair Display'", fontSize: 18, marginBottom: 4 }}>Invite a Vendor</h3>
+                <p style={{ fontSize: 13, color: "#5a5a72", marginBottom: 20 }}>They'll receive a link to complete their application form.</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <label className="vd-label">Vendor Email *</label>
+                    <input className="vd-field" type="email" placeholder="vendor@example.com"
+                      value={vendorInviteEmail} onChange={e => setVendorInviteEmail(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="vd-label">Message to Vendor (optional)</label>
+                    <textarea className="vd-field" rows={3} style={{ resize: "vertical" }}
+                      placeholder="Add a personal note — this will appear in the invitation email and on the form…"
+                      value={vendorInviteNote} onChange={e => setVendorInviteNote(e.target.value)} />
+                  </div>
+                  <button className="btn-gold" disabled={!vendorInviteEmail.trim() || sendingInvite}
+                    onClick={handleSendVendorInvite}
+                    style={{ opacity: sendingInvite ? 0.6 : 1 }}>
+                    {sendingInvite ? "Sending…" : "Send Invitation →"}
+                  </button>
+                </div>
+              </div>
             )}
+
+            {/* Vendor list */}
+            {vendors.length === 0 && vendorView === "list" && (
+              <div className="card" style={{ padding: "48px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>
+                No vendors yet — invite your first supplier above.
+              </div>
+            )}
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               {vendors.map(v => (
-                <div key={v.id} className="card" style={{ padding: "20px 22px" }}>
+                <div key={v.id} className="card" style={{ padding: "20px 22px", border: v.status === "submitted" ? "1px solid rgba(129,140,248,0.3)" : undefined }}>
+
+                  {/* Top row */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 40, height: 40, background: "#13131f", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{v.icon || "🏢"}</div>
+                      {v.image_url
+                        ? <img src={v.image_url} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", border: "1px solid #1e1e2e" }} alt={v.name} />
+                        : <div style={{ width: 44, height: 44, background: "#13131f", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, border: "1px solid #1e1e2e" }}>{v.icon || "🏢"}</div>}
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{v.name}</div>
                         <div style={{ fontSize: 12, color: "#5a5a72" }}>{v.role}</div>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <select
-                        value={v.status}
-                        onChange={e => handleVendorStatus(v.id, e.target.value)}
-                        style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 6, color: v.status === "confirmed" ? "#10b981" : v.status === "cancelled" ? "#ef4444" : "#c9a84c", fontSize: 12, padding: "3px 6px", cursor: "pointer" }}
-                      >
-                        <option value="pending">pending</option>
-                        <option value="confirmed">confirmed</option>
-                        <option value="cancelled">cancelled</option>
-                      </select>
-                    </div>
+                    <span className={`status-pill status-${v.status || "pending"}`}>
+                      {v.status === "submitted" ? "📋 Review" : v.status || "pending"}
+                    </span>
                   </div>
-                  {v.contact && <div style={{ fontSize: 13, color: "#5a5a72", marginBottom: 3 }}>✉ {v.contact}</div>}
-                  {v.phone   && <div style={{ fontSize: 13, color: "#5a5a72", marginBottom: 3 }}>📞 {v.phone}</div>}
-                  {v.notes   && <div style={{ fontSize: 12, color: "#5a5a72", background: "#13131f", borderRadius: 6, padding: "7px 10px", marginTop: 8 }}>{v.notes}</div>}
+
+                  {/* Contact */}
+                  {(v.email || v.contact) && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 3 }}>✉ {v.email || v.contact}</div>}
+                  {v.phone    && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 3 }}>📞 {v.phone}</div>}
+                  {v.website  && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 3 }}>🌐 {v.website}</div>}
+                  {v.instagram && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 3 }}>📸 @{v.instagram}</div>}
+                  {v.description && (
+                    <div style={{ fontSize: 12, color: "#8a8278", background: "#13131f", borderRadius: 6, padding: "8px 10px", marginTop: 8, lineHeight: 1.5 }}>
+                      {v.description.length > 120 ? v.description.slice(0, 120) + "…" : v.description}
+                    </div>
+                  )}
+
+                  {/* Invited / submitted timestamps */}
+                  {v.form_submitted_at && (
+                    <div style={{ fontSize: 11, color: "#818cf8", marginTop: 8 }}>
+                      Form submitted {new Date(v.form_submitted_at).toLocaleDateString("en-NZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  )}
+                  {v.invited_at && !v.form_submitted_at && (
+                    <div style={{ fontSize: 11, color: "#5a5a72", marginTop: 8 }}>
+                      Invited {new Date(v.invited_at).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}
+                    </div>
+                  )}
+
+                  {/* Actions */}
                   <div style={{ display: "flex", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid #0f0f1a" }}>
-                    <button className="btn-ghost" onClick={() => openEditVendor(v)} style={{ flex: 1, padding: "7px", fontSize: 12 }}>✎ Edit</button>
-                    <button className="btn-ghost" onClick={() => handleDeleteVendor(v.id)} style={{ padding: "7px 12px", fontSize: 12, color: "#ef4444" }}>✕</button>
+                    {v.status === "submitted" ? (
+                      <>
+                        <button className="btn-gold" style={{ flex: 1, padding: "8px", fontSize: 12 }}
+                          onClick={() => { setShowDecisionModal(v); setDecisionMessage(""); }}>
+                          Review →
+                        </button>
+                      </>
+                    ) : v.status === "confirmed" || v.status === "declined" ? (
+                      <>
+                        <button className="btn-ghost" style={{ flex: 1, padding: "7px", fontSize: 12 }}
+                          onClick={() => { setShowDecisionModal(v); setDecisionMessage(v.host_message || ""); }}>
+                          Change Decision
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="btn-ghost" style={{ flex: 1, padding: "7px", fontSize: 12 }}
+                          onClick={() => openEditVendor(v)}>✎ Edit</button>
+                        {(v.email || v.contact) && v.status === "invited" && (
+                          <button className="btn-ghost" style={{ padding: "7px 12px", fontSize: 12 }}
+                            onClick={async () => {
+                              await fetch(`${FUNCTIONS_BASE}/send-vendor-invite`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+                                body: JSON.stringify({ vendorId: v.id }),
+                              });
+                              alert("Invite resent!");
+                            }}>↩ Resend</button>
+                        )}
+                      </>
+                    )}
+                    <button className="btn-ghost" style={{ padding: "7px 12px", fontSize: 12, color: "#ef4444" }}
+                      onClick={() => handleDeleteVendor(v.id)}>✕</button>
                   </div>
                 </div>
               ))}
@@ -1661,7 +1823,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* VENDOR MODAL */}
+        {/* VENDOR EDIT MODAL (existing vendors) */}
         {showVendorModal && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }}
             onClick={() => setShowVendorModal(false)}>
@@ -1676,8 +1838,6 @@ export default function Dashboard() {
             `}</style>
             <div onClick={e => e.stopPropagation()}
               style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 18, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", animation: "modalIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards" }}>
-
-              {/* Header */}
               <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, fontWeight: 700, color: "#e2d9cc", marginBottom: 2 }}>
@@ -1685,11 +1845,9 @@ export default function Dashboard() {
                   </h2>
                   <p style={{ fontSize: 12, color: "#5a5a72" }}>Supplier contact and booking details</p>
                 </div>
-                <button onClick={() => setShowVendorModal(false)} style={{ background: "none", border: "none", color: "#3a3a52", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 4, transition: "color 0.15s" }} onMouseEnter={e=>e.currentTarget.style.color="#e2d9cc"} onMouseLeave={e=>e.currentTarget.style.color="#3a3a52"}>×</button>
+                <button onClick={() => setShowVendorModal(false)} style={{ background: "none", border: "none", color: "#3a3a52", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: 4 }}>×</button>
               </div>
-
               <div style={{ padding: "20px 28px 28px", display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Icon picker */}
                 <div>
                   <label className="vm-label">Icon</label>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -1701,56 +1859,74 @@ export default function Dashboard() {
                     ))}
                   </div>
                 </div>
-
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <div>
-                    <label className="vm-label">Name *</label>
-                    <input className="vm-field" placeholder="e.g. Sound Co." value={vendorForm.name}
-                      onChange={e => setVendorForm(f => ({ ...f, name: e.target.value }))} autoFocus />
-                  </div>
-                  <div>
-                    <label className="vm-label">Role</label>
-                    <input className="vm-field" placeholder="e.g. AV / Catering" value={vendorForm.role}
-                      onChange={e => setVendorForm(f => ({ ...f, role: e.target.value }))} />
-                  </div>
+                  <div><label className="vm-label">Name *</label><input className="vm-field" placeholder="e.g. Sound Co." value={vendorForm.name} onChange={e => setVendorForm(f => ({ ...f, name: e.target.value }))} autoFocus /></div>
+                  <div><label className="vm-label">Role</label><input className="vm-field" placeholder="e.g. AV / Catering" value={vendorForm.role} onChange={e => setVendorForm(f => ({ ...f, role: e.target.value }))} /></div>
                 </div>
-
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  <div>
-                    <label className="vm-label">Email</label>
-                    <input className="vm-field" placeholder="contact@vendor.com" value={vendorForm.contact}
-                      onChange={e => setVendorForm(f => ({ ...f, contact: e.target.value }))} />
-                  </div>
-                  <div>
-                    <label className="vm-label">Phone</label>
-                    <input className="vm-field" placeholder="021 000 0000" value={vendorForm.phone}
-                      onChange={e => setVendorForm(f => ({ ...f, phone: e.target.value }))} />
-                  </div>
+                  <div><label className="vm-label">Email</label><input className="vm-field" placeholder="contact@vendor.com" value={vendorForm.contact} onChange={e => setVendorForm(f => ({ ...f, contact: e.target.value }))} /></div>
+                  <div><label className="vm-label">Phone</label><input className="vm-field" placeholder="021 000 0000" value={vendorForm.phone} onChange={e => setVendorForm(f => ({ ...f, phone: e.target.value }))} /></div>
                 </div>
-
-                <div>
-                  <label className="vm-label">Status</label>
-                  <select className="vm-field" value={vendorForm.status}
-                    onChange={e => setVendorForm(f => ({ ...f, status: e.target.value }))}>
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="vm-label">Notes</label>
-                  <textarea className="vm-field" placeholder="Contract terms, requirements, contacts…" rows={3}
-                    value={vendorForm.notes} onChange={e => setVendorForm(f => ({ ...f, notes: e.target.value }))}
-                    style={{ resize: "vertical" }} />
-                </div>
-
+                <div><label className="vm-label">Notes</label><textarea className="vm-field" placeholder="Notes…" rows={3} value={vendorForm.notes} onChange={e => setVendorForm(f => ({ ...f, notes: e.target.value }))} style={{ resize: "vertical" }} /></div>
                 <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
                   <button className="btn-ghost" onClick={() => setShowVendorModal(false)} style={{ flex: 1 }}>Cancel</button>
                   <button className="btn-gold" onClick={handleSaveVendor} disabled={!vendorForm.name.trim()} style={{ flex: 2 }}>
                     {editingVendor ? "Save Changes" : "Add Vendor"}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* VENDOR DECISION MODAL */}
+        {showDecisionModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }}
+            onClick={() => setShowDecisionModal(null)}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 18, width: "100%", maxWidth: 500, boxShadow: "0 32px 80px rgba(0,0,0,0.6)", padding: 28 }}>
+
+              {/* Vendor summary */}
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #1e1e2e" }}>
+                {showDecisionModal.image_url
+                  ? <img src={showDecisionModal.image_url} style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", flexShrink: 0 }} alt="" />
+                  : <div style={{ width: 56, height: 56, background: "#13131f", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>{showDecisionModal.icon || "🏢"}</div>}
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, margin: "0 0 2px" }}>{showDecisionModal.name}</h2>
+                  <div style={{ fontSize: 13, color: "#c9a84c", marginBottom: 4 }}>{showDecisionModal.role}</div>
+                  {showDecisionModal.email && <div style={{ fontSize: 12, color: "#5a5a72" }}>✉ {showDecisionModal.email}</div>}
+                  {showDecisionModal.phone && <div style={{ fontSize: 12, color: "#5a5a72" }}>📞 {showDecisionModal.phone}</div>}
+                  {showDecisionModal.website && <div style={{ fontSize: 12, color: "#5a5a72" }}>🌐 {showDecisionModal.website}</div>}
+                  {showDecisionModal.instagram && <div style={{ fontSize: 12, color: "#5a5a72" }}>📸 @{showDecisionModal.instagram}</div>}
+                </div>
+                <button onClick={() => setShowDecisionModal(null)} style={{ background: "none", border: "none", color: "#3a3a52", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>×</button>
+              </div>
+
+              {showDecisionModal.description && (
+                <div style={{ background: "#13131f", borderRadius: 10, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#8a8278", lineHeight: 1.6 }}>
+                  {showDecisionModal.description}
+                </div>
+              )}
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+                  Message to vendor (optional)
+                </label>
+                <textarea
+                  style={{ width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "11px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }}
+                  rows={3} placeholder="Add a personal message — it'll be included in the decision email…"
+                  value={decisionMessage} onChange={e => setDecisionMessage(e.target.value)} />
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => handleVendorDecision("declined")} disabled={sendingDecision}
+                  style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sendingDecision ? 0.6 : 1 }}>
+                  ✕ Decline
+                </button>
+                <button onClick={() => handleVendorDecision("confirmed")} disabled={sendingDecision}
+                  style={{ flex: 2, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", color: "#fff", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sendingDecision ? 0.6 : 1 }}>
+                  {sendingDecision ? "Sending…" : "✓ Confirm Vendor"}
+                </button>
               </div>
             </div>
           </div>

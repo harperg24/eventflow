@@ -14,7 +14,8 @@ import CheckIn, { GuestCheckIn, EventCheckIn } from "./pages/CheckIn";
 import TicketPage    from "./pages/TicketPage";
 import TicketSuccess from "./pages/TicketSuccess";
 import TicketView    from "./pages/TicketView";
-import TicketScanner from "./pages/TicketScanner";
+import TicketScanner  from "./pages/TicketScanner";
+import VendorForm     from "./pages/VendorForm";
 
 export default function App() {
   const [session, setSession] = useState(undefined);
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/tickets/:slug/success"     element={<TicketSuccess />} />
         <Route path="/ticket/:qrToken"           element={<TicketView />} />
         <Route path="/scanner/:eventId"            element={<TicketScanner />} />
+        <Route path="/vendor/:token"               element={<VendorForm />} />
 
         {/* Protected */}
         <Route path="/events"              element={session ? <EventList />     : <Navigate to="/login" replace />} />
