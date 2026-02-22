@@ -6,9 +6,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-// Import the same constants your supabase.js uses
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../lib/supabase";
-const FUNCTIONS_URL = SUPABASE_URL.replace(".supabase.co", ".functions.supabase.co") + "/create-checkout";
+import { SUPABASE_ANON_KEY } from "../lib/supabase";
+const FUNCTIONS_URL = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1/create-checkout";
 
 export default function TicketPage() {
   const { slug }     = useParams();
