@@ -3,6 +3,7 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
 import { supabase } from "./lib/supabase";
 import Auth          from "./pages/Auth";
 import EventList     from "./pages/EventList";
@@ -59,6 +60,7 @@ export default function App() {
         {/* Default */}
         <Route path="*" element={<Navigate to={session ? "/events" : "/login"} replace />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   );
 }
