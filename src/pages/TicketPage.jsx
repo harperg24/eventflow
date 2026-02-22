@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON    = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL     = supabase.supabaseUrl;
+const SUPABASE_ANON    = supabase.supabaseKey;
 const FUNCTIONS_URL    = SUPABASE_URL.replace(".supabase.co", ".functions.supabase.co") + "/create-checkout";
 
 export default function TicketPage() {
