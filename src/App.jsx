@@ -11,6 +11,9 @@ import Dashboard     from "./pages/Dashboard";
 import RSVP          from "./pages/RSVP";
 import AuthCallback    from "./pages/AuthCallback";
 import CheckIn, { GuestCheckIn, EventCheckIn } from "./pages/CheckIn";
+import TicketPage    from "./pages/TicketPage";
+import TicketSuccess from "./pages/TicketSuccess";
+import TicketView    from "./pages/TicketView";
 
 export default function App() {
   const [session, setSession] = useState(undefined);
@@ -36,6 +39,9 @@ export default function App() {
         <Route path="/auth/callback"     element={<AuthCallback />} />
         <Route path="/checkin/:guestId"        element={<GuestCheckIn />} />
         <Route path="/checkin/event/:eventId"   element={<EventCheckIn />} />
+        <Route path="/tickets/:slug"             element={<TicketPage />} />
+        <Route path="/tickets/:slug/success"     element={<TicketSuccess />} />
+        <Route path="/ticket/:qrToken"           element={<TicketView />} />
 
         {/* Protected */}
         <Route path="/events"              element={session ? <EventList />     : <Navigate to="/login" replace />} />

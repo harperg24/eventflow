@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, createEvent } from "../lib/supabase";
 
-const steps = ["Details", "Venue", "Guests", "Budget", "Review"];
+// Steps are built dynamically based on event category (see below)
 
 const eventTypes = [
   { id: "gig",       label: "Music Gig",    icon: "🎸" },
@@ -30,12 +30,25 @@ const budgetCategories = [
 
 export default function EventCreation() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [currentStep,    setCurrentStep]    = useState(0);
+  const [saving,         setSaving]         = useState(false);
+  const [error,          setError]          = useState(null);
+  const [eventCategory,  setEventCategory]  = useState(null); // null | 'private' | 'ticketed' | 'hybrid'
+  const [ticketTiers,    setTicketTiers]    = useState([{ name: "General Admission", description: "", price: "", capacity: "" }]);
+
+  // Build steps based on category
+  const steps = eventCategory === "ticketed"
+    ? ["Details", "Venue", "Tickets", "Budget", "Review"]
+    : eventCategory === "hybrid"
+    ? ["Details", "Venue", "Guests", "Tickets", "Budget", "Review"]
+    : ["Details", "Venue", "Guests", "Budget", "Review"];
+
+  const addTier    = () => setTicketTiers(t => [...t, { name: "", description: "", price: "", capacity: "" }]);
+  const removeTier = (i) => setTicketTiers(t => t.filter((_, idx) => idx !== i));
+  const updateTier = (i, field, val) => setTicketTiers(t => t.map((tier, idx) => idx === i ? { ...tier, [field]: val } : tier));
 
   const [event, setEvent] = useState({
-    name: "", type: "", date: "", time: "", description: "",
+    name: "", type: "", date: "", time: "", description: "", ticket_message: "",
     venue: "", address: "", capacity: "",
     guests: [], guestInput: "",
     totalBudget: "",
@@ -63,7 +76,25 @@ export default function EventCreation() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("You must be signed in to create an event.");
-      const newEvent = await createEvent(event, user.id);
+      const newEvent = await createEvent({ ...event, type: eventCategory || "private" }, user.id);
+
+      // Save ticket tiers if ticketed or hybrid
+      if (eventCategory === "ticketed" || eventCategory === "hybrid") {
+        const validTiers = ticketTiers.filter(t => t.name.trim() && t.price);
+        if (validTiers.length > 0) {
+          await supabase.from("ticket_tiers").insert(
+            validTiers.map((t, i) => ({
+              event_id:    newEvent.id,
+              name:        t.name.trim(),
+              description: t.description.trim() || null,
+              price:       Math.round(parseFloat(t.price) * 100), // convert to cents
+              capacity:    t.capacity ? parseInt(t.capacity) : null,
+              sort_order:  i,
+            }))
+          );
+        }
+      }
+
       navigate(`/dashboard/${newEvent.id}`);
     } catch (err) {
       setError(err.message);
@@ -125,12 +156,40 @@ export default function EventCreation() {
         </div>
       </div>
 
-      {/* Step content */}
+      {/* ── Category picker — shown before steps ── */}
+      {!eventCategory && (
+        <div style={{ maxWidth: 660, margin: "0 auto", padding: "60px 24px" }}>
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 32, color: "#e8e0d5", marginBottom: 8 }}>What kind of event?</h1>
+            <p style={{ color: "#7a7268", fontSize: 15 }}>This shapes which features are available to you</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+            {[
+              { id: "private",  icon: "🎉", label: "Private",  sub: "Guest list, invites, RSVP. Free event — no ticketing." },
+              { id: "ticketed", icon: "🎟", label: "Ticketed",  sub: "Public ticket sales with Stripe. No guest list." },
+              { id: "hybrid",   icon: "✨", label: "Hybrid",    sub: "Both — sell tickets publicly and manage a guest list." },
+            ].map(c => (
+              <div key={c.id} onClick={() => setEventCategory(c.id)}
+                style={{ background: "#0d0d1a", border: "1px solid #2a2a35", borderRadius: 16, padding: "28px 20px", cursor: "pointer", textAlign: "center", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor="#d4a853"; e.currentTarget.style.transform="translateY(-3px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor="#2a2a35"; e.currentTarget.style.transform="translateY(0)"; }}>
+                <div style={{ fontSize: 40, marginBottom: 14 }}>{c.icon}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "#e8e0d5", marginBottom: 8 }}>{c.label}</div>
+                <div style={{ fontSize: 13, color: "#5a5a72", lineHeight: 1.5 }}>{c.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Step content — only shown after category is chosen */}
+      {eventCategory && (
+      <div>
       <div style={{ flex: 1, padding: "0 40px 40px", overflowY: "auto" }}>
         <div style={{ maxWidth: 660, margin: "0 auto" }} className="step-card" key={currentStep}>
 
           {/* Step 0: Details */}
-          {currentStep === 0 && (
+          {steps[currentStep] === "Details" && (
             <div>
               <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 34, fontWeight: 600, marginBottom: 6 }}>What's the occasion?</h1>
               <p style={{ color: "#5a5a68", fontSize: 15, marginBottom: 36, fontWeight: 300 }}>Let's start with the basics.</p>
@@ -167,7 +226,7 @@ export default function EventCreation() {
           )}
 
           {/* Step 1: Venue */}
-          {currentStep === 1 && (
+          {steps[currentStep] === "Venue" && (
             <div>
               <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 34, fontWeight: 600, marginBottom: 6 }}>Where's it happening?</h1>
               <p style={{ color: "#5a5a68", fontSize: 15, marginBottom: 36, fontWeight: 300 }}>Add your venue details.</p>
@@ -186,8 +245,67 @@ export default function EventCreation() {
             </div>
           )}
 
+          {/* Tickets step — for ticketed and hybrid */}
+          {steps[currentStep] === "Tickets" && (
+            <div>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, marginBottom: 6 }}>Ticket Tiers</h2>
+              <p style={{ color: "#7a7268", fontSize: 14, marginBottom: 28 }}>Set up your ticket types, prices, and availability</p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+                {ticketTiers.map((tier, i) => (
+                  <div key={i} style={{ background: "#0d0d1a", border: "1px solid #2a2a35", borderRadius: 14, padding: "20px 22px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                      <span style={{ fontSize: 13, color: "#7a7268", fontWeight: 500 }}>Tier {i + 1}</span>
+                      {ticketTiers.length > 1 && (
+                        <button onClick={() => removeTier(i)} style={{ background: "none", border: "none", color: "#3a3a45", cursor: "pointer", fontSize: 18 }}>×</button>
+                      )}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#7a7268", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Tier Name *</div>
+                        <input className="field-input" placeholder="e.g. General Admission"
+                          value={tier.name} onChange={e => updateTier(i, "name", e.target.value)} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#7a7268", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Price (NZD) *</div>
+                        <input className="field-input" placeholder="e.g. 25.00" type="number" min="0" step="0.01"
+                          value={tier.price} onChange={e => updateTier(i, "price", e.target.value)} />
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#7a7268", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Description</div>
+                        <input className="field-input" placeholder="What's included?"
+                          value={tier.description} onChange={e => updateTier(i, "description", e.target.value)} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: "#7a7268", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Capacity (blank = unlimited)</div>
+                        <input className="field-input" placeholder="e.g. 100" type="number" min="1"
+                          value={tier.capacity} onChange={e => updateTier(i, "capacity", e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={addTier}
+                style={{ width: "100%", background: "none", border: "1px dashed #2a2a35", color: "#7a7268", borderRadius: 12, padding: "13px", fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor="#d4a853"; e.currentTarget.style.color="#d4a853"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor="#2a2a35"; e.currentTarget.style.color="#7a7268"; }}>
+                + Add Another Tier
+              </button>
+
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 11, color: "#7a7268", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Message on Ticket Page (optional)</div>
+                <textarea className="field-input" placeholder="A message shown to buyers on the ticket page…" rows={3}
+                  value={event.ticket_message} onChange={e => update("ticket_message", e.target.value)}
+                  style={{ resize: "vertical" }} />
+              </div>
+            </div>
+          )}
+
           {/* Step 2: Guests */}
-          {currentStep === 2 && (
+          {steps[currentStep] === "Guests" && (
             <div>
               <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 34, fontWeight: 600, marginBottom: 6 }}>Who's invited?</h1>
               <p style={{ color: "#5a5a68", fontSize: 15, marginBottom: 36, fontWeight: 300 }}>Add guests now or send invites later.</p>
@@ -212,7 +330,7 @@ export default function EventCreation() {
           )}
 
           {/* Step 3: Budget */}
-          {currentStep === 3 && (
+          {steps[currentStep] === "Budget" && (
             <div>
               <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 34, fontWeight: 600, marginBottom: 6 }}>What's the budget?</h1>
               <p style={{ color: "#5a5a68", fontSize: 15, marginBottom: 36, fontWeight: 300 }}>Plan your spend across categories.</p>
@@ -253,11 +371,16 @@ export default function EventCreation() {
           )}
 
           {/* Step 4: Review */}
-          {currentStep === 4 && (
+          {steps[currentStep] === "Review" && (
             <div>
               <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 34, fontWeight: 600, marginBottom: 6 }}>
                 <em style={{ fontStyle: "italic", fontWeight: 400 }}>Looks</em> great.
               </h1>
+              {/* Event type badge */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(212,168,83,0.1)", border: "1px solid rgba(212,168,83,0.25)", borderRadius: 8, padding: "6px 14px", marginBottom: 20 }}>
+                <span style={{ fontSize: 14 }}>{eventCategory === "private" ? "🎉" : eventCategory === "ticketed" ? "🎟" : "✨"}</span>
+                <span style={{ fontSize: 13, color: "#d4a853", fontWeight: 500, textTransform: "capitalize" }}>{eventCategory} Event</span>
+              </div>
               <p style={{ color: "#5a5a68", fontSize: 15, marginBottom: 36, fontWeight: 300 }}>Review before going live.</p>
               <div style={{ background: "linear-gradient(135deg,#1a1210,#13131a)", border: "1px solid #2a2a35", borderRadius: 16, overflow: "hidden", marginBottom: 28 }}>
                 <div style={{ height: 4, background: "linear-gradient(90deg,#d4a853,#b8892f)" }} />

@@ -27,6 +27,8 @@ const NAV = [
   { id: "polls",     label: "Polls",     icon: "◐" },
   { id: "vendors",   label: "Vendors",   icon: "◇" },
   { id: "checklist", label: "Checklist", icon: "☑" },
+  { id: "tickets",   label: "Tickets",   icon: "🎟", ticketed: true },
+  { id: "sales",     label: "Sales",     icon: "◈",  ticketed: true },
   { id: "checkin",   label: "Check-in",  icon: "✓" },
 ];
 
@@ -48,7 +50,14 @@ export default function Dashboard() {
   const [spotifyToken, setSpotifyToken]         = useState(null);
   const [searchOpen, setSearchOpen]             = useState(false);
   const [votedSongs, setVotedSongs]             = useState([]); // organiser tracks own votes locally
-  const [nowPlaying, setNowPlaying]             = useState(null); // full song object playing in player
+  const [nowPlaying, setNowPlaying]             = useState(null);
+  // Ticketing
+  const [tiers,          setTiers]          = useState([]);
+  const [orders,         setOrders]         = useState([]);
+  const [editingTier,    setEditingTier]    = useState(null);
+  const [newTier,        setNewTier]        = useState({ name: "", description: "", price: "", capacity: "" });
+  const [addingTier,     setAddingTier]     = useState(false);
+  const [tierError,      setTierError]      = useState(null); // full song object playing in player
   const [playerProgress, setPlayerProgress]     = useState(0);
   const [playerDuration, setPlayerDuration]     = useState(0);
   const [spotifySearch, setSpotifySearch]       = useState("");
@@ -109,6 +118,15 @@ export default function Dashboard() {
           supabase.from('guest_requests').select('*').eq('event_id', eventId).eq('status', 'pending').order('created_at', { ascending: false }),
         ]);
         setEvent(ev); setGuests(gs); setTasks(ts);
+        // Load ticketing data for ticketed/hybrid events
+        if (ev && ["ticketed","hybrid"].includes(ev.type)) {
+          const [{ data: tierData }, { data: orderData }] = await Promise.all([
+            supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
+            supabase.from("ticket_orders").select("*, ticket_tiers(name)").eq("event_id", eventId).order("created_at", { ascending: false }),
+          ]);
+          setTiers(tierData || []);
+          setOrders(orderData || []);
+        }
         setBudget(bd); setVendors(vs); setExpenses(ex); setSongs(ss); setPolls(ps);
         setRequests(rqRes?.data || []);
       } finally {
@@ -654,7 +672,7 @@ export default function Dashboard() {
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {NAV.map(n => (
+          {NAV.filter(n => !n.ticketed || ["ticketed","hybrid"].includes(event?.type)).map(n => (
             <button key={n.id} className={`nav-item${activeNav === n.id ? " active" : ""}`} onClick={() => setActiveNav(n.id)}>
               <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{n.icon}</span>
               {n.label}
@@ -1617,6 +1635,234 @@ export default function Dashboard() {
         )}
 
         {/* CHECK-IN */}
+        {/* ── CHECKLIST ── */}
+        {/* ── TICKETS ── */}
+        {activeNav === "tickets" && (
+          <div className="fade-up">
+            <style>{`
+              .tier-card { background: #0a0a14; border: 1px solid #1e1e2e; border-radius: 14px; padding: 20px 22px; transition: border-color 0.15s; }
+              .tier-card:hover { border-color: #2e2e42; }
+              .tf { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 10px 13px; color: #e2d9cc; font-size: 13px; outline: none; font-family: 'DM Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .tf:focus { border-color: #c9a84c; }
+              .tf::placeholder { color: #2e2e42; }
+            `}</style>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+              <div>
+                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Tickets</h1>
+                <p style={{ color: "#5a5a72", fontSize: 14 }}>Manage tiers, pricing and availability</p>
+              </div>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                {/* Publish toggle */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "#5a5a72" }}>{event?.published ? "Published" : "Draft"}</span>
+                  <div onClick={async () => {
+                    const np = !event?.published;
+                    setEvent(e => ({ ...e, published: np }));
+                    await supabase.from("events").update({ published: np }).eq("id", eventId);
+                  }}
+                    style={{ width: 42, height: 24, background: event?.published ? "#10b981" : "#1e1e2e", borderRadius: 99, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
+                    <div style={{ width: 18, height: 18, background: "#fff", borderRadius: "50%", position: "absolute", top: 3, left: event?.published ? 21 : 3, transition: "left 0.2s" }} />
+                  </div>
+                </div>
+                <button onClick={() => setAddingTier(true)} className="btn-gold">+ Add Tier</button>
+              </div>
+            </div>
+
+            {/* Ticket link */}
+            {event?.published && (
+              <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 13, color: "#10b981", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {window.location.origin}/tickets/{event?.invite_slug}
+                </span>
+                <button onClick={() => navigator.clipboard.writeText(window.location.origin + "/tickets/" + event?.invite_slug)}
+                  style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 7, padding: "5px 12px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>
+                  Copy Link
+                </button>
+              </div>
+            )}
+            {!event?.published && (
+              <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: "12px 18px", marginBottom: 20, fontSize: 13, color: "#f59e0b" }}>
+                ⚠ Event is not published — toggle Published above to make the ticket page live.
+              </div>
+            )}
+
+            {/* Tier list */}
+            {tiers.length === 0 && !addingTier && (
+              <div style={{ textAlign: "center", padding: "48px", color: "#3a3a52", fontSize: 14 }}>No ticket tiers yet — add one above.</div>
+            )}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {tiers.map(tier => (
+                <div key={tier.id} className="tier-card">
+                  {editingTier?.id === tier.id ? (
+                    <div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Name</div>
+                          <input className="tf" value={editingTier.name} onChange={e => setEditingTier(t => ({ ...t, name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Price (NZD)</div>
+                          <input className="tf" type="number" value={(editingTier.price / 100).toFixed(2)} onChange={e => setEditingTier(t => ({ ...t, price: Math.round(parseFloat(e.target.value || 0) * 100) }))} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Description</div>
+                          <input className="tf" value={editingTier.description || ""} onChange={e => setEditingTier(t => ({ ...t, description: e.target.value }))} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Capacity (blank = unlimited)</div>
+                          <input className="tf" type="number" value={editingTier.capacity || ""} onChange={e => setEditingTier(t => ({ ...t, capacity: e.target.value ? parseInt(e.target.value) : null }))} />
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-gold" style={{ padding: "8px 16px", fontSize: 12 }} onClick={async () => {
+                          await supabase.from("ticket_tiers").update({ name: editingTier.name, description: editingTier.description, price: editingTier.price, capacity: editingTier.capacity }).eq("id", editingTier.id);
+                          setTiers(ts => ts.map(t => t.id === editingTier.id ? { ...t, ...editingTier } : t));
+                          setEditingTier(null);
+                        }}>Save</button>
+                        <button onClick={() => setEditingTier(null)} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: "#e2d9cc", marginBottom: 2 }}>{tier.name}</div>
+                        {tier.description && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 4 }}>{tier.description}</div>}
+                        <div style={{ display: "flex", gap: 12, fontSize: 12, color: "#3a3a52" }}>
+                          <span style={{ color: "#c9a84c", fontWeight: 600 }}>${(tier.price / 100).toFixed(2)}</span>
+                          <span>{tier.sold} sold</span>
+                          {tier.capacity && <span>of {tier.capacity}</span>}
+                          {tier.capacity && <span style={{ color: tier.capacity - tier.sold <= 0 ? "#ef4444" : "#5a5a72" }}>{Math.max(0, tier.capacity - tier.sold)} remaining</span>}
+                        </div>
+                      </div>
+                      {/* Capacity bar */}
+                      {tier.capacity && (
+                        <div style={{ width: 80 }}>
+                          <div style={{ height: 4, background: "#1a1a2e", borderRadius: 99, overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${Math.min(100,(tier.sold/tier.capacity)*100)}%`, background: tier.sold >= tier.capacity ? "#ef4444" : "#10b981", borderRadius: 99 }} />
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => setEditingTier({ ...tier })}
+                          style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor="#c9a84c"; e.currentTarget.style.color="#c9a84c"; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>Edit</button>
+                        <button onClick={async () => { await supabase.from("ticket_tiers").delete().eq("id", tier.id); setTiers(ts => ts.filter(t => t.id !== tier.id)); }}
+                          style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
+                          onMouseEnter={e => { e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
+                          onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>×</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Add tier form */}
+              {addingTier && (
+                <div className="tier-card" style={{ borderColor: "#2e2e42" }}>
+                  <div style={{ fontSize: 13, color: "#8a8278", marginBottom: 12, fontWeight: 500 }}>New Tier</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Name *</div>
+                      <input className="tf" placeholder="e.g. General Admission" value={newTier.name} onChange={e => setNewTier(t => ({ ...t, name: e.target.value }))} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Price NZD *</div>
+                      <input className="tf" type="number" placeholder="25.00" value={newTier.price} onChange={e => setNewTier(t => ({ ...t, price: e.target.value }))} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Description</div>
+                      <input className="tf" placeholder="What's included?" value={newTier.description} onChange={e => setNewTier(t => ({ ...t, description: e.target.value }))} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Capacity (blank = unlimited)</div>
+                      <input className="tf" type="number" placeholder="100" value={newTier.capacity} onChange={e => setNewTier(t => ({ ...t, capacity: e.target.value }))} />
+                    </div>
+                  </div>
+                  {tierError && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{tierError}</div>}
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn-gold" style={{ padding: "8px 16px", fontSize: 12 }} onClick={async () => {
+                      if (!newTier.name.trim() || !newTier.price) { setTierError("Name and price required"); return; }
+                      const { data, error } = await supabase.from("ticket_tiers").insert({
+                        event_id: eventId, name: newTier.name.trim(),
+                        description: newTier.description.trim() || null,
+                        price: Math.round(parseFloat(newTier.price) * 100),
+                        capacity: newTier.capacity ? parseInt(newTier.capacity) : null,
+                        sort_order: tiers.length,
+                      }).select().single();
+                      if (error) { setTierError(error.message); return; }
+                      setTiers(ts => [...ts, data]);
+                      setNewTier({ name: "", description: "", price: "", capacity: "" });
+                      setAddingTier(false);
+                      setTierError(null);
+                    }}>Add Tier</button>
+                    <button onClick={() => { setAddingTier(false); setTierError(null); }} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── SALES ── */}
+        {activeNav === "sales" && (
+          <div className="fade-up">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+              <div>
+                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Sales</h1>
+                <p style={{ color: "#5a5a72", fontSize: 14 }}>
+                  {orders.filter(o => o.status === "paid").length} orders ·{" "}
+                  ${(orders.filter(o => o.status === "paid").reduce((s, o) => s + o.total_amount, 0) / 100).toFixed(2)} revenue
+                </p>
+              </div>
+            </div>
+
+            {/* Revenue cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+              {[
+                { label: "Total Revenue", value: "$" + (orders.filter(o => o.status === "paid").reduce((s, o) => s + o.total_amount, 0) / 100).toFixed(2), color: "#c9a84c" },
+                { label: "Tickets Sold",  value: orders.filter(o => o.status === "paid").reduce((s, o) => s + o.quantity, 0), color: "#10b981" },
+                { label: "Orders",        value: orders.filter(o => o.status === "paid").length, color: "#818cf8" },
+              ].map(stat => (
+                <div key={stat.label} className="card" style={{ padding: "18px 20px", textAlign: "center" }}>
+                  <div style={{ fontSize: 26, fontWeight: 700, color: stat.color, fontFamily: "'Playfair Display'" }}>{stat.value}</div>
+                  <div style={{ fontSize: 12, color: "#5a5a72", marginTop: 4 }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Orders table */}
+            <div className="card" style={{ overflow: "hidden" }}>
+              {orders.length === 0 && (
+                <div style={{ padding: "48px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>No orders yet.</div>
+              )}
+              {orders.map((o, i) => (
+                <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 20px", borderBottom: i < orders.length - 1 ? "1px solid #0a0a14" : "none" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500, color: "#e2d9cc" }}>{o.buyer_name}</div>
+                    <div style={{ fontSize: 11, color: "#5a5a72" }}>{o.buyer_email} · {o.quantity}× {o.ticket_tiers?.name}</div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#3a3a52", flexShrink: 0 }}>
+                    {new Date(o.created_at).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "#c9a84c", flexShrink: 0 }}>
+                    ${(o.total_amount / 100).toFixed(2)}
+                  </div>
+                  <div style={{ flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 5, fontWeight: 500,
+                      background: o.status === "paid" ? "rgba(16,185,129,0.12)" : o.status === "refunded" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
+                      color: o.status === "paid" ? "#10b981" : o.status === "refunded" ? "#ef4444" : "#f59e0b",
+                      border: `1px solid ${o.status === "paid" ? "rgba(16,185,129,0.2)" : o.status === "refunded" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}` }}>
+                      {o.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── CHECKLIST ── */}
         {activeNav === "checklist" && (
           <div className="fade-up">
