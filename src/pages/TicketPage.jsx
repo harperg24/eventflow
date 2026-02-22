@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-const SUPABASE_URL     = supabase.supabaseUrl;
-const SUPABASE_ANON    = supabase.supabaseKey;
-const FUNCTIONS_URL    = SUPABASE_URL.replace(".supabase.co", ".functions.supabase.co") + "/create-checkout";
+// Import the same constants your supabase.js uses
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../lib/supabase";
+const FUNCTIONS_URL = SUPABASE_URL.replace(".supabase.co", ".functions.supabase.co") + "/create-checkout";
 
 export default function TicketPage() {
   const { slug }     = useParams();
@@ -54,7 +54,7 @@ export default function TicketPage() {
     try {
       const res = await fetch(FUNCTIONS_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON },
+        headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
         body: JSON.stringify({
           eventId:    event.id,
           tierId:     selectedTier.id,
