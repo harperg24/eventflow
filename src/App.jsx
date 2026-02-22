@@ -16,6 +16,7 @@ import TicketSuccess from "./pages/TicketSuccess";
 import TicketView    from "./pages/TicketView";
 import TicketScanner  from "./pages/TicketScanner";
 import VendorForm     from "./pages/VendorForm";
+import CollabAccept   from "./pages/CollabAccept";
 
 export default function App() {
   const [session, setSession] = useState(undefined);
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/ticket/:qrToken"           element={<TicketView />} />
         <Route path="/scanner/:eventId"            element={<TicketScanner />} />
         <Route path="/vendor/:token"               element={<VendorForm />} />
+        <Route path="/collab/accept/:token"        element={<CollabAccept />} />
 
         {/* Protected */}
         <Route path="/events"              element={session ? <EventList />     : <Navigate to="/login" replace />} />

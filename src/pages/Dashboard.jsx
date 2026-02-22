@@ -26,6 +26,7 @@ const NAV = [
   { id: "playlist",  label: "Playlist",  icon: "♫" },
   { id: "polls",     label: "Polls",     icon: "◐" },
   { id: "vendors",   label: "Vendors",   icon: "◇" },
+  { id: "collab",    label: "Collaborate", icon: "◈" },
   { id: "checklist", label: "Checklist", icon: "☑" },
   { id: "tickets",   label: "Ticket Hub", icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",  icon: "✓" },
@@ -109,6 +110,8 @@ function AttendeeTab({ eventId, supabase, orders, navigate }) {
 export default function Dashboard() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const FUNCTIONS_BASE = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1";
+  const ANON_KEY = supabase.supabaseKey || "";
   const [activeNav, setActiveNav] = useState("overview");
   const [loading, setLoading] = useState(true);
 
@@ -181,6 +184,14 @@ export default function Dashboard() {
   const [decisionMessage,    setDecisionMessage]    = useState("");
   const [sendingDecision,    setSendingDecision]    = useState(false);
   const [vendorView,         setVendorView]         = useState("list"); // list | invite
+  const [showPublishModal,   setShowPublishModal]   = useState(false); // "publish" | "unpublish" | null
+  const [showManualVendor,   setShowManualVendor]   = useState(false);
+  const [manualVendor,       setManualVendor]       = useState(null); // vendor being manually edited
+  const [collaborators,      setCollaborators]      = useState([]);
+  const [collabInviteEmail,  setCollabInviteEmail]  = useState("");
+  const [collabInviteRole,   setCollabInviteRole]   = useState("view_only");
+  const [sendingCollab,      setSendingCollab]      = useState(false);
+  const [userRole,           setUserRole]           = useState("owner"); // this user's role
   const [deletingGuest, setDeletingGuest] = useState(null);
   const [selectedGuests, setSelectedGuests] = useState([]);
 
@@ -211,12 +222,22 @@ export default function Dashboard() {
         setEvent(ev); setGuests(gs); setTasks(ts);
         // Load ticketing data for ticketed/hybrid events
         if (ev) {
-          const [{ data: tierData }, { data: orderData }] = await Promise.all([
+          const [{ data: tierData }, { data: orderData }, { data: collabData }] = await Promise.all([
             supabase.from("ticket_tiers").select("*").eq("event_id", eventId).order("sort_order"),
             supabase.from("ticket_orders").select("*, ticket_tiers(name)").eq("event_id", eventId).order("created_at", { ascending: false }),
+            supabase.from("event_collaborators").select("*").eq("event_id", eventId).order("created_at"),
           ]);
           setTiers(tierData || []);
           setOrders(orderData || []);
+          setCollaborators(collabData || []);
+          // Determine current user's role
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && ev.organiser_id !== user.id) {
+            const myCollab = (collabData || []).find(c => c.user_id === user.id && c.status === "accepted");
+            if (myCollab) setUserRole(myCollab.role);
+          } else {
+            setUserRole("owner");
+          }
         }
         setBudget(bd); setVendors(vs); setExpenses(ex); setSongs(ss); setPolls(ps);
         setRequests(rqRes?.data || []);
@@ -625,14 +646,71 @@ export default function Dashboard() {
   };
 
   const handleDeleteVendor = async (id) => {
+    const vendor = vendors.find(v => v.id === id);
+    if (!window.confirm(`Remove ${vendor?.name || "this vendor"}?${vendor?.email ? " They will receive a rejection email." : ""}`)) return;
+    // Send rejection email if they submitted a form
+    if (vendor?.email && vendor?.form_submitted_at) {
+      await fetch(`${FUNCTIONS_BASE}/vendor-decision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        body: JSON.stringify({ vendorId: id, decision: "declined", message: "" }),
+      }).catch(() => {});
+    }
     setVendors(vs => vs.filter(v => v.id !== id));
     await supabase.from("vendors").delete().eq("id", id);
   };
 
-  // ── Vendor invite ────────────────────────────────────────────
-  const FUNCTIONS_BASE = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1";
-  const ANON_KEY = supabase.supabaseKey || "";
+  // ── Collaboration ────────────────────────────────────────────
+  const handleSendCollabInvite = async () => {
+    if (!collabInviteEmail.trim()) return;
+    setSendingCollab(true);
+    try {
+      const { data: collab, error } = await supabase.from("event_collaborators").insert({
+        event_id: eventId, email: collabInviteEmail.trim().toLowerCase(), role: collabInviteRole,
+      }).select().single();
+      if (error) throw error;
+      setCollaborators(cs => [...cs, collab]);
+      // Send invite email
+      const res = await fetch(`${FUNCTIONS_BASE}/send-collab-invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        body: JSON.stringify({ collabId: collab.id }),
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      setCollabInviteEmail(""); setCollabInviteRole("view_only");
+    } catch (e) { alert("Error: " + e.message); }
+    setSendingCollab(false);
+  };
 
+  const handleRemoveCollab = async (id) => {
+    if (!window.confirm("Remove this collaborator?")) return;
+    await supabase.from("event_collaborators").delete().eq("id", id);
+    setCollaborators(cs => cs.filter(c => c.id !== id));
+  };
+
+  const handleUpdateCollabRole = async (id, role) => {
+    await supabase.from("event_collaborators").update({ role }).eq("id", id);
+    setCollaborators(cs => cs.map(c => c.id === id ? { ...c, role } : c));
+  };
+
+  const handleTransferOwnership = async (collabId) => {
+    if (!window.confirm("Transfer ownership? You will become an Admin and cannot undo this without the new owner.")) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    const collab = collaborators.find(c => c.id === collabId);
+    if (!collab) return;
+    // Update event organiser
+    await supabase.from("events").update({ organiser_id: collab.user_id }).eq("id", eventId);
+    // Make current user an admin collab
+    await supabase.from("event_collaborators").upsert({ event_id: eventId, email: user?.email || "", user_id: user?.id, role: "admin", status: "accepted" });
+    // Remove their collab row (they're now owner)
+    await supabase.from("event_collaborators").delete().eq("id", collabId);
+    setUserRole("admin");
+    setCollaborators(cs => cs.filter(c => c.id !== collabId));
+    alert("Ownership transferred. You are now an Admin.");
+  };
+
+  // ── Vendor invite ────────────────────────────────────────────
   const handleSendVendorInvite = async () => {
     if (!vendorInviteEmail.trim()) return;
     setSendingInvite(true);
@@ -1700,9 +1778,14 @@ export default function Dashboard() {
                   {vendors.filter(v => v.status === "confirmed").length} confirmed
                 </p>
               </div>
-              <button className="btn-gold" onClick={() => setVendorView(v => v === "invite" ? "list" : "invite")}>
-                {vendorView === "invite" ? "← Back" : "+ Invite Vendor"}
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-ghost" onClick={() => { setManualVendor({ name: "", role: "", email: "", phone: "", website: "", instagram: "", description: "" }); setShowManualVendor(true); }}>
+                  + Add Manually
+                </button>
+                <button className="btn-gold" onClick={() => setVendorView(v => v === "invite" ? "list" : "invite")}>
+                  {vendorView === "invite" ? "← Back" : "+ Invite Vendor"}
+                </button>
+              </div>
             </div>
 
             {/* Invite panel */}
@@ -1800,7 +1883,7 @@ export default function Dashboard() {
                     ) : (
                       <>
                         <button className="btn-ghost" style={{ flex: 1, padding: "7px", fontSize: 12 }}
-                          onClick={() => openEditVendor(v)}>✎ Edit</button>
+                          onClick={() => { setManualVendor({ ...v }); setShowManualVendor(true); }}>✎ Edit</button>
                         {(v.email || v.contact) && v.status === "invited" && (
                           <button className="btn-ghost" style={{ padding: "7px 12px", fontSize: 12 }}
                             onClick={async () => {
@@ -1918,6 +2001,10 @@ export default function Dashboard() {
                   value={decisionMessage} onChange={e => setDecisionMessage(e.target.value)} />
               </div>
 
+              <button onClick={() => { setShowDecisionModal(null); setManualVendor({ ...showDecisionModal }); setShowManualVendor(true); }}
+                style={{ width: "100%", background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: "9px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 10 }}>
+                ✎ Edit vendor details
+              </button>
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => handleVendorDecision("declined")} disabled={sendingDecision}
                   style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sendingDecision ? 0.6 : 1 }}>
@@ -1959,18 +2046,20 @@ export default function Dashboard() {
                   ${(orders.filter(o => o.status === "paid").reduce((s,o) => s + o.total_amount, 0) / 100).toFixed(2)} revenue
                 </p>
               </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12, color: "#5a5a72" }}>{event?.published ? "Live" : "Draft"}</span>
-                  <div onClick={async () => {
-                    const np = !event?.published;
-                    setEvent(e => ({ ...e, published: np }));
-                    await supabase.from("events").update({ published: np }).eq("id", eventId);
-                  }} style={{ width: 42, height: 24, background: event?.published ? "#10b981" : "#1e1e2e", borderRadius: 99, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
-                    <div style={{ width: 18, height: 18, background: "#fff", borderRadius: "50%", position: "absolute", top: 3, left: event?.published ? 21 : 3, transition: "left 0.2s" }} />
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={() => setShowPublishModal(event?.published ? "unpublish" : "publish")}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "10px 18px",
+                  borderRadius: 10, border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
+                  fontSize: 14, fontWeight: 700, transition: "all 0.2s",
+                  background: event?.published
+                    ? "rgba(16,185,129,0.12)" : "linear-gradient(135deg,#c9a84c,#a8872e)",
+                  color: event?.published ? "#10b981" : "#080810",
+                  boxShadow: event?.published ? "none" : "0 4px 20px rgba(201,168,76,0.3)",
+                }}>
+                <span style={{ fontSize: 16 }}>{event?.published ? "✓" : "▶"}</span>
+                {event?.published ? "Live" : "Go Live →"}
+              </button>
             </div>
 
             {/* Sub-tabs */}
@@ -2141,231 +2230,136 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ── CHECKLIST ── */}
-        {/* ── TICKETS ── */}
-        {activeNav === "tickets" && (
+        {/* ── COLLABORATE ── */}
+        {activeNav === "collab" && (
           <div className="fade-up">
             <style>{`
-              .tier-card { background: #0a0a14; border: 1px solid #1e1e2e; border-radius: 14px; padding: 20px 22px; transition: border-color 0.15s; }
-              .tier-card:hover { border-color: #2e2e42; }
-              .tf { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 10px 13px; color: #e2d9cc; font-size: 13px; outline: none; font-family: 'DM Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
-              .tf:focus { border-color: #c9a84c; }
-              .tf::placeholder { color: #2e2e42; }
+              .role-select { background: #13131f; border: 1px solid #1e1e2e; border-radius: 8px; padding: 6px 10px; color: #e2d9cc; font-size: 12px; outline: none; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+              .role-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
             `}</style>
-
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Tickets</h1>
-                <p style={{ color: "#5a5a72", fontSize: 14 }}>Manage tiers, pricing and availability</p>
-              </div>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                {/* Publish toggle */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 12, color: "#5a5a72" }}>{event?.published ? "Published" : "Draft"}</span>
-                  <div onClick={async () => {
-                    const np = !event?.published;
-                    setEvent(e => ({ ...e, published: np }));
-                    await supabase.from("events").update({ published: np }).eq("id", eventId);
-                  }}
-                    style={{ width: 42, height: 24, background: event?.published ? "#10b981" : "#1e1e2e", borderRadius: 99, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
-                    <div style={{ width: 18, height: 18, background: "#fff", borderRadius: "50%", position: "absolute", top: 3, left: event?.published ? 21 : 3, transition: "left 0.2s" }} />
-                  </div>
-                </div>
-                <button onClick={() => setAddingTier(true)} className="btn-gold">+ Add Tier</button>
-              </div>
-            </div>
-
-            {/* Ticket link */}
-            {event?.published && (
-              <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 13, color: "#10b981", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {window.location.origin}/tickets/{event?.invite_slug}
-                </span>
-                <button onClick={() => navigator.clipboard.writeText(window.location.origin + "/tickets/" + event?.invite_slug)}
-                  style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 7, padding: "5px 12px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>
-                  Copy Link
-                </button>
-              </div>
-            )}
-            {!event?.published && (
-              <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: "12px 18px", marginBottom: 20, fontSize: 13, color: "#f59e0b" }}>
-                ⚠ Event is not published — toggle Published above to make the ticket page live.
-              </div>
-            )}
-
-            {/* Tier list */}
-            {tiers.length === 0 && !addingTier && (
-              <div style={{ textAlign: "center", padding: "48px", color: "#3a3a52", fontSize: 14 }}>No ticket tiers yet — add one above.</div>
-            )}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {tiers.map(tier => (
-                <div key={tier.id} className="tier-card">
-                  {editingTier?.id === tier.id ? (
-                    <div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                        <div>
-                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Name</div>
-                          <input className="tf" value={editingTier.name} onChange={e => setEditingTier(t => ({ ...t, name: e.target.value }))} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Price (NZD)</div>
-                          <input className="tf" type="number" value={(editingTier.price / 100).toFixed(2)} onChange={e => setEditingTier(t => ({ ...t, price: Math.round(parseFloat(e.target.value || 0) * 100) }))} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Description</div>
-                          <input className="tf" value={editingTier.description || ""} onChange={e => setEditingTier(t => ({ ...t, description: e.target.value }))} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Capacity (blank = unlimited)</div>
-                          <input className="tf" type="number" value={editingTier.capacity || ""} onChange={e => setEditingTier(t => ({ ...t, capacity: e.target.value ? parseInt(e.target.value) : null }))} />
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <button className="btn-gold" style={{ padding: "8px 16px", fontSize: 12 }} onClick={async () => {
-                          await supabase.from("ticket_tiers").update({ name: editingTier.name, description: editingTier.description, price: editingTier.price, capacity: editingTier.capacity }).eq("id", editingTier.id);
-                          setTiers(ts => ts.map(t => t.id === editingTier.id ? { ...t, ...editingTier } : t));
-                          setEditingTier(null);
-                        }}>Save</button>
-                        <button onClick={() => setEditingTier(null)} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 15, fontWeight: 600, color: "#e2d9cc", marginBottom: 2 }}>{tier.name}</div>
-                        {tier.description && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 4 }}>{tier.description}</div>}
-                        <div style={{ display: "flex", gap: 12, fontSize: 12, color: "#3a3a52" }}>
-                          <span style={{ color: "#c9a84c", fontWeight: 600 }}>${(tier.price / 100).toFixed(2)}</span>
-                          <span>{tier.sold} sold</span>
-                          {tier.capacity && <span>of {tier.capacity}</span>}
-                          {tier.capacity && <span style={{ color: tier.capacity - tier.sold <= 0 ? "#ef4444" : "#5a5a72" }}>{Math.max(0, tier.capacity - tier.sold)} remaining</span>}
-                        </div>
-                      </div>
-                      {/* Capacity bar */}
-                      {tier.capacity && (
-                        <div style={{ width: 80 }}>
-                          <div style={{ height: 4, background: "#1a1a2e", borderRadius: 99, overflow: "hidden" }}>
-                            <div style={{ height: "100%", width: `${Math.min(100,(tier.sold/tier.capacity)*100)}%`, background: tier.sold >= tier.capacity ? "#ef4444" : "#10b981", borderRadius: 99 }} />
-                          </div>
-                        </div>
-                      )}
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button onClick={() => setEditingTier({ ...tier })}
-                          style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor="#c9a84c"; e.currentTarget.style.color="#c9a84c"; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>Edit</button>
-                        <button onClick={async () => { await supabase.from("ticket_tiers").delete().eq("id", tier.id); setTiers(ts => ts.filter(t => t.id !== tier.id)); }}
-                          style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s" }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>×</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Add tier form */}
-              {addingTier && (
-                <div className="tier-card" style={{ borderColor: "#2e2e42" }}>
-                  <div style={{ fontSize: 13, color: "#8a8278", marginBottom: 12, fontWeight: 500 }}>New Tier</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Name *</div>
-                      <input className="tf" placeholder="e.g. General Admission" value={newTier.name} onChange={e => setNewTier(t => ({ ...t, name: e.target.value }))} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Price NZD *</div>
-                      <input className="tf" type="number" placeholder="25.00" value={newTier.price} onChange={e => setNewTier(t => ({ ...t, price: e.target.value }))} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Description</div>
-                      <input className="tf" placeholder="What's included?" value={newTier.description} onChange={e => setNewTier(t => ({ ...t, description: e.target.value }))} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Capacity (blank = unlimited)</div>
-                      <input className="tf" type="number" placeholder="100" value={newTier.capacity} onChange={e => setNewTier(t => ({ ...t, capacity: e.target.value }))} />
-                    </div>
-                  </div>
-                  {tierError && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{tierError}</div>}
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button className="btn-gold" style={{ padding: "8px 16px", fontSize: 12 }} onClick={async () => {
-                      if (!newTier.name.trim() || !newTier.price) { setTierError("Name and price required"); return; }
-                      const { data, error } = await supabase.from("ticket_tiers").insert({
-                        event_id: eventId, name: newTier.name.trim(),
-                        description: newTier.description.trim() || null,
-                        price: Math.round(parseFloat(newTier.price) * 100),
-                        capacity: newTier.capacity ? parseInt(newTier.capacity) : null,
-                        sort_order: tiers.length,
-                      }).select().single();
-                      if (error) { setTierError(error.message); return; }
-                      setTiers(ts => [...ts, data]);
-                      setNewTier({ name: "", description: "", price: "", capacity: "" });
-                      setAddingTier(false);
-                      setTierError(null);
-                    }}>Add Tier</button>
-                    <button onClick={() => { setAddingTier(false); setTierError(null); }} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── SALES ── */}
-        {activeNav === "sales" && (
-          <div className="fade-up">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-              <div>
-                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Sales</h1>
+                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Collaborate</h1>
                 <p style={{ color: "#5a5a72", fontSize: 14 }}>
-                  {orders.filter(o => o.status === "paid").length} orders ·{" "}
-                  ${(orders.filter(o => o.status === "paid").reduce((s, o) => s + o.total_amount, 0) / 100).toFixed(2)} revenue
+                  {collaborators.filter(c => c.status === "accepted").length} active · {collaborators.filter(c => c.status === "invited").length} pending invite
                 </p>
               </div>
             </div>
 
-            {/* Revenue cards */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
-              {[
-                { label: "Total Revenue", value: "$" + (orders.filter(o => o.status === "paid").reduce((s, o) => s + o.total_amount, 0) / 100).toFixed(2), color: "#c9a84c" },
-                { label: "Tickets Sold",  value: orders.filter(o => o.status === "paid").reduce((s, o) => s + o.quantity, 0), color: "#10b981" },
-                { label: "Orders",        value: orders.filter(o => o.status === "paid").length, color: "#818cf8" },
-              ].map(stat => (
-                <div key={stat.label} className="card" style={{ padding: "18px 20px", textAlign: "center" }}>
-                  <div style={{ fontSize: 26, fontWeight: 700, color: stat.color, fontFamily: "'Playfair Display'" }}>{stat.value}</div>
-                  <div style={{ fontSize: 12, color: "#5a5a72", marginTop: 4 }}>{stat.label}</div>
-                </div>
-              ))}
+            {/* Role legend */}
+            <div style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 14, padding: "18px 20px", marginBottom: 24 }}>
+              <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 12, fontWeight: 600 }}>Permission Tiers</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
+                {[
+                  { role: "admin",     label: "Admin",     color: "#818cf8", desc: "Full access, can invite others" },
+                  { role: "ticketing", label: "Ticketing", color: "#c9a84c", desc: "Ticket tiers, orders & sales" },
+                  { role: "check_in",  label: "Check-in",  color: "#10b981", desc: "Scanner & guest arrivals" },
+                  { role: "view_only", label: "View Only", color: "#5a5a72", desc: "Read-only across all sections" },
+                ].map(r => (
+                  <div key={r.role} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: r.color, flexShrink: 0 }} />
+                    <div>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: r.color }}>{r.label}</span>
+                      <span style={{ fontSize: 11, color: "#5a5a72" }}> — {r.desc}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Orders table */}
-            <div className="card" style={{ overflow: "hidden" }}>
-              {orders.length === 0 && (
-                <div style={{ padding: "48px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>No orders yet.</div>
-              )}
-              {orders.map((o, i) => (
-                <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 20px", borderBottom: i < orders.length - 1 ? "1px solid #0a0a14" : "none" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500, color: "#e2d9cc" }}>{o.buyer_name}</div>
-                    <div style={{ fontSize: 11, color: "#5a5a72" }}>{o.buyer_email} · {o.quantity}× {o.ticket_tiers?.name}</div>
-                  </div>
-                  <div style={{ fontSize: 12, color: "#3a3a52", flexShrink: 0 }}>
-                    {new Date(o.created_at).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "#c9a84c", flexShrink: 0 }}>
-                    ${(o.total_amount / 100).toFixed(2)}
-                  </div>
-                  <div style={{ flexShrink: 0 }}>
-                    <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 5, fontWeight: 500,
-                      background: o.status === "paid" ? "rgba(16,185,129,0.12)" : o.status === "refunded" ? "rgba(239,68,68,0.12)" : "rgba(245,158,11,0.12)",
-                      color: o.status === "paid" ? "#10b981" : o.status === "refunded" ? "#ef4444" : "#f59e0b",
-                      border: `1px solid ${o.status === "paid" ? "rgba(16,185,129,0.2)" : o.status === "refunded" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}` }}>
-                      {o.status}
-                    </span>
-                  </div>
+            {/* Owner card */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, color: "#3a3a52", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Owner</div>
+              <div className="card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#c9a84c,#a8872e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#080810", fontWeight: 700, flexShrink: 0 }}>👑</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>Event Creator</div>
+                  <div style={{ fontSize: 12, color: "#5a5a72" }}>Full control · Cannot be removed</div>
                 </div>
-              ))}
+                <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)", fontWeight: 600 }}>Owner</span>
+              </div>
             </div>
+
+            {/* Collaborator list */}
+            {collaborators.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ fontSize: 11, color: "#3a3a52", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Collaborators</div>
+                <div className="card" style={{ overflow: "hidden" }}>
+                  {collaborators.map((c, i) => {
+                    const roleColors = { admin: "#818cf8", ticketing: "#c9a84c", check_in: "#10b981", view_only: "#5a5a72" };
+                    const col = roleColors[c.role] || "#5a5a72";
+                    return (
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px", borderBottom: i < collaborators.length - 1 ? "1px solid #0a0a14" : "none" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#13131f", border: `1.5px solid ${c.status === "accepted" ? col : "#1e1e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                          {c.status === "accepted" ? "●" : "○"}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</div>
+                          <div style={{ fontSize: 11, color: c.status === "accepted" ? "#5a5a72" : "#f59e0b" }}>
+                            {c.status === "accepted" ? `Joined ${new Date(c.accepted_at).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}` : "Invite pending"}
+                          </div>
+                        </div>
+                        {userRole === "owner" ? (
+                          <select className="role-select" value={c.role}
+                            onChange={e => handleUpdateCollabRole(c.id, e.target.value)}>
+                            <option value="admin">Admin</option>
+                            <option value="ticketing">Ticketing</option>
+                            <option value="check_in">Check-in</option>
+                            <option value="view_only">View Only</option>
+                          </select>
+                        ) : (
+                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 20, background: `${col}18`, color: col, border: `1px solid ${col}40`, fontWeight: 600 }}>
+                            {c.role.replace("_", " ")}
+                          </span>
+                        )}
+                        {userRole === "owner" && (
+                          <div style={{ display: "flex", gap: 6 }}>
+                            {c.status === "accepted" && c.user_id && (
+                              <button onClick={() => handleTransferOwnership(c.id)}
+                                style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "#5a5a72", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}
+                                title="Transfer ownership">
+                                👑
+                              </button>
+                            )}
+                            <button onClick={() => handleRemoveCollab(c.id)}
+                              style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "#ef4444", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Invite form */}
+            {(userRole === "owner" || userRole === "admin") && (
+              <div style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 14, padding: "22px" }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Invite Collaborator</div>
+                <div style={{ fontSize: 13, color: "#5a5a72", marginBottom: 16 }}>They'll receive an email with a link to accept.</div>
+                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                  <input
+                    style={{ flex: 1, background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}
+                    type="email" placeholder="collaborator@email.com"
+                    value={collabInviteEmail} onChange={e => setCollabInviteEmail(e.target.value)} />
+                  <select className="role-select"
+                    value={collabInviteRole} onChange={e => setCollabInviteRole(e.target.value)}
+                    style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 12px", fontSize: 13 }}>
+                    <option value="admin">Admin</option>
+                    <option value="ticketing">Ticketing</option>
+                    <option value="check_in">Check-in</option>
+                    <option value="view_only">View Only</option>
+                  </select>
+                </div>
+                <button className="btn-gold" disabled={!collabInviteEmail.trim() || sendingCollab}
+                  onClick={handleSendCollabInvite}
+                  style={{ width: "100%", opacity: sendingCollab ? 0.6 : 1 }}>
+                  {sendingCollab ? "Sending…" : "Send Invite →"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -2685,7 +2679,148 @@ export default function Dashboard() {
 
       </main>
 
-      {/* ── Mobile Bottom Nav ── */}
+      {/* ── PUBLISH MODAL ── */}
+      {showPublishModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+          onClick={() => setShowPublishModal(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#0a0a14", border: `1px solid ${showPublishModal === "publish" ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 20, width: "100%", maxWidth: 480, padding: "32px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+
+            {showPublishModal === "publish" ? (
+              <>
+                <div style={{ fontSize: 40, textAlign: "center", marginBottom: 16 }}>🚀</div>
+                <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 22, textAlign: "center", marginBottom: 8, color: "#f0e8db" }}>Go Live?</h2>
+                <p style={{ fontSize: 14, color: "#8a8278", textAlign: "center", marginBottom: 24, lineHeight: 1.7 }}>
+                  This will make your ticket page publicly accessible. Anyone with the link can purchase tickets.
+                </p>
+                <div style={{ background: "#13131f", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "16px 18px", marginBottom: 24 }}>
+                  <div style={{ fontSize: 11, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8, fontWeight: 600 }}>Your ticket link</div>
+                  <div style={{ fontSize: 13, color: "#e2d9cc", wordBreak: "break-all", marginBottom: 12 }}>
+                    {window.location.origin}/tickets/{event?.invite_slug}
+                  </div>
+                  <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/tickets/${event?.invite_slug}`)}
+                    style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 7, padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                    Copy Link
+                  </button>
+                </div>
+                <div style={{ fontSize: 13, color: "#5a5a72", marginBottom: 24, lineHeight: 1.6 }}>
+                  <strong style={{ color: "#e2d9cc" }}>Next steps:</strong> Share this link via social media, email, or add it to your event pages. Tickets will flow straight into your Sales tab.
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setShowPublishModal(false)}
+                    style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    setEvent(e => ({ ...e, published: true }));
+                    await supabase.from("events").update({ published: true }).eq("id", eventId);
+                    setShowPublishModal(false);
+                  }}
+                    style={{ flex: 2, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", color: "#fff", borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                    Go Live →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 40, textAlign: "center", marginBottom: 16 }}>⏸</div>
+                <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 22, textAlign: "center", marginBottom: 8, color: "#f0e8db" }}>Take Offline?</h2>
+                <p style={{ fontSize: 14, color: "#8a8278", textAlign: "center", marginBottom: 24, lineHeight: 1.7 }}>
+                  The ticket page will no longer be accessible. Existing orders are unaffected.
+                </p>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setShowPublishModal(false)}
+                    style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                    Cancel
+                  </button>
+                  <button onClick={async () => {
+                    setEvent(e => ({ ...e, published: false }));
+                    await supabase.from("events").update({ published: false }).eq("id", eventId);
+                    setShowPublishModal(false);
+                  }}
+                    style={{ flex: 2, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                    Take Offline
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── MANUAL VENDOR MODAL ── */}
+      {showManualVendor && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(6px)" }}
+          onClick={() => setShowManualVendor(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 20, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, margin: 0 }}>
+                {manualVendor?.id ? "Edit Vendor Details" : "Add Vendor Manually"}
+              </h2>
+              <button onClick={() => setShowManualVendor(false)} style={{ background: "none", border: "none", color: "#3a3a52", fontSize: 22, cursor: "pointer", padding: 0 }}>×</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                { key: "name",        label: "Business Name *", placeholder: "e.g. Sound Co." },
+                { key: "role",        label: "Service / Role",  placeholder: "e.g. Catering" },
+                { key: "email",       label: "Email",           placeholder: "vendor@example.com" },
+                { key: "phone",       label: "Phone",           placeholder: "021 000 0000" },
+                { key: "website",     label: "Website",         placeholder: "yourbusiness.co.nz" },
+                { key: "instagram",   label: "Instagram",       placeholder: "@handle" },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{label}</label>
+                  <input
+                    style={{ width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "11px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}
+                    placeholder={placeholder}
+                    value={manualVendor?.[key] || ""}
+                    onChange={e => setManualVendor(v => ({ ...v, [key]: e.target.value }))} />
+                </div>
+              ))}
+              <div>
+                <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Description</label>
+                <textarea
+                  style={{ width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "11px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }}
+                  rows={3} placeholder="About their services…"
+                  value={manualVendor?.description || ""}
+                  onChange={e => setManualVendor(v => ({ ...v, description: e.target.value }))} />
+              </div>
+              <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
+                <button onClick={() => setShowManualVendor(false)}
+                  style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                  Cancel
+                </button>
+                <button disabled={!manualVendor?.name?.trim()} onClick={async () => {
+                  if (!manualVendor?.name?.trim()) return;
+                  if (manualVendor.id) {
+                    const { data } = await supabase.from("vendors").update({
+                      name: manualVendor.name, role: manualVendor.role, email: manualVendor.email,
+                      phone: manualVendor.phone, website: manualVendor.website,
+                      instagram: manualVendor.instagram, description: manualVendor.description,
+                    }).eq("id", manualVendor.id).select().single();
+                    setVendors(vs => vs.map(v => v.id === manualVendor.id ? { ...v, ...data } : v));
+                  } else {
+                    const { data } = await supabase.from("vendors").insert({
+                      event_id: eventId, name: manualVendor.name, role: manualVendor.role,
+                      email: manualVendor.email, phone: manualVendor.phone,
+                      website: manualVendor.website, instagram: manualVendor.instagram,
+                      description: manualVendor.description, status: "confirmed",
+                    }).select().single();
+                    setVendors(vs => [...vs, data]);
+                  }
+                  setShowManualVendor(false);
+                }}
+                  style={{ flex: 2, background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                  {manualVendor?.id ? "Save Changes" : "Add Vendor"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile Bottom Nav ── */}}
       {isMobile && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a14", borderTop: "1px solid #1e1e2e", display: "flex", zIndex: 50, padding: "4px 0 env(safe-area-inset-bottom,0)" }}>
           {(mobileMode === "ticketing"

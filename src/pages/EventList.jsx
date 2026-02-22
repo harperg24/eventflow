@@ -30,8 +30,10 @@ export default function EventList() {
   const [events,  setEvents]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [user,    setUser]    = useState(null);
-  const [deleting, setDeleting] = useState(null); // id of event pending delete confirm
-  const [signingOut, setSigningOut] = useState(false);
+  const [deleting,     setDeleting]     = useState(null);
+  const [signingOut,   setSigningOut]   = useState(false);
+  const [collabEvents, setCollabEvents] = useState([]); // events user is collaborating on
+  const [pendingInvites, setPendingInvites] = useState([]); // pending collab invites
 
   // ── Load user + events ──────────────────────────────────
   useEffect(() => {
@@ -46,6 +48,26 @@ export default function EventList() {
         .order("date", { ascending: true });
 
       if (!error) setEvents(data || []);
+
+      // Load collaboration events & pending invites
+      if (user) {
+        // Events this user is a confirmed collaborator on
+        const { data: collabs } = await supabase
+          .from("event_collaborators")
+          .select("*, events(*)")
+          .eq("user_id", user.id)
+          .eq("status", "accepted");
+        setCollabEvents((collabs || []).map(c => ({ ...c.events, _collabRole: c.role })));
+
+        // Pending invites by email
+        const { data: invites } = await supabase
+          .from("event_collaborators")
+          .select("*, events(name,date)")
+          .eq("email", user.email)
+          .eq("status", "invited");
+        setPendingInvites(invites || []);
+      }
+
       setLoading(false);
     };
     load();
@@ -330,6 +352,60 @@ export default function EventList() {
                 <div style={{ width: 40, height: 40, border: "1px dashed #2a2a38", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#3a3a52" }}>+</div>
                 <span style={{ fontSize: 13, color: "#3a3a52" }}>New event</span>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending collab invites */}
+        {!loading && pendingInvites.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: "#818cf8", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12, fontWeight: 600 }}>
+              Pending Invites · {pendingInvites.length}
+            </div>
+            {pendingInvites.map(inv => (
+              <div key={inv.id} style={{ background: "#0a0a14", border: "1px solid rgba(129,140,248,0.3)", borderRadius: 14, padding: "16px 20px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ fontSize: 24 }}>🤝</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{inv.events?.name}</div>
+                  <div style={{ fontSize: 12, color: "#818cf8" }}>
+                    {inv.role.replace("_", " ")} · {inv.events?.date ? new Date(inv.events.date).toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" }) : ""}
+                  </div>
+                </div>
+                <button onClick={() => navigate(`/collab/accept/${inv.invite_token}`)}
+                  style={{ background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 9, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>
+                  View Invite
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Collab events */}
+        {!loading && collabEvents.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ fontSize: 11, color: "#5a5a72", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>
+              Collaborating On
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 14 }}>
+              {collabEvents.map(ev => {
+                const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other;
+                const du   = daysUntil(ev.date);
+                return (
+                  <div key={ev.id} onClick={() => navigate(`/dashboard/${ev.id}`)}
+                    style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 16, padding: "18px 20px", cursor: "pointer", transition: "border-color 0.15s" }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor="#2e2e42"}
+                    onMouseLeave={e => e.currentTarget.style.borderColor="#1e1e2e"}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                      <span style={{ fontSize: 20 }}>{meta.icon}</span>
+                      <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: "rgba(129,140,248,0.12)", color: "#818cf8", border: "1px solid rgba(129,140,248,0.2)", fontWeight: 600 }}>
+                        {(ev._collabRole || "").replace("_"," ")}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{ev.name}</div>
+                    <div style={{ fontSize: 12, color: du.color }}>{du.label}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
