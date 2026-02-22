@@ -37,13 +37,13 @@ const ROLE_ACCESS = {
   admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
   ticketing: ["overview","tickets","checkin","collab"],
   check_in:  ["overview","checkin","guests","tickets"],
-  view_only: ["overview","guests","checkin","collab"],
+  view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
 };
 const ROLE_READONLY = {
   owner: [], admin: [],
   ticketing: ["collab"],
-  check_in:  ["guests","tickets"],
-  view_only: ["guests","checkin","collab"],
+  check_in:  ["guests","tickets","checkin"],
+  view_only: ["guests","checkin","collab","tickets","budget","playlist","polls","vendors","checklist"],
 };
 
 const NAV = [
@@ -216,6 +216,9 @@ export default function Dashboard() {
   const [showManualVendor,   setShowManualVendor]   = useState(false);
   const [manualVendor,       setManualVendor]       = useState(null); // vendor being manually edited
   const [collaborators,      setCollaborators]      = useState([]);
+  const [ownerEmail,         setOwnerEmail]         = useState("");
+  const [showTransferModal,  setShowTransferModal]  = useState(false);
+  const [transferTarget,     setTransferTarget]     = useState("");
   const [collabInviteEmail,  setCollabInviteEmail]  = useState("");
   const [collabInviteRole,   setCollabInviteRole]   = useState("view_only");
   const [sendingCollab,      setSendingCollab]      = useState(false);
@@ -270,9 +273,15 @@ export default function Dashboard() {
           if (user && ev.organiser_id !== user.id) {
             const myCollab = (collabData || []).find(c => c.user_id === user.id && c.status === "accepted");
             if (myCollab) setUserRole(myCollab.role);
+            // Load owner email from a collaborator row that was previously owner, or use organiser_id lookup
+            // Best effort: find in collabData if owner was previously a collab, else leave blank
           } else {
             setUserRole("owner");
+            if (user?.email) setOwnerEmail(user.email);
           }
+          // For collaborators viewing: try to get owner email from event (if stored) or a profile table
+          // Fall back to showing organiser_id short-form if email unavailable
+          if (ev.organiser_email) setOwnerEmail(ev.organiser_email);
         }
         setBudget(bd); setVendors(vs); setExpenses(ex); setSongs(ss); setPolls(ps);
         setRequests(rqRes?.data || []);
@@ -759,19 +768,27 @@ export default function Dashboard() {
   };
 
   const handleTransferOwnership = async (collabId) => {
+    if (userRole !== "owner") return; // Only the owner can transfer
     if (!window.confirm("Transfer ownership? You will become an Admin and cannot undo this without the new owner.")) return;
     const { data: { user } } = await supabase.auth.getUser();
     const collab = collaborators.find(c => c.id === collabId);
     if (!collab) return;
-    // Update event organiser
-    await supabase.from("events").update({ organiser_id: collab.user_id }).eq("id", eventId);
-    // Make current user an admin collab
-    await supabase.from("event_collaborators").upsert({ event_id: eventId, email: user?.email || "", user_id: user?.id, role: "admin", status: "accepted" });
-    // Remove their collab row (they're now owner)
+    // Update event organiser_id + organiser_email
+    await supabase.from("events").update({
+      organiser_id:    collab.user_id,
+      organiser_email: collab.email,
+    }).eq("id", eventId);
+    // Add current user as admin collab
+    await supabase.from("event_collaborators").upsert({
+      event_id: eventId, email: user?.email || "", user_id: user?.id,
+      role: "admin", status: "accepted",
+    });
+    // Remove new owner's collab row (they're now the event owner)
     await supabase.from("event_collaborators").delete().eq("id", collabId);
+    setOwnerEmail(collab.email);
     setUserRole("admin");
     setCollaborators(cs => cs.filter(c => c.id !== collabId));
-    alert("Ownership transferred. You are now an Admin.");
+    alert("Ownership transferred to " + collab.email + ". You are now an Admin.");
   };
 
   // ── Vendor invite ────────────────────────────────────────────
@@ -2365,16 +2382,42 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Owner card */}
+            {/* Owner card — same row style as collaborators */}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11, color: "#3a3a52", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Owner</div>
-              <div className="card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#c9a84c,#a8872e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#080810", fontWeight: 700, flexShrink: 0 }}>👑</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>Event Creator</div>
-                  <div style={{ fontSize: 12, color: "#5a5a72" }}>Full control · Cannot be removed</div>
+              <div className="card" style={{ overflow: "hidden" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px" }}>
+                  {/* Avatar */}
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(201,168,76,0.12)", border: "1.5px solid #c9a84c", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+                    {ownerEmail ? ownerEmail[0].toUpperCase() : "👑"}
+                  </div>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#e2d9cc" }}>
+                      {ownerEmail || "Event Owner"}
+                      {userRole === "owner" && <span style={{ fontSize: 11, color: "#5a5a72", marginLeft: 6 }}>(you)</span>}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#5a5a72" }}>Full control · Cannot be removed</div>
+                  </div>
+                  {/* Owner badge with tooltip */}
+                  <span
+                    title="Owner: Full control over this event. Can transfer ownership, manage all collaborators, and cannot be removed."
+                    style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)", fontWeight: 600, cursor: "help", whiteSpace: "nowrap" }}>
+                    👑 Owner
+                  </span>
+                  {/* Transfer ownership button — owner only */}
+                  {userRole === "owner" && collaborators.some(c => c.status === "accepted" && c.user_id) && (
+                    <button
+                      style={{ background: "none", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "#c9a84c", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}
+                      onClick={() => {
+                        const first = collaborators.find(c => c.status === "accepted" && c.user_id);
+                        setTransferTarget(first?.id || "");
+                        setShowTransferModal(true);
+                      }}>
+                      Transfer 👑
+                    </button>
+                  )}
                 </div>
-                <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(201,168,76,0.12)", color: "#c9a84c", border: "1px solid rgba(201,168,76,0.25)", fontWeight: 600 }}>Owner</span>
               </div>
             </div>
 
@@ -2418,19 +2461,10 @@ export default function Dashboard() {
                           </span>
                         )}
                         {(userRole === "owner" || userRole === "admin") && (
-                          <div style={{ display: "flex", gap: 6 }}>
-                            {c.status === "accepted" && c.user_id && (
-                              <button onClick={() => handleTransferOwnership(c.id)}
-                                style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "#5a5a72", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}
-                                title="Transfer ownership">
-                                👑
-                              </button>
-                            )}
-                            <button onClick={() => handleRemoveCollab(c.id)}
-                              style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "#ef4444", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
-                              ✕
-                            </button>
-                          </div>
+                          <button onClick={() => handleRemoveCollab(c.id)}
+                            style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "#ef4444", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                            ✕
+                          </button>
                         )}
                       </div>
                     );
@@ -2785,6 +2819,41 @@ export default function Dashboard() {
 
       </main>
 
+      {/* ── TRANSFER OWNERSHIP MODAL ── */}
+      {showTransferModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+          onClick={() => setShowTransferModal(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#0a0a14", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            <div style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>👑</div>
+            <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, textAlign: "center", margin: "0 0 6px" }}>Transfer Ownership</h2>
+            <p style={{ fontSize: 13, color: "#5a5a72", textAlign: "center", marginBottom: 20, lineHeight: 1.6 }}>
+              You will become an Admin. This cannot be undone without the new owner's cooperation.
+            </p>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Transfer to</label>
+              <select value={transferTarget} onChange={e => setTransferTarget(e.target.value)}
+                style={{ width: "100%", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                {collaborators.filter(c => c.status === "accepted" && c.user_id).map(c => (
+                  <option key={c.id} value={c.id}>{c.email} ({c.role.replace("_"," ")})</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setShowTransferModal(false)}
+                style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Cancel
+              </button>
+              <button onClick={async () => { setShowTransferModal(false); await handleTransferOwnership(transferTarget); }}
+                disabled={!transferTarget}
+                style={{ flex: 2, background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Confirm Transfer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── REQUEST ACCESS MODAL ── */}
       {showRequestModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
@@ -2823,6 +2892,41 @@ export default function Dashboard() {
         </div>
       )}
 
+
+      {/* ── TRANSFER OWNERSHIP MODAL ── */}
+      {showTransferModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+          onClick={() => setShowTransferModal(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#0a0a14", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            <div style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>👑</div>
+            <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, textAlign: "center", margin: "0 0 6px" }}>Transfer Ownership</h2>
+            <p style={{ fontSize: 13, color: "#5a5a72", textAlign: "center", marginBottom: 20, lineHeight: 1.6 }}>
+              You will become an Admin. This cannot be undone without the new owner's cooperation.
+            </p>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Transfer to</label>
+              <select value={transferTarget} onChange={e => setTransferTarget(e.target.value)}
+                style={{ width: "100%", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                {collaborators.filter(c => c.status === "accepted" && c.user_id).map(c => (
+                  <option key={c.id} value={c.id}>{c.email} ({c.role.replace("_"," ")})</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setShowTransferModal(false)}
+                style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Cancel
+              </button>
+              <button onClick={async () => { setShowTransferModal(false); await handleTransferOwnership(transferTarget); }}
+                disabled={!transferTarget}
+                style={{ flex: 2, background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Confirm Transfer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── REQUEST ACCESS MODAL ── */}
       {showRequestModal && (
