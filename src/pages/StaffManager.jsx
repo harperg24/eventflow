@@ -6,23 +6,45 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 
-// ── Helpers ──────────────────────────────────────────────────
-const fmt = (d) => new Date(d).toLocaleDateString("en-NZ", { weekday:"short", day:"numeric", month:"short" });
-const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-NZ", { hour:"2-digit", minute:"2-digit" }) : "--:--";
-const fmtDate = (d) => new Date(d).toISOString().slice(0,10);
+// ── Helpers — NZ timezone (Pacific/Auckland) ─────────────────
+const NZ_TZ = "Pacific/Auckland";
+const fmt     = (d) => new Date(d).toLocaleDateString("en-NZ",  { timeZone:NZ_TZ, weekday:"short", day:"numeric", month:"short" });
+const fmtTime = (d) => d ? new Date(d).toLocaleTimeString("en-NZ", { timeZone:NZ_TZ, hour:"2-digit", minute:"2-digit" }) : "--:--";
+
+// "YYYY-MM-DD" in NZ local time — the only correct way to compare days
+const nzDateStr = (d) => {
+  const dt = d instanceof Date ? d : new Date(d);
+  const p = new Intl.DateTimeFormat("en-NZ", { timeZone:NZ_TZ, year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(dt);
+  return `${p.find(x=>x.type==="year").value}-${p.find(x=>x.type==="month").value}-${p.find(x=>x.type==="day").value}`;
+};
+const fmtDate  = nzDateStr; // alias for CSV export
+const sameDay  = (a, b) => nzDateStr(a) === nzDateStr(b);
+
+// UTC Date representing NZ midnight for the given date
+const nzMidnightUTC = (d) => new Date(`${nzDateStr(d)}T00:00:00+12:00`);
+
+// Monday of the NZ week containing d — returns a UTC Date
+const weekStart = (d) => {
+  const local = new Date(`${nzDateStr(d)}T12:00:00+12:00`); // NZ noon, DST-safe
+  const offset = local.getDay() === 0 ? -6 : 1 - local.getDay();
+  local.setDate(local.getDate() + offset);
+  return nzMidnightUTC(local);
+};
+const addDays = (d, n) => { const dt = new Date(d); dt.setDate(dt.getDate()+n); return dt; };
+
 const hoursWorked = (entry) => {
   if (!entry.clock_out) return 0;
   const ms = new Date(entry.clock_out) - new Date(entry.clock_in) - (entry.break_minutes||0)*60000;
   return Math.max(0, ms / 3600000);
 };
-const weekStart = (d) => { const dt = new Date(d); dt.setDate(dt.getDate() - dt.getDay() + 1); dt.setHours(0,0,0,0); return dt; };
-const addDays = (d, n) => { const dt = new Date(d); dt.setDate(dt.getDate()+n); return dt; };
-const sameDay = (a, b) => fmtDate(a) === fmtDate(b);
+
+// Entries only count toward pay if they are NOT exceptions, or ARE approved exceptions
+const countableEntry = (e) => !e.is_exception || e.approved === true;
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function calcPay(entries, emp) {
-  const totalHours = entries.reduce((s, e) => s + hoursWorked(e), 0);
+  const totalHours = entries.filter(countableEntry).reduce((s, e) => s + hoursWorked(e), 0);
   const gross = totalHours * (emp.hourly_rate || 0);
   const taxAmt = gross * ((emp.tax_rate || 0) / 100);
   const net = Math.max(0, gross - taxAmt - (emp.deductions || 0));
@@ -301,8 +323,8 @@ function EmployeeTimesheet({ emp, entries, onClose }) {
   const ws2 = weekStart(weekCursor);
   const we  = addDays(ws2, 7);
   const weekEntries = entries.filter(e => {
-    const d = new Date(e.clock_in);
-    return d >= ws2 && d < we;
+    const t = new Date(e.clock_in).getTime();
+    return t >= ws2.getTime() && t < we.getTime();
   });
   const { totalHours, gross, taxAmt, net } = calcPay(weekEntries, emp);
   const weekDays2 = Array.from({length:7},(_,i)=>addDays(ws2,i));
@@ -467,6 +489,29 @@ export default function StaffManager({ eventId }) {
     setShifts(ss=>ss.filter(s=>s.id!==id));
   };
 
+  // ── Exception approvals ───────────────────────────────────
+  const handleApproveException = async (entryId, approved) => {
+    const { data } = await supabase.from("time_entries")
+      .update({ approved, approved_at: new Date().toISOString() })
+      .eq("id", entryId).select().single();
+    setEntries(es => es.map(e => e.id === entryId ? data : e));
+
+    // If approved, also create a shift for this entry
+    if (approved) {
+      const entry = entries.find(e => e.id === entryId);
+      if (entry) {
+        const { data: newShift } = await supabase.from("shifts").insert({
+          event_id:    eventId,
+          employee_id: entry.employee_id,
+          start_time:  entry.clock_in,
+          end_time:    entry.clock_out || new Date().toISOString(),
+          notes:       "Auto-created from approved exception",
+        }).select().single();
+        if (newShift) setShifts(ss => [...ss, newShift]);
+      }
+    }
+  };
+
   // ── Copy portal link ───────────────────────────────────────
   const copyPortalLink = (emp) => {
     const url = `${window.location.origin}/staff/${emp.access_token}`;
@@ -480,8 +525,8 @@ export default function StaffManager({ eventId }) {
   const tsWeekStart = weekStart(tsWeekFilter);
   const tsWeekEnd   = addDays(tsWeekStart, 7);
   const tsEntries   = entries.filter(e=>{
-    const d = new Date(e.clock_in);
-    return d>=tsWeekStart && d<tsWeekEnd && (tsEmpFilter==="all"||e.employee_id===tsEmpFilter);
+    const t = new Date(e.clock_in).getTime();
+    return t >= tsWeekStart.getTime() && t < tsWeekEnd.getTime() && (tsEmpFilter==="all"||e.employee_id===tsEmpFilter);
   });
 
   return (
@@ -529,7 +574,7 @@ export default function StaffManager({ eventId }) {
                 {employees.map((emp,i)=>{
                   const col = COLOR_PALETTE[i % COLOR_PALETTE.length];
                   const empEntries = entries.filter(e=>e.employee_id===emp.id);
-                  const thisWeekEntries = empEntries.filter(e=>new Date(e.clock_in)>=weekStart(new Date()));
+                  const thisWeekEntries = empEntries.filter(e=>new Date(e.clock_in).getTime()>=weekStart(new Date()).getTime());
                   const { totalHours: wkHrs } = calcPay(thisWeekEntries, emp);
                   const clocked = empEntries.find(e=>!e.clock_out);
                   return (
@@ -582,6 +627,47 @@ export default function StaffManager({ eventId }) {
               {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
           </div>
+
+          {/* ── Exceptions panel ── */}
+          {(() => {
+            const pending = entries.filter(e => e.is_exception && e.approved === null && (tsEmpFilter==="all" || e.employee_id===tsEmpFilter));
+            if (pending.length === 0) return null;
+            return (
+              <div style={{ background:"rgba(245,158,11,0.04)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:14, marginBottom:20, overflow:"hidden" }}>
+                <div style={{ padding:"14px 20px", borderBottom:"1px solid rgba(245,158,11,0.1)", display:"flex", gap:10, alignItems:"center" }}>
+                  <span style={{ fontSize:16 }}>⚠️</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:"#f59e0b" }}>Unscheduled Clock-ins — Pending Approval ({pending.length})</div>
+                    <div style={{ fontSize:12, color:"#8a7060" }}>These exceptions are excluded from timesheets until approved. Approving also adds a shift to the schedule.</div>
+                  </div>
+                </div>
+                {pending.map((e, i) => {
+                  const emp = employees.find(em => em.id === e.employee_id);
+                  const hrs = hoursWorked(e);
+                  return (
+                    <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 20px", borderBottom: i < pending.length-1 ? "1px solid rgba(245,158,11,0.08)" : "none" }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:13, fontWeight:600 }}>{emp?.name}</div>
+                        <div style={{ fontSize:12, color:"#8a7060" }}>
+                          {fmt(e.clock_in)} · {fmtTime(e.clock_in)} → {e.clock_out ? fmtTime(e.clock_out) : "still clocked in"}
+                          {hrs > 0 && <span style={{ color:"#c9a84c" }}> · {hrs.toFixed(2)}h</span>}
+                          {e.notes && <span style={{ color:"#5a5a72" }}> · "{e.notes}"</span>}
+                        </div>
+                      </div>
+                      <button onClick={() => handleApproveException(e.id, false)}
+                        style={{ background:"none", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444", borderRadius:8, padding:"6px 12px", fontSize:12, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
+                        ✗ Reject
+                      </button>
+                      <button onClick={() => handleApproveException(e.id, true)}
+                        style={{ background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.3)", color:"#10b981", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
+                        ✓ Approve
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Summary table */}
           <div className="card" style={{ overflow:"hidden", marginBottom:20 }}>
