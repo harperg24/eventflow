@@ -2,7 +2,7 @@
 //  Dashboard.jsx  —  wired to Supabase with real-time updates
 //  Route: /dashboard/:eventId
 // ============================================================
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EditEventModal from "../components/EditEventModal";
 import {
@@ -27,10 +27,84 @@ const NAV = [
   { id: "polls",     label: "Polls",     icon: "◐" },
   { id: "vendors",   label: "Vendors",   icon: "◇" },
   { id: "checklist", label: "Checklist", icon: "☑" },
-  { id: "tickets",   label: "Tickets",   icon: "🎟", ticketed: true },
-  { id: "sales",     label: "Sales",     icon: "◈",  ticketed: true },
+  { id: "tickets",   label: "Ticket Hub", icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",  icon: "✓" },
 ];
+
+// Inline AttendeeTab component — shows all tickets with check-in status
+function AttendeeTab({ eventId, supabase, orders, navigate }) {
+  const [tickets,  setTickets]  = React.useState([]);
+  const [loading,  setLoading]  = React.useState(true);
+  const [search,   setSearch]   = React.useState("");
+
+  React.useEffect(() => {
+    supabase.from("tickets")
+      .select("*, ticket_tiers(name), ticket_orders(buyer_name, buyer_email)")
+      .eq("event_id", eventId)
+      .order("created_at")
+      .then(({ data }) => { setTickets(data || []); setLoading(false); });
+  }, [eventId]);
+
+  const filtered = tickets.filter(t => {
+    const name  = t.ticket_orders?.buyer_name?.toLowerCase() || "";
+    const email = t.ticket_orders?.buyer_email?.toLowerCase() || "";
+    const num   = t.ticket_number?.toLowerCase() || "";
+    const q     = search.toLowerCase();
+    return !q || name.includes(q) || email.includes(q) || num.includes(q);
+  });
+
+  const checkedIn = tickets.filter(t => t.checked_in).length;
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search by name, email or ticket number…"
+          style={{ flex: 1, background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }} />
+        <div style={{ fontSize: 13, color: "#5a5a72", flexShrink: 0 }}>
+          <span style={{ color: "#10b981", fontWeight: 600 }}>{checkedIn}</span>/{tickets.length} in
+        </div>
+      </div>
+      {loading && <div style={{ textAlign: "center", padding: 40, color: "#3a3a52", fontSize: 13 }}>Loading…</div>}
+      <div className="card" style={{ overflow: "hidden" }}>
+        {filtered.length === 0 && !loading && (
+          <div style={{ padding: "40px", textAlign: "center", color: "#3a3a52", fontSize: 13 }}>No tickets found.</div>
+        )}
+        {filtered.map((t, i) => (
+          <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 18px",
+            borderBottom: i < filtered.length - 1 ? "1px solid #0a0a14" : "none",
+            background: t.checked_in ? "rgba(16,185,129,0.03)" : "transparent" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700,
+              background: t.checked_in ? "rgba(16,185,129,0.12)" : "#13131f",
+              border: `1.5px solid ${t.checked_in ? "#10b981" : "#1e1e2e"}`,
+              color: t.checked_in ? "#10b981" : "#3a3a52" }}>
+              {t.checked_in ? "✓" : "·"}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: "#e2d9cc" }}>{t.ticket_orders?.buyer_name || "—"}</div>
+              <div style={{ fontSize: 11, color: "#5a5a72", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {t.ticket_tiers?.name} · {t.ticket_number}
+              </div>
+            </div>
+            {t.checked_in && t.checked_in_at && (
+              <div style={{ fontSize: 11, color: "#10b981", flexShrink: 0 }}>
+                {new Date(t.checked_in_at).toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            )}
+            <div style={{ flexShrink: 0 }}>
+              <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 5,
+                background: t.checked_in ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.04)",
+                color: t.checked_in ? "#10b981" : "#3a3a52",
+                border: `1px solid ${t.checked_in ? "rgba(16,185,129,0.2)" : "#1e1e2e"}` }}>
+                {t.checked_in ? "Scanned" : "Not yet"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { eventId } = useParams();
@@ -52,6 +126,9 @@ export default function Dashboard() {
   const [votedSongs, setVotedSongs]             = useState([]); // organiser tracks own votes locally
   const [nowPlaying, setNowPlaying]             = useState(null);
   // Ticketing
+  const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
+  const [mobileMode,     setMobileMode]     = useState("full"); // "full" | "ticketing"
+  const [hubTab,         setHubTab]         = useState("tiers"); // tiers | orders | attendees
   const [tiers,          setTiers]          = useState([]);
   const [orders,         setOrders]         = useState([]);
   const [editingTier,    setEditingTier]    = useState(null);
@@ -99,6 +176,13 @@ export default function Dashboard() {
   const [vendorForm, setVendorForm] = useState({ name: "", role: "", contact: "", phone: "", notes: "", status: "pending", icon: "🏢" });
   const [deletingGuest, setDeletingGuest] = useState(null);
   const [selectedGuests, setSelectedGuests] = useState([]);
+
+  // Mobile resize listener
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // ── Load everything ───────────────────────────────────────
   useEffect(() => {
@@ -646,14 +730,52 @@ export default function Dashboard() {
     .vote-btn { opacity: 0.4; transition: opacity 0.15s; background: rgba(201,168,76,0.15); border: none; border-radius: 6px; color: #c9a84c; padding: 5px 10px; font-size: 12px; cursor: pointer; font-family: 'DM Sans'; }
     .song-row:hover .vote-btn { opacity: 1; }
     .vote-btn:hover { opacity: 1 !important; background: rgba(201,168,76,0.25); }
+    /* Mobile */
+    .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: #5a5a72; cursor: pointer; font-family: 'DM Sans',sans-serif; padding: 8px 4px; flex: 1; transition: color 0.15s; min-width: 0; }
+    .mobile-nav-btn.active { color: #c9a84c; }
+    .mobile-nav-btn span.icon { font-size: 20px; }
+    .mobile-nav-btn span.label { font-size: 10px; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .mode-pill { display: inline-flex; background: #13131f; border: 1px solid #1e1e2e; border-radius: 99px; padding: 3px; gap: 2px; }
+    .mode-pill button { border: none; border-radius: 99px; padding: 6px 14px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'DM Sans',sans-serif; transition: all 0.2s; }
+    .mode-pill button.active { background: linear-gradient(135deg,#c9a84c,#a8872e); color: #080810; }
+    .mode-pill button:not(.active) { background: none; color: #5a5a72; }
   `;
 
+  // Mobile ticketing mode nav items
+  const MOBILE_TICKETING_NAV = [
+    { id: "checkin",  label: "Check-in", icon: "✓" },
+    { id: "tickets",  label: "Tickets",  icon: "🎟" },
+    { id: "guests",   label: "Guests",   icon: "◎" },
+    { id: "overview", label: "Overview", icon: "⌂" },
+  ];
+  const MOBILE_FULL_NAV = NAV.filter(n =>
+    !n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing) || (n.ticketed && tiers.length > 0)
+  ).slice(0, 5); // show first 5 on mobile bottom nav
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#080810", fontFamily: "'DM Sans', sans-serif", color: "#e2d9cc" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#080810", fontFamily: "'DM Sans', sans-serif", color: "#e2d9cc", flexDirection: isMobile ? "column" : "row" }}>
       <style>{css}</style>
 
-      {/* ── Sidebar ── */}
-      <aside style={{ width: 220, background: "#0a0a14", borderRight: "1px solid #141420", padding: "28px 16px", display: "flex", flexDirection: "column", gap: 2, flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflowY: "auto" }}>
+      {/* ── Mobile Header ── */}
+      {isMobile && (
+        <div style={{ background: "#0a0a14", borderBottom: "1px solid #1e1e2e", padding: "12px 16px", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button onClick={() => navigate("/events")} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 18, padding: 0, marginRight: 4 }}>←</button>
+            <div style={{ width: 24, height: 24, background: "linear-gradient(135deg,#c9a84c,#a8872e)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✦</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}>{event.name}</div>
+              <div style={{ fontSize: 11, color: "#c9a84c" }}>{new Date(event.date).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}</div>
+            </div>
+          </div>
+          <div className="mode-pill">
+            <button className={mobileMode === "full" ? "active" : ""} onClick={() => setMobileMode("full")}>Full</button>
+            <button className={mobileMode === "ticketing" ? "active" : ""} onClick={() => setMobileMode("ticketing")}>Door</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sidebar (desktop only) ── */}
+      {!isMobile && <aside style={{ width: 220, background: "#0a0a14", borderRight: "1px solid #141420", padding: "28px 16px", display: "flex", flexDirection: "column", gap: 2, flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 28, paddingLeft: 4 }}>
           <div style={{ width: 28, height: 28, background: "linear-gradient(135deg,#c9a84c,#a8872e)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>✦</div>
           <span style={{ fontFamily: "'Playfair Display'", fontSize: 18 }}>EventFlow</span>
@@ -698,10 +820,10 @@ export default function Dashboard() {
             Sign out
           </button>
         </div>
-      </aside>
+      </aside>}
 
       {/* ── Main ── */}
-      <main style={{ flex: 1, overflowY: "auto", padding: "36px 40px" }}>
+      <main style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 16px 90px" : "36px 40px" }}>
 
         {/* OVERVIEW */}
         {activeNav === "overview" && (
@@ -1637,6 +1759,214 @@ export default function Dashboard() {
         {/* CHECK-IN */}
         {/* ── CHECKLIST ── */}
         {/* ── TICKETS ── */}
+        {/* ── TICKET HUB ── */}
+        {activeNav === "tickets" && (
+          <div className="fade-up">
+            <style>{`
+              .tier-card { background: #0a0a14; border: 1px solid #1e1e2e; border-radius: 14px; padding: 20px 22px; transition: border-color 0.15s; }
+              .tier-card:hover { border-color: #2e2e42; }
+              .tf { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 10px 13px; color: #e2d9cc; font-size: 13px; outline: none; font-family: 'DM Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .tf:focus { border-color: #c9a84c; }
+              .tf::placeholder { color: #2e2e42; }
+              .hub-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: 'DM Sans',sans-serif; transition: all 0.15s; }
+              .hub-tab.active { background: rgba(201,168,76,0.15); color: #c9a84c; }
+              .hub-tab:not(.active) { background: none; color: #5a5a72; }
+              .hub-tab:not(.active):hover { color: #e2d9cc; }
+            `}</style>
+
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+              <div>
+                <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Ticket Hub</h1>
+                <p style={{ color: "#5a5a72", fontSize: 14 }}>
+                  {orders.filter(o => o.status === "paid").reduce((s,o) => s + o.quantity, 0)} sold ·{" "}
+                  ${(orders.filter(o => o.status === "paid").reduce((s,o) => s + o.total_amount, 0) / 100).toFixed(2)} revenue
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "#5a5a72" }}>{event?.published ? "Live" : "Draft"}</span>
+                  <div onClick={async () => {
+                    const np = !event?.published;
+                    setEvent(e => ({ ...e, published: np }));
+                    await supabase.from("events").update({ published: np }).eq("id", eventId);
+                  }} style={{ width: 42, height: 24, background: event?.published ? "#10b981" : "#1e1e2e", borderRadius: 99, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
+                    <div style={{ width: 18, height: 18, background: "#fff", borderRadius: "50%", position: "absolute", top: 3, left: event?.published ? 21 : 3, transition: "left 0.2s" }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-tabs */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 10, padding: 4 }}>
+              {[
+                { id: "tiers",     label: "Tiers" },
+                { id: "orders",    label: "Orders" },
+                { id: "attendees", label: "Attendees" },
+              ].map(t => (
+                <button key={t.id} onClick={() => setHubTab(t.id)}
+                  style={{ flex: 1, border: "none", borderRadius: 7, padding: "8px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s",
+                    background: hubTab === t.id ? "rgba(201,168,76,0.15)" : "none",
+                    color: hubTab === t.id ? "#c9a84c" : "#5a5a72" }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* ── TIERS ── */}
+            {hubTab === "tiers" && (
+              <div>
+                {event?.published && (
+                  <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 13, color: "#10b981", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {window.location.origin}/tickets/{event?.invite_slug}
+                    </span>
+                    <button onClick={() => navigator.clipboard.writeText(window.location.origin + "/tickets/" + event?.invite_slug)}
+                      style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 7, padding: "5px 12px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", flexShrink: 0 }}>
+                      Copy
+                    </button>
+                  </div>
+                )}
+                {!event?.published && (
+                  <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: "12px 18px", marginBottom: 16, fontSize: 13, color: "#f59e0b" }}>
+                    ⚠ Toggle Published above to make the ticket page live.
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+                  <button onClick={() => setAddingTier(true)} className="btn-gold">+ Add Tier</button>
+                </div>
+                {tiers.length === 0 && !addingTier && (
+                  <div style={{ textAlign: "center", padding: "48px", color: "#3a3a52", fontSize: 14 }}>No ticket tiers yet.</div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {tiers.map(tier => (
+                    <div key={tier.id} className="tier-card">
+                      {editingTier?.id === tier.id ? (
+                        <div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                            <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Name</div><input className="tf" value={editingTier.name} onChange={e => setEditingTier(t => ({ ...t, name: e.target.value }))} /></div>
+                            <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Price (NZD)</div><input className="tf" type="number" value={(editingTier.price / 100).toFixed(2)} onChange={e => setEditingTier(t => ({ ...t, price: Math.round(parseFloat(e.target.value || 0) * 100) }))} /></div>
+                            <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Description</div><input className="tf" value={editingTier.description || ""} onChange={e => setEditingTier(t => ({ ...t, description: e.target.value }))} /></div>
+                            <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Capacity</div><input className="tf" type="number" value={editingTier.capacity || ""} onChange={e => setEditingTier(t => ({ ...t, capacity: e.target.value ? parseInt(e.target.value) : null }))} /></div>
+                          </div>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <button className="btn-gold" style={{ padding: "8px 16px", fontSize: 12 }} onClick={async () => {
+                              await supabase.from("ticket_tiers").update({ name: editingTier.name, description: editingTier.description, price: editingTier.price, capacity: editingTier.capacity }).eq("id", editingTier.id);
+                              setTiers(ts => ts.map(t => t.id === editingTier.id ? { ...t, ...editingTier } : t));
+                              setEditingTier(null);
+                            }}>Save</button>
+                            <button onClick={() => setEditingTier(null)} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 15, fontWeight: 600, color: "#e2d9cc", marginBottom: 2 }}>{tier.name}</div>
+                            {tier.description && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 4 }}>{tier.description}</div>}
+                            <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
+                              <span style={{ color: "#c9a84c", fontWeight: 600 }}>${(tier.price / 100).toFixed(2)}</span>
+                              <span style={{ color: "#5a5a72" }}>{tier.sold} sold</span>
+                              {tier.capacity && <span style={{ color: tier.capacity - tier.sold <= 0 ? "#ef4444" : "#5a5a72" }}>{Math.max(0, tier.capacity - tier.sold)} left</span>}
+                            </div>
+                          </div>
+                          {tier.capacity && (
+                            <div style={{ width: 60 }}>
+                              <div style={{ height: 4, background: "#1a1a2e", borderRadius: 99, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${Math.min(100,(tier.sold/tier.capacity)*100)}%`, background: tier.sold >= tier.capacity ? "#ef4444" : "#10b981", borderRadius: 99 }} />
+                              </div>
+                            </div>
+                          )}
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button onClick={() => setEditingTier({ ...tier })} style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif" }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor="#c9a84c"; e.currentTarget.style.color="#c9a84c"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>Edit</button>
+                            <button onClick={async () => { await supabase.from("ticket_tiers").delete().eq("id", tier.id); setTiers(ts => ts.filter(t => t.id !== tier.id)); }}
+                              style={{ background: "none", border: "1px solid #1e1e2e", borderRadius: 7, padding: "5px 10px", color: "#5a5a72", cursor: "pointer", fontSize: 12, fontFamily: "'DM Sans',sans-serif" }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor="#1e1e2e"; e.currentTarget.style.color="#5a5a72"; }}>×</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {addingTier && (
+                    <div className="tier-card" style={{ borderColor: "#2e2e42" }}>
+                      <div style={{ fontSize: 13, color: "#8a8278", marginBottom: 12, fontWeight: 500 }}>New Tier</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                        <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Name *</div><input className="tf" placeholder="e.g. General Admission" value={newTier.name} onChange={e => setNewTier(t => ({ ...t, name: e.target.value }))} /></div>
+                        <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Price NZD *</div><input className="tf" type="number" placeholder="25.00" value={newTier.price} onChange={e => setNewTier(t => ({ ...t, price: e.target.value }))} /></div>
+                        <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Description</div><input className="tf" placeholder="What's included?" value={newTier.description} onChange={e => setNewTier(t => ({ ...t, description: e.target.value }))} /></div>
+                        <div><div style={{ fontSize: 11, color: "#5a5a72", marginBottom: 5 }}>Capacity</div><input className="tf" type="number" placeholder="100" value={newTier.capacity} onChange={e => setNewTier(t => ({ ...t, capacity: e.target.value }))} /></div>
+                      </div>
+                      {tierError && <div style={{ fontSize: 12, color: "#ef4444", marginBottom: 8 }}>{tierError}</div>}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-gold" style={{ padding: "8px 16px", fontSize: 12 }} onClick={async () => {
+                          if (!newTier.name.trim() || !newTier.price) { setTierError("Name and price required"); return; }
+                          const { data, error } = await supabase.from("ticket_tiers").insert({
+                            event_id: eventId, name: newTier.name.trim(),
+                            description: newTier.description.trim() || null,
+                            price: Math.round(parseFloat(newTier.price) * 100),
+                            capacity: newTier.capacity ? parseInt(newTier.capacity) : null,
+                            sort_order: tiers.length,
+                          }).select().single();
+                          if (error) { setTierError(error.message); return; }
+                          setTiers(ts => [...ts, data]);
+                          setNewTier({ name: "", description: "", price: "", capacity: "" });
+                          setAddingTier(false); setTierError(null);
+                        }}>Add Tier</button>
+                        <button onClick={() => { setAddingTier(false); setTierError(null); }} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── ORDERS ── */}
+            {hubTab === "orders" && (
+              <div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
+                  {[
+                    { label: "Revenue", value: "$" + (orders.filter(o=>o.status==="paid").reduce((s,o)=>s+o.total_amount,0)/100).toFixed(2), color: "#c9a84c" },
+                    { label: "Sold",    value: orders.filter(o=>o.status==="paid").reduce((s,o)=>s+o.quantity,0), color: "#10b981" },
+                    { label: "Orders",  value: orders.filter(o=>o.status==="paid").length, color: "#818cf8" },
+                  ].map(s => (
+                    <div key={s.label} className="card" style={{ padding: "16px", textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: "'Playfair Display'" }}>{s.value}</div>
+                      <div style={{ fontSize: 11, color: "#5a5a72", marginTop: 3 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="card" style={{ overflow: "hidden" }}>
+                  {orders.length === 0 && <div style={{ padding: "48px", textAlign: "center", color: "#3a3a52", fontSize: 14 }}>No orders yet.</div>}
+                  {orders.map((o, i) => (
+                    <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 18px", borderBottom: i < orders.length-1 ? "1px solid #0a0a14" : "none" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>{o.buyer_name}</div>
+                        <div style={{ fontSize: 11, color: "#5a5a72", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.buyer_email} · {o.quantity}× {o.ticket_tiers?.name}</div>
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#c9a84c", flexShrink: 0 }}>${(o.total_amount/100).toFixed(2)}</div>
+                      <span style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, flexShrink: 0,
+                        background: o.status==="paid" ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
+                        color: o.status==="paid" ? "#10b981" : "#ef4444",
+                        border: `1px solid ${o.status==="paid" ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}` }}>
+                        {o.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── ATTENDEES ── */}
+            {hubTab === "attendees" && (
+              <AttendeeTab eventId={eventId} supabase={supabase} orders={orders} navigate={navigate} />
+            )}
+          </div>
+        )}
+
+        {/* ── CHECKLIST ── */}
+        {/* ── TICKETS ── */}
         {activeNav === "tickets" && (
           <div className="fade-up">
             <style>{`
@@ -2178,6 +2508,30 @@ export default function Dashboard() {
         )}
 
       </main>
+
+      {/* ── Mobile Bottom Nav ── */}
+      {isMobile && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a14", borderTop: "1px solid #1e1e2e", display: "flex", zIndex: 50, padding: "4px 0 env(safe-area-inset-bottom,0)" }}>
+          {(mobileMode === "ticketing"
+            ? MOBILE_TICKETING_NAV
+            : MOBILE_FULL_NAV
+          ).map(n => (
+            <button key={n.id} className={`mobile-nav-btn${activeNav === n.id ? " active" : ""}`}
+              onClick={() => setActiveNav(n.id)}>
+              <span className="icon">{n.icon}</span>
+              <span className="label">{n.label}</span>
+            </button>
+          ))}
+          {mobileMode === "ticketing" && tiers.length > 0 && (
+            <button className="mobile-nav-btn"
+              onClick={() => navigate("/scanner/" + eventId)}
+              style={{ color: "#c9a84c", flex: 1 }}>
+              <span className="icon">📷</span>
+              <span className="label">Scanner</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Edit Guest Modal */}
       {editingGuest && (

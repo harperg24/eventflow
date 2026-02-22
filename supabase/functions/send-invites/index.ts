@@ -42,7 +42,7 @@ function buildEmail(to: string, subject: string, html: string, from: string): st
   const msg = [
     `From: EventFlow <${from}>`,
     `To: ${to}`,
-    `Subject: ${subject}`,
+    `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
     `MIME-Version: 1.0`,
     `Content-Type: text/html; charset=utf-8`,
     ``,
@@ -166,7 +166,7 @@ serve(async (req) => {
         const rsvpUrl = `${APP_URL}/e/${event.invite_slug}?guest=${guest.id}`;
         const html    = inviteTemplate(guest.name, event.name, eventDate, rsvpUrl);
 
-        await sendGmail(guest.email, `You're invited to ${event.name} 🎉`, html, accessToken);
+        await sendGmail(guest.email, `You're invited to ${event.name}`, html, accessToken);
 
         await supabase.from("guests")
           .update({ invited_at: new Date().toISOString() })

@@ -49,7 +49,9 @@ async function getGmailToken(): Promise<string> {
 }
 
 function buildEmail(to: string, subject: string, html: string, from: string): string {
-  const msg = [`From: EventFlow <${from}>`, `To: ${to}`, `Subject: ${subject}`,
+  // Encode subject as RFC2047 quoted-printable to handle any special chars safely
+  const safeSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+  const msg = [`From: EventFlow <${from}>`, `To: ${to}`, `Subject: ${safeSubject}`,
     `MIME-Version: 1.0`, `Content-Type: text/html; charset=utf-8`, ``, html].join("\r\n");
   return btoa(unescape(encodeURIComponent(msg))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -171,7 +173,7 @@ serve(async (req) => {
 
       await sendGmail(
         buyerEmail,
-        `Your tickets for ${ev?.name} 🎟`,
+        `Your tickets for ${ev?.name}`,
         ticketEmail(
           buyerName,
           ev?.name || "",
