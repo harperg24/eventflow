@@ -52,12 +52,25 @@ export default function EventList() {
       // Load collaboration events & pending invites
       if (user) {
         // Events this user is a confirmed collaborator on
-        const { data: collabs } = await supabase
-          .from("event_collaborators")
-          .select("*, events(*)")
-          .eq("user_id", user.id)
-          .eq("status", "accepted");
-        setCollabEvents((collabs || []).map(c => ({ ...c.events, _collabRole: c.role })));
+        // Query by BOTH user_id and email to catch rows before user_id is stamped
+        const [{ data: collabsById }, { data: collabsByEmail }] = await Promise.all([
+          supabase.from("event_collaborators").select("*, events(*)").eq("user_id", user.id).eq("status", "accepted"),
+          supabase.from("event_collaborators").select("*, events(*)").eq("email", user.email).eq("status", "accepted"),
+        ]);
+        // Merge and deduplicate by event id
+        const allCollabs = [...(collabsById || []), ...(collabsByEmail || [])];
+        const seen = new Set();
+        const uniqueCollabs = allCollabs.filter(c => {
+          if (seen.has(c.event_id)) return false;
+          seen.add(c.event_id); return true;
+        });
+        // Stamp user_id on any rows that don't have it yet
+        for (const c of uniqueCollabs) {
+          if (!c.user_id) {
+            await supabase.from("event_collaborators").update({ user_id: user.id }).eq("id", c.id);
+          }
+        }
+        setCollabEvents(uniqueCollabs.map(c => ({ ...c.events, _collabRole: c.role, _collabId: c.id, _eventId: c.event_id })));
 
         // Pending invites by email
         const { data: invites } = await supabase
@@ -388,21 +401,29 @@ export default function EventList() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 14 }}>
               {collabEvents.map(ev => {
-                const meta = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other;
-                const du   = daysUntil(ev.date);
+                const meta      = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other;
+                const du        = daysUntil(ev.date);
+                const roleLabel = (ev._collabRole || "").replace("_"," ");
+                const roleColors = { admin: "#818cf8", ticketing: "#c9a84c", "check in": "#10b981", "view only": "#5a5a72" };
+                const roleColor  = roleColors[roleLabel] || "#818cf8";
                 return (
-                  <div key={ev.id} onClick={() => navigate(`/dashboard/${ev.id}`)}
-                    style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 16, padding: "18px 20px", cursor: "pointer", transition: "border-color 0.15s" }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor="#2e2e42"}
-                    onMouseLeave={e => e.currentTarget.style.borderColor="#1e1e2e"}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div key={ev._eventId || ev.id} onClick={() => navigate(`/dashboard/${ev._eventId || ev.id}`)}
+                    style={{ background: "#0a0a14", border: `1px solid ${roleColor}25`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", transition: "border-color 0.15s", position: "relative", overflow: "hidden" }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor=`${roleColor}50`}
+                    onMouseLeave={e => e.currentTarget.style.borderColor=`${roleColor}25`}>
+                    {/* Collab stripe */}
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${roleColor}, transparent)` }} />
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                       <span style={{ fontSize: 20 }}>{meta.icon}</span>
-                      <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: "rgba(129,140,248,0.12)", color: "#818cf8", border: "1px solid rgba(129,140,248,0.2)", fontWeight: 600 }}>
-                        {(ev._collabRole || "").replace("_"," ")}
+                      <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: `${roleColor}18`, color: roleColor, border: `1px solid ${roleColor}35`, fontWeight: 600 }}>
+                        🤝 {roleLabel}
                       </span>
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{ev.name}</div>
-                    <div style={{ fontSize: 12, color: du.color }}>{du.label}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontSize: 12, color: du.color }}>{du.label}</div>
+                      <div style={{ fontSize: 11, color: "#3a3a52" }}>collaborating</div>
+                    </div>
                   </div>
                 );
               })}

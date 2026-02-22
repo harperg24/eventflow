@@ -19,17 +19,44 @@ import {
   sendInvites,
 } from "../lib/supabase";
 
+// Read-only banner shown when a collaborator views a section they can't edit
+function ReadOnlyBanner({ role }) {
+  return (
+    <div style={{ background: "rgba(90,90,114,0.08)", border: "1px solid rgba(90,90,114,0.2)", borderRadius: 10, padding: "10px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontSize: 14 }}>🔒</span>
+      <span style={{ fontSize: 13, color: "#5a5a72" }}>
+        You have <strong style={{ color: "#8a8278" }}>view-only</strong> access to this section as a <strong style={{ color: "#8a8278" }}>{(role || "").replace("_"," ")}</strong>.
+      </span>
+    </div>
+  );
+}
+
+// Role-based access control
+const ROLE_ACCESS = {
+  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
+  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
+  ticketing: ["overview","tickets","checkin","collab"],
+  check_in:  ["overview","checkin","guests","tickets"],
+  view_only: ["overview","guests","checkin","collab"],
+};
+const ROLE_READONLY = {
+  owner: [], admin: [],
+  ticketing: ["collab"],
+  check_in:  ["guests","tickets"],
+  view_only: ["guests","checkin","collab"],
+};
+
 const NAV = [
-  { id: "overview",  label: "Overview",  icon: "◈" },
-  { id: "guests",    label: "Guests",    icon: "◉" },
-  { id: "budget",    label: "Budget",    icon: "◎" },
-  { id: "playlist",  label: "Playlist",  icon: "♫" },
-  { id: "polls",     label: "Polls",     icon: "◐" },
-  { id: "vendors",   label: "Vendors",   icon: "◇" },
+  { id: "overview",  label: "Overview",    icon: "◈" },
+  { id: "guests",    label: "Guests",      icon: "◉" },
+  { id: "budget",    label: "Budget",      icon: "◎" },
+  { id: "playlist",  label: "Playlist",    icon: "♫" },
+  { id: "polls",     label: "Polls",       icon: "◐" },
+  { id: "vendors",   label: "Vendors",     icon: "◇" },
   { id: "collab",    label: "Collaborate", icon: "◈" },
-  { id: "checklist", label: "Checklist", icon: "☑" },
-  { id: "tickets",   label: "Ticket Hub", icon: "🎟", ticketed: true },
-  { id: "checkin",   label: "Check-in",  icon: "✓" },
+  { id: "checklist", label: "Checklist",   icon: "☑" },
+  { id: "tickets",   label: "Ticket Hub",  icon: "🎟", ticketed: true },
+  { id: "checkin",   label: "Check-in",    icon: "✓" },
 ];
 
 // Inline AttendeeTab component — shows all tickets with check-in status
@@ -110,6 +137,7 @@ function AttendeeTab({ eventId, supabase, orders, navigate }) {
 export default function Dashboard() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+
   const FUNCTIONS_BASE = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1";
   const ANON_KEY = supabase.supabaseKey || "";
   const [activeNav, setActiveNav] = useState("overview");
@@ -192,6 +220,13 @@ export default function Dashboard() {
   const [collabInviteRole,   setCollabInviteRole]   = useState("view_only");
   const [sendingCollab,      setSendingCollab]      = useState(false);
   const [userRole,           setUserRole]           = useState("owner"); // this user's role
+
+  // Permission helpers — computed from userRole (defined after userRole state)
+  const allowedTabs = ROLE_ACCESS[userRole] || ROLE_ACCESS.owner;
+  const readOnlyTabs = ROLE_READONLY[userRole] || [];
+  const canSee  = (tab) => allowedTabs.includes(tab);
+  const canEdit = (tab) => !readOnlyTabs.includes(tab);
+  const isReadOnly = (tab) => !canEdit(tab);
   const [deletingGuest, setDeletingGuest] = useState(null);
   const [selectedGuests, setSelectedGuests] = useState([]);
 
@@ -694,6 +729,35 @@ export default function Dashboard() {
     setCollaborators(cs => cs.map(c => c.id === id ? { ...c, role } : c));
   };
 
+  const handleLeaveEvent = async () => {
+    if (!window.confirm("Leave this event? You'll lose access and need to be re-invited.")) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("event_collaborators")
+      .delete().eq("event_id", eventId).eq("user_id", user.id);
+    navigate("/events");
+  };
+
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestedRole, setRequestedRole] = useState("admin");
+  const [requestNote, setRequestNote] = useState("");
+  const [sendingRequest, setSendingRequest] = useState(false);
+
+  const handleRequestAccess = async () => {
+    setSendingRequest(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      // Send a notification — store as a special pending collab row or use a simple note
+      // We'll update the host_message field on the existing collab row as a signal
+      await supabase.from("event_collaborators")
+        .update({ host_message: `ACCESS REQUEST: Wants ${requestedRole}. Note: ${requestNote}` })
+        .eq("event_id", eventId).eq("user_id", user.id);
+      setShowRequestModal(false);
+      setRequestNote("");
+      alert("Request sent! The owner will be notified next time they view the Collaborate section.");
+    } catch (e) { alert("Error: " + e.message); }
+    setSendingRequest(false);
+  };
+
   const handleTransferOwnership = async (collabId) => {
     if (!window.confirm("Transfer ownership? You will become an Admin and cannot undo this without the new owner.")) return;
     const { data: { user } } = await supabase.auth.getUser();
@@ -932,7 +996,7 @@ export default function Dashboard() {
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {NAV.filter(n => !n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing) || (n.ticketed && tiers.length > 0)).map(n => (
+          {NAV.filter(n => canSee(n.id) && (!n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing) || (n.ticketed && tiers.length > 0))).map(n => (
             <button key={n.id} className={`nav-item${activeNav === n.id ? " active" : ""}`} onClick={() => setActiveNav(n.id)}>
               <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{n.icon}</span>
               {n.label}
@@ -1072,6 +1136,7 @@ export default function Dashboard() {
         {/* GUESTS */}
         {activeNav === "guests" && (
           <div className="fade-up">
+            {isReadOnly("guests") && <ReadOnlyBanner role={userRole} />}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
               <div>
                 <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Guest List</h1>
@@ -1084,9 +1149,9 @@ export default function Dashboard() {
                 <button className="btn-ghost" onClick={() => setSelectedGuests([])} style={{ display: selectedGuests.length ? "block" : "none", padding: "10px 16px", fontSize: 13 }}>
                   Clear
                 </button>
-                <button className="btn-gold" onClick={handleSendInvites} disabled={inviting} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {canEdit("guests") && <button className="btn-gold" onClick={handleSendInvites} disabled={inviting} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {inviting ? "Sending…" : selectedGuests.length > 0 ? `✉ Send to ${selectedGuests.length}` : "✉ Send Uninvited"}
-                </button>
+                </button>}
               </div>
             </div>
             {inviteResult && (
@@ -1143,7 +1208,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Email</div>
                 <input className="field" type="email" placeholder="guest@email.com" value={newGuestEmail} onChange={e => setNewGuestEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddGuest()} />
               </div>
-              <button className="btn-gold" onClick={handleAddGuest} disabled={!newGuestEmail.trim()}>Add Guest</button>
+              {canEdit("guests") && <button className="btn-gold" onClick={handleAddGuest} disabled={!newGuestEmail.trim()}>Add Guest</button>}
             </div>
 
             <div className="card">
@@ -1193,6 +1258,7 @@ export default function Dashboard() {
         {/* BUDGET */}
         {activeNav === "budget" && (
           <div className="fade-up">
+            {isReadOnly("budget") && <ReadOnlyBanner role={userRole} />}
             <style>{`
               .ef-field { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .ef-field:focus { border-color: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
@@ -1220,7 +1286,7 @@ export default function Dashboard() {
               </div>
               <button className="btn-gold" onClick={() => { setCategoryForm({ label: "", allocated: "", icon: "💰", color: "#c9a84c" }); setShowCategoryModal(true); }}>
                 + Category
-              </button>
+              </button>}
             </div>
 
             {/* Summary card — donut + stats */}
@@ -1480,6 +1546,7 @@ export default function Dashboard() {
         {/* PLAYLIST */}
         {activeNav === "playlist" && (
           <div className="fade-up">
+            {isReadOnly("playlist") && <ReadOnlyBanner role={userRole} />}
             <style>{`
               .sp-field { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: 'DM Sans', sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .sp-field:focus { border-color: #1db954; box-shadow: 0 0 0 3px rgba(29,185,84,0.1); }
@@ -1682,6 +1749,7 @@ export default function Dashboard() {
         {/* POLLS */}
         {activeNav === "polls" && (
           <div className="fade-up">
+            {isReadOnly("polls") && <ReadOnlyBanner role={userRole} />}
             <div style={{ marginBottom: 28 }}>
               <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Polls</h1>
               <p style={{ color: "#5a5a72", fontSize: 14 }}>Ask guests anything · live results</p>
@@ -1707,7 +1775,7 @@ export default function Dashboard() {
                 <button onClick={addPollOption} style={{ background: "none", border: "none", color: "#5a5a72", fontSize: 13, cursor: "pointer", marginTop: 8, padding: "4px 0", fontFamily: "'DM Sans',sans-serif", transition: "color 0.15s" }} onMouseEnter={e=>e.currentTarget.style.color="#c9a84c"} onMouseLeave={e=>e.currentTarget.style.color="#5a5a72"}>+ Add option</button>
               </div>
               {pollError && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#ef4444", marginBottom: 12 }}>⚠ {pollError}</div>}
-              <button className="btn-gold" onClick={handleCreatePoll} style={{ width: "100%" }}>Create Poll</button>
+              {canEdit("polls") && <button className="btn-gold" onClick={handleCreatePoll} style={{ width: "100%" }}>Create Poll</button>}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {polls.map(poll => {
@@ -1753,6 +1821,7 @@ export default function Dashboard() {
         {/* VENDORS */}
         {activeNav === "vendors" && (
           <div className="fade-up">
+            {isReadOnly("vendors") && <ReadOnlyBanner role={userRole} />}
             <style>{`
               .vd-field { background: #13131f; border: 1px solid #1e1e2e; border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 13px; outline: none; font-family: 'DM Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .vd-field:focus { border-color: #c9a84c; }
@@ -1778,14 +1847,14 @@ export default function Dashboard() {
                   {vendors.filter(v => v.status === "confirmed").length} confirmed
                 </p>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
+              {canEdit("vendors") && <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn-ghost" onClick={() => { setManualVendor({ name: "", role: "", email: "", phone: "", website: "", instagram: "", description: "" }); setShowManualVendor(true); }}>
                   + Add Manually
                 </button>
                 <button className="btn-gold" onClick={() => setVendorView(v => v === "invite" ? "list" : "invite")}>
                   {vendorView === "invite" ? "← Back" : "+ Invite Vendor"}
                 </button>
-              </div>
+              </div>}
             </div>
 
             {/* Invite panel */}
@@ -2098,7 +2167,7 @@ export default function Dashboard() {
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-                  <button onClick={() => setAddingTier(true)} className="btn-gold">+ Add Tier</button>
+                  {canEdit("tickets") && <button onClick={() => setAddingTier(true)} className="btn-gold">+ Add Tier</button>}
                 </div>
                 {tiers.length === 0 && !addingTier && (
                   <div style={{ textAlign: "center", padding: "48px", color: "#3a3a52", fontSize: 14 }}>No ticket tiers yet.</div>
@@ -2235,8 +2304,37 @@ export default function Dashboard() {
           <div className="fade-up">
             <style>{`
               .role-select { background: #13131f; border: 1px solid #1e1e2e; border-radius: 8px; padding: 6px 10px; color: #e2d9cc; font-size: 12px; outline: none; cursor: pointer; font-family: 'DM Sans',sans-serif; }
-              .role-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
             `}</style>
+
+            {/* My-role banner for non-owners */}
+            {userRole !== "owner" && userRole !== "admin" && (() => {
+              const roleColors = { ticketing: "#c9a84c", check_in: "#10b981", view_only: "#5a5a72" };
+              const col = roleColors[userRole] || "#5a5a72";
+              return (
+                <div style={{ background: `${col}0d`, border: `1px solid ${col}30`, borderRadius: 12, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ fontSize: 20 }}>🤝</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: col, marginBottom: 2 }}>
+                      You're a collaborator — {userRole.replace("_"," ")}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#5a5a72" }}>
+                      You can view this section but cannot invite or manage collaborators.
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => setShowRequestModal(true)}
+                      style={{ background: "none", border: `1px solid ${col}40`, color: col, borderRadius: 8, padding: "7px 14px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontWeight: 600 }}>
+                      Request Access ↑
+                    </button>
+                    <button onClick={handleLeaveEvent}
+                      style={{ background: "none", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 8, padding: "7px 14px", fontSize: 12, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                      Leave
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
                 <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Collaborate</h1>
@@ -2299,7 +2397,7 @@ export default function Dashboard() {
                             {c.status === "accepted" ? `Joined ${new Date(c.accepted_at).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}` : "Invite pending"}
                           </div>
                         </div>
-                        {userRole === "owner" ? (
+                        {(userRole === "owner" || userRole === "admin") ? (
                           <select className="role-select" value={c.role}
                             onChange={e => handleUpdateCollabRole(c.id, e.target.value)}>
                             <option value="admin">Admin</option>
@@ -2312,7 +2410,14 @@ export default function Dashboard() {
                             {c.role.replace("_", " ")}
                           </span>
                         )}
-                        {userRole === "owner" && (
+                        {/* Access request badge */}
+                        {(userRole === "owner" || userRole === "admin") && c.host_message?.startsWith("ACCESS REQUEST:") && (
+                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 20, background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)", cursor: "pointer", whiteSpace: "nowrap" }}
+                            title={c.host_message} onClick={() => alert(c.host_message)}>
+                            ⚡ Request
+                          </span>
+                        )}
+                        {(userRole === "owner" || userRole === "admin") && (
                           <div style={{ display: "flex", gap: 6 }}>
                             {c.status === "accepted" && c.user_id && (
                               <button onClick={() => handleTransferOwnership(c.id)}
@@ -2366,6 +2471,7 @@ export default function Dashboard() {
         {/* ── CHECKLIST ── */}
         {activeNav === "checklist" && (
           <div className="fade-up">
+            {isReadOnly("checklist") && <ReadOnlyBanner role={userRole} />}
             <style>{`
               .task-row { display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid #0a0a14; transition: background 0.15s; }
               .task-row:last-child { border-bottom: none; }
@@ -2416,7 +2522,7 @@ export default function Dashboard() {
                 <input className="cl-field" type="date" value={newTaskDue}
                   style={{ width: 150 }}
                   onChange={e => setNewTaskDue(e.target.value)} />
-                <button className="btn-gold" onClick={handleAddTask}>Add</button>
+                {canEdit("checklist") && <button className="btn-gold" onClick={handleAddTask}>Add</button>}
               </div>
             </div>
 
@@ -2450,7 +2556,7 @@ export default function Dashboard() {
                         <input className="cl-field" type="date" value={editingTask.due_date || ""}
                           style={{ width: 140 }}
                           onChange={e => setEditingTask(et => ({ ...et, due_date: e.target.value }))} />
-                        <button className="btn-gold" style={{ padding: "8px 14px", fontSize: 12 }} onClick={handleUpdateTask}>Save</button>
+                        {canEdit("checklist") && <button className="btn-gold" style={{ padding: "8px 14px", fontSize: 12 }} onClick={handleUpdateTask}>Save</button>}
                         <button onClick={() => setEditingTask(null)} style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif" }}>Cancel</button>
                       </div>
                     ) : (
@@ -2520,9 +2626,9 @@ export default function Dashboard() {
                 QR
               </button>
               {g.checked_in ? (
-                <button onClick={() => handleUnCheckIn(g.id)}
-                  style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid #10b981", borderRadius: 8, padding: "7px 14px", color: "#10b981", cursor: "pointer", fontSize: 13, fontFamily: "'DM Sans',sans-serif", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
-                  onMouseEnter={e => { e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
+                <button onClick={() => canEdit("checkin") && handleUnCheckIn(g.id)}
+                  style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid #10b981", borderRadius: 8, padding: "7px 14px", color: "#10b981", cursor: canEdit("checkin") ? "pointer" : "default", fontSize: 13, fontFamily: "'DM Sans',sans-serif", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
+                  onMouseEnter={e => { if(canEdit("checkin")){ e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}}
                   onMouseLeave={e => { e.currentTarget.style.background="rgba(16,185,129,0.1)"; e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
                   title="Undo check-in">
                   ✓ In
@@ -2678,6 +2784,83 @@ export default function Dashboard() {
         )}
 
       </main>
+
+      {/* ── REQUEST ACCESS MODAL ── */}
+      {showRequestModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+          onClick={() => setShowRequestModal(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, margin: "0 0 6px" }}>Request Higher Access</h2>
+            <p style={{ fontSize: 13, color: "#5a5a72", marginBottom: 20 }}>The event owner will see your request in the Collaborate section.</p>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Requesting Role</label>
+              <select value={requestedRole} onChange={e => setRequestedRole(e.target.value)}
+                style={{ width: "100%", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                <option value="admin">Admin — Full access</option>
+                <option value="ticketing">Ticketing — Tickets & sales</option>
+                <option value="check_in">Check-in — Guest arrivals</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Note (optional)</label>
+              <textarea value={requestNote} onChange={e => setRequestNote(e.target.value)}
+                placeholder="Explain why you need higher access…"
+                style={{ width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }}
+                rows={3} />
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setShowRequestModal(false)}
+                style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Cancel
+              </button>
+              <button onClick={handleRequestAccess} disabled={sendingRequest}
+                style={{ flex: 2, background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sendingRequest ? 0.6 : 1 }}>
+                {sendingRequest ? "Sending…" : "Send Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* ── REQUEST ACCESS MODAL ── */}
+      {showRequestModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
+          onClick={() => setShowRequestModal(false)}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, margin: "0 0 6px" }}>Request Higher Access</h2>
+            <p style={{ fontSize: 13, color: "#5a5a72", marginBottom: 20 }}>The event owner will see your request in the Collaborate section.</p>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Requesting Role</label>
+              <select value={requestedRole} onChange={e => setRequestedRole(e.target.value)}
+                style={{ width: "100%", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                <option value="admin">Admin — Full access</option>
+                <option value="ticketing">Ticketing — Tickets & sales</option>
+                <option value="check_in">Check-in — Guest arrivals</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#5a5a72", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Note (optional)</label>
+              <textarea value={requestNote} onChange={e => setRequestNote(e.target.value)}
+                placeholder="Explain why you need higher access…"
+                style={{ width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "10px 14px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif", resize: "vertical" }}
+                rows={3} />
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setShowRequestModal(false)}
+                style={{ flex: 1, background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                Cancel
+              </button>
+              <button onClick={handleRequestAccess} disabled={sendingRequest}
+                style={{ flex: 2, background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", opacity: sendingRequest ? 0.6 : 1 }}>
+                {sendingRequest ? "Sending…" : "Send Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── PUBLISH MODAL ── */}
       {showPublishModal && (
@@ -2906,4 +3089,4 @@ export default function Dashboard() {
       )}
     </div>
   );
-}
+}{canEdit("budget") && 
