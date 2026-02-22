@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EditEventModal from "../components/EditEventModal";
+import StaffManager from "./StaffManager";
 import {
   supabase,
   fetchEvent, fetchGuests, fetchTasks, fetchBudget, updateTask, deleteTask,
@@ -33,8 +34,8 @@ function ReadOnlyBanner({ role }) {
 
 // Role-based access control
 const ROLE_ACCESS = {
-  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
-  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
+  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff"],
+  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff"],
   ticketing: ["overview","tickets","checkin","collab"],
   check_in:  ["overview","checkin","guests","tickets"],
   view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
@@ -57,6 +58,7 @@ const NAV = [
   { id: "checklist", label: "Checklist",   icon: "☑" },
   { id: "tickets",   label: "Ticket Hub",  icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",    icon: "✓" },
+  { id: "staff",     label: "Staff",       icon: "⏱" },
 ];
 
 // Inline AttendeeTab component — shows all tickets with check-in status
@@ -2500,6 +2502,11 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ── STAFF ── */}
+        {activeNav === "staff" && (
+          <StaffManager eventId={eventId} />
         )}
 
         {/* ── CHECKLIST ── */}

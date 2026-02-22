@@ -17,6 +17,7 @@ import TicketView    from "./pages/TicketView";
 import TicketScanner  from "./pages/TicketScanner";
 import VendorForm     from "./pages/VendorForm";
 import CollabAccept   from "./pages/CollabAccept";
+import StaffPortal    from "./pages/StaffPortal";
 
 export default function App() {
   const [session, setSession] = useState(undefined);
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/scanner/:eventId"            element={<TicketScanner />} />
         <Route path="/vendor/:token"               element={<VendorForm />} />
         <Route path="/collab/accept/:token"        element={<CollabAccept />} />
+        <Route path="/staff/:token"                 element={<StaffPortal />} />
 
         {/* Protected */}
         <Route path="/events"              element={session ? <EventList />     : <Navigate to="/login" replace />} />
