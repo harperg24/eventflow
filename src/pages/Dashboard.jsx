@@ -1286,7 +1286,7 @@ export default function Dashboard() {
               </div>
               <button className="btn-gold" onClick={() => { setCategoryForm({ label: "", allocated: "", icon: "💰", color: "#c9a84c" }); setShowCategoryModal(true); }}>
                 + Category
-              </button>}
+              </button>
             </div>
 
             {/* Summary card — donut + stats */}
@@ -3089,4 +3089,4 @@ export default function Dashboard() {
       )}
     </div>
   );
-}{canEdit("budget") && 
+}
