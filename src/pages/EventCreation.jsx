@@ -429,6 +429,8 @@ export default function EventCreation() {
           </div>
         </div>
       </div>
+      </div>
+      )}
     </div>
   );
 }
