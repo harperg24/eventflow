@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-import { SUPABASE_ANON_KEY } from "../lib/supabase";
-const FUNCTIONS_URL = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1/create-checkout";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`;
 
 export default function TicketPage() {
   const { slug }     = useParams();

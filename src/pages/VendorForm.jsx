@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-const SUPABASE_URL = supabase.supabaseUrl || "";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export default function VendorForm() {
   const { token }     = useParams();

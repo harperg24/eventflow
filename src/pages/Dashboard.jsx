@@ -138,7 +138,7 @@ export default function Dashboard() {
   const { eventId } = useParams();
   const navigate = useNavigate();
 
-  const FUNCTIONS_BASE = "https://qjxbgilbmkdvrwtuqpje.supabase.co/functions/v1";
+  const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
   const ANON_KEY = supabase.supabaseKey || "";
   const [activeNav, setActiveNav] = useState("overview");
   const [loading, setLoading] = useState(true);
