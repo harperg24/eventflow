@@ -965,7 +965,6 @@ export default function Dashboard() {
     .mode-pill button { border:none; border-radius:99px; padding:6px 14px; font-size:12px; font-weight:500; cursor:pointer; font-family:inherit; transition:all 0.2s; }
     .mode-pill button.active { background:var(--accent); color:#fff; }
     .mode-pill button:not(.active) { background:none; color:var(--text3); }
-  `
   `;
 
   // Mobile ticketing mode nav items
