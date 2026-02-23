@@ -74,55 +74,68 @@ async function sendGmail(to: string, subject: string, html: string, accessToken:
 
 // ── Email template ───────────────────────────────────────────
 function inviteTemplate(guestName: string, eventName: string, eventDate: string, rsvpUrl: string): string {
-  return `
-<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
-  <div style="max-width:520px;margin:0 auto;padding:48px 24px;">
-
-    <!-- Logo -->
-    <div style="text-align:center;margin-bottom:40px;">
-      <div style="display:inline-flex;align-items:center;gap:8px;">
-        <div style="width:28px;height:28px;background:linear-gradient(135deg,#c9a84c,#a8872e);border-radius:7px;display:inline-block;line-height:28px;text-align:center;color:#080810;font-size:14px;">✦</div>
-        <span style="font-size:15px;color:#5a5a72;letter-spacing:0.05em;">EventFlow</span>
-      </div>
-    </div>
-
-    <!-- Card -->
-    <div style="background:#0a0a14;border:1px solid #1e1e2e;border-radius:18px;padding:40px 36px;text-align:center;">
-      <div style="font-size:36px;margin-bottom:16px;">🎉</div>
-      <h1 style="font-family:Georgia,serif;font-size:26px;font-weight:600;color:#f0e8db;margin:0 0 10px;">
-        You're invited${guestName ? `, ${guestName.split(" ")[0]}` : ""}
-      </h1>
-      <p style="font-size:15px;color:#5a5a72;margin:0 0 6px;">to</p>
-      <h2 style="font-family:Georgia,serif;font-size:22px;font-weight:600;color:#c9a84c;margin:0 0 8px;">${eventName}</h2>
-      ${eventDate ? `<p style="font-size:14px;color:#5a5a72;margin:0 0 32px;">${eventDate}</p>` : `<div style="margin-bottom:32px;"></div>`}
-
-      <!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
-        href="${rsvpUrl}" style="height:50px;v-text-anchor:middle;width:200px;" arcsize="20%" fillcolor="#c9a84c">
-        <w:anchorlock/>
-        <center style="color:#080810;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;">RSVP Now</center>
-      </v:roundrect>
-      <![endif]-->
-      <!--[if !mso]><!-->
-      <a href="${rsvpUrl}"
-        style="display:inline-block;background-color:#c9a84c;color:#080810;font-size:15px;font-weight:600;padding:14px 36px;border-radius:10px;text-decoration:none;letter-spacing:0.02em;mso-hide:all;">
-        RSVP Now &rarr;
-      </a>
-      <!--<![endif]-->
-
-      <p style="font-size:12px;color:#3a3a52;margin:28px 0 0;line-height:1.7;">
-        Or copy this link into your browser:<br>
-        <span style="color:#5a5a72;word-break:break-all;">${rsvpUrl}</span>
-      </p>
-    </div>
-
-    <p style="text-align:center;font-size:11px;color:#2e2e42;margin-top:28px;">
-      Powered by EventFlow · You received this because you were added to the guest list.
-    </p>
-  </div>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+</head>
+<body style="margin:0;padding:0;background:#f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;">
+    <tr><td align="center" style="padding:48px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        
+      <tr>
+        <td align="center" style="padding-bottom:32px;">
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="background:#c9a84c;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#1a0e00;font-weight:700;">✦</td>
+              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
+          <div style="height:4px;background:#c9a84c;border-radius:4px 4px 0 0;"></div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
+            <tr><td align="center" style="padding-bottom:16px;font-size:40px;">🎉</td></tr>
+            <tr><td align="center" style="padding-bottom:20px;">
+              <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:26px;font-weight:800;color:#1d1d1f;margin:0 0 6px;letter-spacing:-0.03em;">
+                You're invited${guestName ? `, ${guestName.split(" ")[0]}` : ""}
+              </h1>
+              <p style="font-size:15px;color:#6e6e73;margin:0;">to</p>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:8px;">
+              <div style="font-size:22px;font-weight:800;color:#1d1d1f;letter-spacing:-0.02em;">${eventName}</div>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:28px;">
+              ${eventDate ? `<div style="font-size:14px;color:#6e6e73;margin-top:4px;">${eventDate}</div>` : ""}
+            </td></tr>
+            <tr><td align="center" style="padding:8px 0 20px;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${rsvpUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#c9a84c"><w:anchorlock/><center style="color:#1a0e00;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">RSVP Now</center></v:roundrect><![endif]-->
+              <!--[if !mso]><!-->
+              <a href="${rsvpUrl}" style="display:inline-block;background:#c9a84c;color:#1a0e00;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">RSVP Now &rarr;</a>
+              <!--<![endif]-->
+            </td></tr>
+            <tr><td align="center" style="padding-top:4px;">
+              <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
+                Or copy this link:<br>
+                <a href="${rsvpUrl}" style="color:#7a5c1e;word-break:break-all;">${rsvpUrl}</a>
+              </p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top:24px;">
+          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
+            Powered by <span style="color:#7a5c1e;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You received this because you were added to the guest list.
+          </p>
+        </td>
+      </tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`;
 }

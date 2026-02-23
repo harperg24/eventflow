@@ -30,14 +30,14 @@ const TYPE_ICON = { gig:"🎸", ball:"🥂", party:"🎉", wedding:"💍", birth
 
 // ── CSS ────────────────────────────────────────────────────
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); }
   ::selection { background: var(--accent); color: #fff; }
   ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: var(--border); }
-  .rf { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 13px 16px; color: var(--text); font-size: 15px; width: 100%; outline: none; font-family: 'Plus Jakarta Sans',sans-serif; transition: border-color 0.2s; }
+  .rf { background: var(--bg3); border: 1.5px solid var(--border); border-radius: 10px; padding: 13px 16px; color: var(--text); font-size: 15px; width: 100%; outline: none; font-family: 'Plus Jakarta Sans',sans-serif; transition: border-color 0.2s; }
   .rf:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
-  .rf::placeholder { color: rgba(255,255,255,0.15); }
+  .rf::placeholder { color: var(--text3); }
   .rl { display: block; font-size: 12px; color: var(--text2); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; }
   .sbtn { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 12px; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; width: 100%; transition: all 0.2s; }
   .sbtn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.88; }
@@ -52,7 +52,7 @@ const css = `
   .vbtn { background: var(--accentBg); border: 1px solid var(--accentBorder); border-radius: 8px; color: var(--accent); padding: 6px 14px; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
   .vbtn:hover { opacity: 0.85; }
   .vbadge { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; color: #10b981; padding: 6px 14px; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 12px; }
-  .poll-opt { width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.07); border-radius: 10px; color: var(--text); font-family: 'Plus Jakarta Sans',sans-serif; font-size: 14px; cursor: pointer; text-align: left; transition: all 0.18s; margin-bottom: 8px; position: relative; overflow: hidden; }
+  .poll-opt { width: 100%; padding: 13px 16px; background: var(--bg3); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Plus Jakarta Sans',sans-serif; font-size: 14px; cursor: pointer; text-align: left; transition: all 0.18s; margin-bottom: 8px; position: relative; overflow: hidden; }
   .poll-opt:hover:not(:disabled) { border-color: var(--accentBorder); }
   .poll-opt.voted { border-color: var(--accent); background: var(--accentBg); cursor: default; }
   .poll-fill { position: absolute; top:0; left:0; bottom:0; background: var(--accentBg); transition: width 0.5s cubic-bezier(0.16,1,0.3,1); border-radius: 8px; }
@@ -435,7 +435,7 @@ export default function RSVP() {
         <div style={{ marginBottom: 32 }}><Logo /></div>
         <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "40px 32px" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🚫</div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, color: "var(--text)", marginBottom: 10 }}>You've been removed</h2>
+          <h2 style={{ fontFamily: "inherit", fontSize: 26, fontWeight: 600, color: "var(--text)", marginBottom: 10 }}>You've been removed</h2>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 20 }}>
             You are no longer on the guest list for <strong style={{ color: "var(--text)" }}>{event?.name}</strong>. This invite link is no longer valid.
           </p>
@@ -457,16 +457,16 @@ export default function RSVP() {
       <style>{css}</style>
 
       {/* Hero */}
-      <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(160deg,#0e0c18,#0a0a10 50%,#0c100a)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ position: "absolute", top: -80, right: -80, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle,var(--accentBg),transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "relative", overflow: "hidden", background: "var(--bg2)", borderBottom: "1.5px solid var(--border)" }}>
+        
         <div style={{ maxWidth: 580, margin: "0 auto", padding: "52px 24px 44px" }}>
           <div style={{ marginBottom: 40 }}><Logo /></div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <span style={{ fontSize: 36 }}>{meta}</span>
             <span style={{ fontSize: 12, color: "var(--accent)", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 500 }}>{event.type}</span>
           </div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(32px,8vw,52px)", fontWeight: 600, lineHeight: 1.1, marginBottom: 20, color: "var(--text)" }}>{event.name}</h1>
-          {event.description && <p style={{ fontSize: 15, color: "#7a7268", lineHeight: 1.75, marginBottom: 28, fontWeight: 300 }}>{event.description}</p>}
+          <h1 style={{ fontFamily: "inherit", fontSize: "clamp(32px,8vw,52px)", fontWeight: 600, lineHeight: 1.1, marginBottom: 20, color: "var(--text)" }}>{event.name}</h1>
+          {event.description && <p style={{ fontSize: 15, color: "var(--text2)", lineHeight: 1.75, marginBottom: 28, fontWeight: 300 }}>{event.description}</p>}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
             {[
               { icon: "📅", text: formatDate(event.date) },
@@ -487,7 +487,7 @@ export default function RSVP() {
 
         {/* Tab bar — only after attending confirmed */}
         {guestStatus === "attending" && (
-          <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 32, marginTop: 8 }}>
+          <div style={{ display: "flex", borderBottom: "1.5px solid var(--border)", marginBottom: 32, marginTop: 8 }}>
             {[{ id:"rsvp", label:"Your RSVP" }, { id:"playlist", label:`Playlist (${songs.length})` }, { id:"polls", label:`Polls (${polls.length})` }].map(t => (
               <button key={t.id} className={`tab-btn${activeTab === t.id ? " active" : ""}`} onClick={() => setActiveTab(t.id)}>{t.label}</button>
             ))}
@@ -501,7 +501,7 @@ export default function RSVP() {
             {/* STEP: picker — choose who you are */}
             {step === "picker" && (
               <div className="fu">
-                <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, marginBottom: 8 }}>Who are you?</h2>
+                <h2 style={{ fontFamily: "inherit", fontSize: 26, fontWeight: 600, marginBottom: 8 }}>Who are you?</h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20, fontWeight: 300 }}>Select your name from the guest list.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
                   {guestList.map(g => {
@@ -512,8 +512,8 @@ export default function RSVP() {
                         disabled={!isPending}
                         onClick={() => isPending && selectGuest(g)}
                         style={{
-                          background: isPending ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.01)",
-                          border: `1.5px solid ${isPending ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)"}`,
+                          background: isPending ? "var(--bg3)" : "var(--bg2)",
+                          border: `1.5px solid ${isPending ? "var(--border)" : "transparent"}`,
                           borderRadius: 12, padding: "14px 18px",
                           color: isPending ? "var(--text)" : "var(--text3)",
                           fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 15,
@@ -523,7 +523,7 @@ export default function RSVP() {
                           opacity: isPending ? 1 : 0.45,
                         }}
                         onMouseEnter={e => { if (isPending) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accentBg)"; }}}
-                        onMouseLeave={e => { if (isPending) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}}
+                        onMouseLeave={e => { if (isPending) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--bg3)"; }}}
                       >
                         <span>{g.name || <span style={{ color: "var(--text2)" }}>Guest</span>}</span>
                         {!isPending && (
@@ -535,7 +535,7 @@ export default function RSVP() {
                     );
                   })}
                 </div>
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16, textAlign: "center" }}>
+                <div style={{ borderTop: "1.5px solid var(--border)", paddingTop: 16, textAlign: "center" }}>
                   <button onClick={() => setStep("request")} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", transition: "color 0.15s" }} onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text2)"}>
                     I'm not on the list →
                   </button>
@@ -556,7 +556,7 @@ export default function RSVP() {
                     )}
                   </div>
                 )}
-                <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, marginBottom: 8 }}>Will you be there?</h2>
+                <h2 style={{ fontFamily: "inherit", fontSize: 26, fontWeight: 600, marginBottom: 8 }}>Will you be there?</h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 24, fontWeight: 300 }}>Let the organiser know if you're coming.</p>
                 <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
                   <button className={`cbtn yes${rsvpChoice === "attending" ? " sel" : ""}`} onClick={() => setRsvpChoice("attending")}><span style={{ fontSize: 28 }}>✓</span><span>Yes, I'm in!</span></button>
@@ -583,7 +583,7 @@ export default function RSVP() {
                 {formError && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#ef4444", marginBottom: 14 }}>⚠ {formError}</div>}
 
                 <div style={{ display: "flex", gap: 10 }}>
-                  {!isFromInviteLink && <button onClick={() => setStep("picker")} style={{ flex: 1, background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "14px", color: "var(--text2)", fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, cursor: "pointer" }}>← Back</button>}
+                  {!isFromInviteLink && <button onClick={() => setStep("picker")} style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", borderRadius: 12, padding: "14px", color: "var(--text2)", fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, cursor: "pointer" }}>← Back</button>}
                   <button className="sbtn" style={{ flex: isFromInviteLink ? 1 : 2 }} onClick={handleRSVP} disabled={submitting || !rsvpChoice}>
                     {submitting ? "Submitting…" : rsvpChoice === "attending" ? "Confirm RSVP 🎉" : rsvpChoice === "declined" ? "Submit RSVP" : "Select attending or declined"}
                   </button>
@@ -595,7 +595,7 @@ export default function RSVP() {
             {step === "done" && (
               <div className="pi" style={{ textAlign: "center", padding: "48px 24px" }}>
                 <div style={{ fontSize: 52, marginBottom: 20 }}>{guestStatus === "attending" ? "🎉" : "😔"}</div>
-                <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontWeight: 600, marginBottom: 10 }}>
+                <h2 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 600, marginBottom: 10 }}>
                   {guestStatus === "attending" ? `You're in${guestName ? `, ${guestName.split(" ")[0]}` : ""}!` : "Thanks for letting us know."}
                 </h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, maxWidth: 340, margin: "0 auto 28px" }}>
@@ -603,7 +603,7 @@ export default function RSVP() {
                 </p>
                 {guestStatus === "attending"
                   ? <button className="sbtn" style={{ maxWidth: 240, margin: "0 auto" }} onClick={() => setActiveTab("playlist")}>View Playlist →</button>
-                  : <button onClick={() => { setGuestStatus(null); setStep("rsvp"); localStorage.removeItem(storageKey+"_status"); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "12px 24px", color: "var(--text2)", fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, cursor: "pointer" }}>Change my RSVP</button>
+                  : <button onClick={() => { setGuestStatus(null); setStep("rsvp"); localStorage.removeItem(storageKey+"_status"); }} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 10, padding: "12px 24px", color: "var(--text2)", fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14, cursor: "pointer" }}>Change my RSVP</button>
                 }
               </div>
             )}
@@ -614,7 +614,7 @@ export default function RSVP() {
                 <button onClick={() => setStep("picker")} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", marginBottom: 20, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
                   ← Back to guest list
                 </button>
-                <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, marginBottom: 8 }}>Request to join</h2>
+                <h2 style={{ fontFamily: "inherit", fontSize: 26, fontWeight: 600, marginBottom: 8 }}>Request to join</h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 24, fontWeight: 300 }}>
                   You're not on the guest list yet. Fill in your details and the organiser will review your request before you can RSVP.
                 </p>
@@ -641,7 +641,7 @@ export default function RSVP() {
             {step === "requestDone" && (
               <div className="pi" style={{ textAlign: "center", padding: "48px 24px" }}>
                 <div style={{ fontSize: 52, marginBottom: 20 }}>⏳</div>
-                <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, marginBottom: 10 }}>Request sent!</h2>
+                <h2 style={{ fontFamily: "inherit", fontSize: 26, fontWeight: 600, marginBottom: 10 }}>Request sent!</h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, maxWidth: 360, margin: "0 auto" }}>
                   The organiser has been notified and will review your request. Once approved, you'll be able to RSVP. Check back soon!
                 </p>
@@ -655,24 +655,24 @@ export default function RSVP() {
         {activeTab === "playlist" && guestStatus === "attending" && (
           <div className="fu">
             <style>{`
-              .sp-rf { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 11px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: 'Plus Jakarta Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .sp-rf { background: var(--bg3); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--text); font-size: 14px; outline: none; font-family: 'Plus Jakarta Sans',sans-serif; width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .sp-rf:focus { border-color: #1db954; box-shadow: 0 0 0 3px rgba(29,185,84,0.1); }
               .sp-rf::placeholder { color: #2e2e42; }
               .sp-res { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
-              .sp-res:hover { background: rgba(255,255,255,0.04); }
+              .sp-res:hover { background: var(--bg3); }
               .sp-prev { width: 30px; height: 30px; border-radius: 50%; border: none; background: rgba(29,185,84,0.15); color: #1db954; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
               .sp-prev:hover, .sp-prev.on { background: rgba(29,185,84,0.3); }
               .sp-add-btn { background: rgba(29,185,84,0.12); border: 1px solid rgba(29,185,84,0.2); color: #1db954; border-radius: 7px; padding: 5px 11px; font-size: 12px; cursor: pointer; font-family: 'Plus Jakarta Sans',sans-serif; white-space: nowrap; transition: background 0.15s; }
               .sp-add-btn:hover { background: rgba(29,185,84,0.22); }
             `}</style>
 
-            <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Playlist</h2>
+            <h2 style={{ fontFamily: "inherit", fontSize: 24, fontWeight: 600, marginBottom: 4 }}>Playlist</h2>
             <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>
               Vote for your favourites · search Spotify to suggest a song
             </p>
 
             {/* Spotify search */}
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "16px", marginBottom: 22 }}>
+            <div style={{ background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "16px", marginBottom: 22 }}>
               <div style={{ fontSize: 12, color: "#1db954", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.371-.721.49-1.101.24-3.021-1.86-6.821-2.28-11.29-1.24-.418.1-.84-.16-.94-.579-.1-.421.16-.84.58-.941 4.9-1.12 9.1-.64 12.48 1.44.37.24.489.72.249 1.08zm1.47-3.27c-.301.47-.94.62-1.41.33-3.461-2.13-8.731-2.75-12.82-1.51-.511.16-1.05-.121-1.211-.63-.16-.51.121-1.05.631-1.21 4.671-1.42 10.47-.72 14.45 1.72.47.29.62.94.33 1.41l.031-.01zm.13-3.4c-4.15-2.461-11-2.69-14.96-1.49-.63.19-1.3-.16-1.49-.79-.19-.63.16-1.3.79-1.49 4.56-1.38 12.14-1.11 16.93 1.72.56.33.74 1.06.4 1.62-.33.56-1.06.74-1.62.4l-.05.03z"/></svg>
                 Request a song from Spotify
@@ -807,7 +807,7 @@ export default function RSVP() {
         {/* ── Polls tab ── */}
         {activeTab === "polls" && guestStatus === "attending" && (
           <div className="fu">
-            <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 600, marginBottom: 6 }}>Polls</h2>
+            <h2 style={{ fontFamily: "inherit", fontSize: 24, fontWeight: 600, marginBottom: 6 }}>Polls</h2>
             <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 28 }}>Your vote shapes the event.</p>
             {polls.length === 0 && <div style={{ textAlign: "center", padding: "32px", color: "var(--text3)", fontSize: 14 }}>No polls open right now.</div>}
             {polls.map(poll => {
@@ -839,7 +839,7 @@ export default function RSVP() {
       </div>
 
       {/* Footer */}
-      <div style={{ textAlign: "center", padding: "24px", borderTop: "1px solid rgba(255,255,255,0.04)", fontSize: 12, color: "var(--border)" }}>
+      <div style={{ textAlign: "center", padding: "24px", borderTop: "1.5px solid var(--border)", fontSize: 12, color: "var(--text3)" }}>
         Powered by <span style={{ color: "var(--accent)" }}>EventFlow</span>
       </div>
     </div>

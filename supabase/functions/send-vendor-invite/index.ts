@@ -49,28 +49,68 @@ async function sendGmail(to: string, subject: string, html: string) {
 }
 
 function inviteEmailHtml(vendorName: string, eventName: string, eventDate: string, formUrl: string, hostNote: string): string {
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
-  <div style="max-width:540px;margin:0 auto;padding:48px 24px;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ EventFlow</span>
-    </div>
-    <div style="background:#0a0a14;border:1px solid #1e1e2e;border-radius:18px;padding:36px;margin-bottom:20px;">
-      <div style="font-size:32px;text-align:center;margin-bottom:20px;">📋</div>
-      <h1 style="font-family:Georgia,serif;font-size:24px;color:#f0e8db;margin:0 0 8px;text-align:center;">Vendor Application</h1>
-      <p style="font-size:15px;color:#c9a84c;text-align:center;margin:0 0 20px;">${eventName}${eventDate ? ` · ${eventDate}` : ""}</p>
-      ${hostNote ? `<div style="background:#13131f;border-left:3px solid #c9a84c;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:20px;font-size:14px;color:#8a8278;line-height:1.6;">${hostNote}</div>` : ""}
-      <p style="font-size:14px;color:#8a8278;line-height:1.7;margin:0 0 24px;">
-        You've been invited to apply as a vendor for this event. Please complete the form below with your business details — the organiser will review your application and get back to you.
-      </p>
-      <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${formUrl}" style="height:50px;v-text-anchor:middle;width:300px;" arcsize="20%" fillcolor="#c9a84c"><w:anchorlock/><center style="color:#080810;font-family:sans-serif;font-size:15px;font-weight:bold;">Complete Application</center></v:roundrect><![endif]-->
-      <div style="text-align:center;">
-        <a href="${formUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#a8872e);color:#080810;text-decoration:none;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;">Complete Application &rarr;</a>
-      </div>
-    </div>
-    <p style="text-align:center;font-size:12px;color:#3a3a52;line-height:1.7;">
-      This link is unique to you · Powered by EventFlow
-    </p>
-  </div></body></html>`;
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+</head>
+<body style="margin:0;padding:0;background:#f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;">
+    <tr><td align="center" style="padding:48px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        
+      <tr>
+        <td align="center" style="padding-bottom:32px;">
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="background:#c9a84c;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#1a0e00;font-weight:700;">✦</td>
+              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
+          <div style="height:4px;background:#c9a84c;border-radius:4px 4px 0 0;"></div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
+            <tr><td align="center" style="padding-bottom:16px;font-size:36px;">📋</td></tr>
+            <tr><td align="center" style="padding-bottom:20px;">
+              <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:800;color:#1d1d1f;margin:0 0 8px;letter-spacing:-0.03em;">Vendor Application</h1>
+              <div style="font-size:16px;font-weight:700;color:#9b6e1a;letter-spacing:-0.01em;">${eventName}${eventDate ? ` · ${eventDate}` : ""}</div>
+            </td></tr>
+            ${hostNote ? `<tr><td style="padding:0 0 20px;"><div style="background:#fffbf0;border:1.5px solid #f0d070;border-radius:12px;padding:14px 16px;font-size:14px;color:#6e6e73;line-height:1.6;">${hostNote}</div></td></tr>` : ""}
+            <tr><td style="padding:0 0 24px;">
+              <p style="font-size:14px;color:#6e6e73;line-height:1.7;margin:0;">
+                Hi${vendorName ? ` ${vendorName}` : ""}! You've been invited to apply as a vendor. Click below to complete your application.
+              </p>
+            </td></tr>
+            <tr><td align="center" style="padding:8px 0 20px;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${formUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#c9a84c"><w:anchorlock/><center style="color:#1a0e00;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Complete Application</center></v:roundrect><![endif]-->
+              <!--[if !mso]><!-->
+              <a href="${formUrl}" style="display:inline-block;background:#c9a84c;color:#1a0e00;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">Complete Application &rarr;</a>
+              <!--<![endif]-->
+            </td></tr>
+            <tr><td align="center" style="padding-top:4px;">
+              <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
+                Or copy this link:<br>
+                <a href="${formUrl}" style="color:#7a5c1e;word-break:break-all;">${formUrl}</a>
+              </p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top:24px;">
+          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
+            Powered by <span style="color:#7a5c1e;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You received this vendor invitation from an EventFlow event organiser.
+          </p>
+        </td>
+      </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 serve(async (req) => {

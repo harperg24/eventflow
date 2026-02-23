@@ -129,7 +129,7 @@ function AttendeeTab({ eventId, supabase, orders, navigate }) {
             )}
             <div style={{ flexShrink: 0 }}>
               <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 5,
-                background: t.checked_in ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.04)",
+                background: t.checked_in ? "rgba(16,185,129,0.12)" : "var(--bg3)",
                 color: t.checked_in ? "#10b981" : "var(--text3)",
                 border: `1px solid ${t.checked_in ? "rgba(16,185,129,0.2)" : "var(--border)"}` }}>
                 {t.checked_in ? "Scanned" : "Not yet"}
@@ -1267,7 +1267,7 @@ export default function Dashboard() {
                     {g.invited_at
                       ? <span className="tag" style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8", fontSize: 11 }} title={`Sent ${new Date(g.invited_at).toLocaleDateString("en-NZ")}`}>✓ Sent</span>
                       : g.email
-                        ? <span className="tag" style={{ background: "rgba(255,255,255,0.04)", color: "var(--text3)", fontSize: 11 }}>Not sent</span>
+                        ? <span className="tag" style={{ background: "var(--bg3)", color: "var(--text3)", fontSize: 11 }}>Not sent</span>
                         : <span style={{ fontSize: 12, color: "#2a2a38" }}>No email</span>
                     }
                   </div>
@@ -1407,13 +1407,13 @@ export default function Dashboard() {
 
                   {/* Expense line items */}
                   {catExpenses.length > 0 && (
-                    <div style={{ borderTop: "1px solid var(--bg3)" }}>
+                    <div style={{ borderTop: "1px solid var(--border)" }}>
                       {catExpenses.map((e, i) => (
                         <div key={e.id} style={{
                           display: "flex", alignItems: "center", gap: 10,
                           padding: "9px 20px 9px 54px",
-                          background: i % 2 === 0 ? "#060610" : "#070712",
-                          borderBottom: i < catExpenses.length - 1 ? "1px solid #0a0a16" : "none"
+                          background: i % 2 === 0 ? "var(--bg3)" : "var(--bg2)",
+                          borderBottom: i < catExpenses.length - 1 ? "1px solid var(--border)" : "none"
                         }}>
                           <div style={{ width: 4, height: 4, borderRadius: "50%", background: c.color || "var(--accent)", flexShrink: 0 }} />
                           <span style={{ flex: 1, fontSize: 13, color: "var(--text2)" }}>{e.description}</span>
@@ -1577,7 +1577,7 @@ export default function Dashboard() {
               .sp-field:focus { border-color: #1db954; box-shadow: 0 0 0 3px rgba(29,185,84,0.1); }
               .sp-field::placeholder { color: var(--text3); }
               .sp-result { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 9px; transition: background 0.15s; }
-              .sp-result:hover { background: rgba(255,255,255,0.03); }
+              .sp-result:hover { background: var(--bg3); }
               .sp-play { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(29,185,84,0.15); color: #1db954; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
               .sp-play:hover, .sp-play.playing { background: rgba(29,185,84,0.28); }
               .sp-add { background: rgba(29,185,84,0.12); border: 1px solid rgba(29,185,84,0.2); color: #1db954; border-radius: 7px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: var(--font,'Plus Jakarta Sans',sans-serif); transition: all 0.15s; white-space: nowrap; }
@@ -1692,7 +1692,7 @@ export default function Dashboard() {
                 const secs = s.duration_ms ? String(Math.floor((s.duration_ms%60000)/1000)).padStart(2,"0") : null;
                 return (
                   <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderBottom: i < songs.length - 1 ? "1px solid var(--border)" : "none", background: isActive ? "rgba(29,185,84,0.04)" : "transparent", transition: "background 0.15s" }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "var(--bg3)"; }}
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}>
 
                     {/* Rank */}
@@ -2530,7 +2530,7 @@ export default function Dashboard() {
             <style>{`
               .task-row { display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
               .task-row:last-child { border-bottom: none; }
-              .task-row:hover { background: rgba(255,255,255,0.02); }
+              .task-row:hover { background: var(--bg3); }
               .task-row:hover .task-actions { opacity: 1; }
               .task-actions { opacity: 0; display: flex; gap: 6px; transition: opacity 0.15s; }
               .cl-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
@@ -2659,7 +2659,7 @@ export default function Dashboard() {
 
           const GuestRow = ({ g }) => (
             <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderBottom: "1px solid var(--border)", transition: "background 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.02)"}
+              onMouseEnter={e => e.currentTarget.style.background="var(--bg3)"}
               onMouseLeave={e => e.currentTarget.style.background="transparent"}>
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "var(--bg3)", border: `1.5px solid ${g.checked_in ? "#10b981" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, transition: "all 0.2s" }}>
                 {(g.name || g.email || "?")[0].toUpperCase()}

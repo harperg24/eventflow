@@ -44,24 +44,69 @@ serve(async (req) => {
       ? new Date(collab.events.date).toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
       : "";
 
-    const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
-    <div style="max-width:540px;margin:0 auto;padding:48px 24px;">
-      <div style="text-align:center;margin-bottom:32px;"><span style="font-size:14px;color:#5a5a72;">✦ EventFlow</span></div>
-      <div style="background:#0a0a14;border:1px solid #1e1e2e;border-radius:18px;padding:36px;margin-bottom:20px;">
-        <div style="font-size:32px;text-align:center;margin-bottom:16px;">🤝</div>
-        <h1 style="font-family:Georgia,serif;font-size:22px;color:#f0e8db;margin:0 0 6px;text-align:center;">You've been invited to collaborate</h1>
-        <p style="font-size:15px;color:#c9a84c;text-align:center;margin:0 0 20px;">${collab.events?.name}${eventDate ? ` · ${eventDate}` : ""}</p>
-        <div style="background:#13131f;border-radius:10px;padding:14px 16px;margin-bottom:24px;">
-          <div style="font-size:11px;color:#5a5a72;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Your role</div>
-          <div style="font-size:14px;color:#c9a84c;font-weight:600;margin-bottom:2px;">${collab.role.charAt(0).toUpperCase() + collab.role.slice(1)}</div>
-          <div style="font-size:12px;color:#5a5a72;">${ROLE_LABELS[collab.role] || ""}</div>
-        </div>
-        <div style="text-align:center;">
-          <a href="${acceptUrl}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#a8872e);color:#080810;text-decoration:none;padding:14px 36px;border-radius:12px;font-size:15px;font-weight:700;">Accept Invitation &rarr;</a>
-        </div>
-      </div>
-      <p style="text-align:center;font-size:12px;color:#3a3a52;">You can decline from within the app after signing in · Powered by EventFlow</p>
-    </div></body></html>`;
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+</head>
+<body style="margin:0;padding:0;background:#f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;">
+    <tr><td align="center" style="padding:48px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        
+      <tr>
+        <td align="center" style="padding-bottom:32px;">
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="background:#c9a84c;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#1a0e00;font-weight:700;">✦</td>
+              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
+          <div style="height:4px;background:#c9a84c;border-radius:4px 4px 0 0;"></div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
+            <tr><td align="center" style="padding-bottom:16px;font-size:36px;">🤝</td></tr>
+            <tr><td align="center" style="padding-bottom:20px;">
+              <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:800;color:#1d1d1f;margin:0 0 8px;letter-spacing:-0.03em;">You've been invited to collaborate</h1>
+              <div style="font-size:16px;font-weight:700;color:#9b6e1a;letter-spacing:-0.01em;">${collab.events?.name}${eventDate ? ` · ${eventDate}` : ""}</div>
+            </td></tr>
+            <tr><td style="padding:0 0 24px;">
+              <div style="background:#f5f5f7;border:1.5px solid #e5e5ea;border-radius:12px;padding:16px 18px;">
+                <div style="font-size:11px;color:#8e8e93;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Your role</div>
+                <div style="font-size:15px;font-weight:700;color:#1d1d1f;">${collab.role.charAt(0).toUpperCase() + collab.role.slice(1)}</div>
+                <div style="font-size:12px;color:#6e6e73;margin-top:3px;">${ROLE_LABELS[collab.role] || ""}</div>
+              </div>
+            </td></tr>
+            <tr><td align="center" style="padding:8px 0 20px;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${acceptUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#c9a84c"><w:anchorlock/><center style="color:#1a0e00;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Accept Invitation</center></v:roundrect><![endif]-->
+              <!--[if !mso]><!-->
+              <a href="${acceptUrl}" style="display:inline-block;background:#c9a84c;color:#1a0e00;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">Accept Invitation &rarr;</a>
+              <!--<![endif]-->
+            </td></tr>
+            <tr><td align="center" style="padding-top:4px;">
+              <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
+                Or copy this link:<br>
+                <a href="${acceptUrl}" style="color:#7a5c1e;word-break:break-all;">${acceptUrl}</a>
+              </p>
+            </td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="padding-top:24px;">
+          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
+            Powered by <span style="color:#7a5c1e;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You can decline from within the app after signing in.
+          </p>
+        </td>
+      </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 
     const token = await getGmailToken();
     await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
