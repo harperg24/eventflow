@@ -212,7 +212,7 @@ export default function QueueManager({ eventId }) {
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:20 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:"-0.04em", marginBottom:4 }}>Queue Manager</h1>
-          <p style={{ color:"var(--text2)", fontSize:14 }}>{queues.length} queue{queues.length!==1?"s"} · virtual line system</p>
+          <p style={{ color:"var(--text2)", fontSize:14 }}>{queues.length} queue{queues.length!==1?"s":""}{"  ·  "}virtual line system</p>
         </div>
         <button onClick={()=>setModal({})} style={btnStyle()}>+ New Queue</button>
       </div>
