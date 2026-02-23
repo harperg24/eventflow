@@ -40,7 +40,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public — no auth needed */}
-        <Route path="/login"         element={session ? <Navigate to="/events" replace /> : <Auth />} />
+        <Route path="/login"         element={session ? <Navigate to="/home" replace /> : <Auth />} />
         <Route path="/e/:slug"       element={<RSVP />} />
         <Route path="/auth/callback"     element={<AuthCallback />} />
         <Route path="/checkin/:guestId"        element={<GuestCheckIn />} />
@@ -61,7 +61,7 @@ export default function App() {
         <Route path="/dashboard/:eventId"  element={session ? <Dashboard />     : <Navigate to="/login" replace />} />
 
         {/* Default */}
-        <Route path="*" element={<Navigate to={session ? "/events" : "/login"} replace />} />
+        <Route path="*" element={<Navigate to={session ? "/home" : "/login"} replace />} />
       </Routes>
     </BrowserRouter>
   );

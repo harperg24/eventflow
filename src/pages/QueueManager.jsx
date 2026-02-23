@@ -82,22 +82,24 @@ function QueueFormModal({ queue, onSave, onClose }) {
   const maxJoinsN     = form.max_joins_per_device ?? 1;
 
   return (
-    /* Overlay — scrollable, top-aligned so the card never gets cut off */
+    /* Overlay — centers the card, card itself scrolls internally */
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)",
-      overflowY:"auto", zIndex:500, backdropFilter:"blur(6px)",
-      display:"flex", justifyContent:"center", alignItems:"flex-start", padding:"32px 16px 48px" }}
+      zIndex:500, backdropFilter:"blur(6px)",
+      display:"flex", justifyContent:"center", alignItems:"center", padding:"24px 16px" }}
       onClick={onClose}>
 
-      {/* Card */}
+      {/* Card — fixed max-height, internal scroll */}
       <div onClick={e => e.stopPropagation()}
         style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:18,
-          width:"100%", maxWidth:500, boxShadow:"0 24px 60px rgba(0,0,0,0.45)",
-          display:"flex", flexDirection:"column" }}>
+          width:"100%", maxWidth:500,
+          maxHeight:"calc(100vh - 48px)",
+          boxShadow:"0 24px 60px rgba(0,0,0,0.45)",
+          display:"flex", flexDirection:"column", overflow:"hidden" }}>
 
-        {/* ── Sticky header ── */}
+        {/* ── Header (never scrolls) ── */}
         <div style={{ padding:"18px 22px", borderBottom:"1.5px solid var(--border)",
           display:"flex", justifyContent:"space-between", alignItems:"center",
-          position:"sticky", top:0, background:"var(--bg2)", borderRadius:"18px 18px 0 0", zIndex:2 }}>
+          flexShrink:0 }}>
           <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>
             {form.id ? "Edit Queue" : "New Queue"}
           </div>
@@ -105,8 +107,9 @@ function QueueFormModal({ queue, onSave, onClose }) {
             borderRadius:8, padding:"4px 10px", color:"var(--text2)", cursor:"pointer", fontSize:14, lineHeight:1.4 }}>✕</button>
         </div>
 
-        {/* ── Body ── */}
-        <div style={{ padding:"22px 22px 4px", display:"flex", flexDirection:"column", gap:22 }}>
+        {/* ── Scrollable body ── */}
+        <div style={{ padding:"22px 22px 4px", display:"flex", flexDirection:"column", gap:22,
+          overflowY:"auto", flex:1 }}>
 
           {/* Queue basics */}
           <div>
@@ -214,10 +217,9 @@ function QueueFormModal({ queue, onSave, onClose }) {
 
         </div>
 
-        {/* ── Sticky footer with action buttons ── */}
-        <div style={{ padding:"16px 22px", borderTop:"1.5px solid var(--border)", marginTop:8,
-          display:"flex", gap:10, position:"sticky", bottom:0, background:"var(--bg2)",
-          borderRadius:"0 0 18px 18px", zIndex:2 }}>
+        {/* ── Footer with action buttons (never scrolls) ── */}
+        <div style={{ padding:"16px 22px", borderTop:"1.5px solid var(--border)",
+          display:"flex", gap:10, flexShrink:0, background:"var(--bg2)", borderRadius:"0 0 18px 18px" }}>
           <button onClick={onClose}
             style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
               borderRadius:9, padding:"11px", fontSize:14, color:"var(--text2)", cursor:"pointer", fontFamily:"inherit" }}>
