@@ -43,64 +43,85 @@ function QueueFormModal({ queue, onSave, onClose }) {
   const [form, setForm] = useState(queue || {
     name:"", description:"", max_per_person:1, auto_caller:1, max_joins_per_device:1
   });
+  // Track whether custom number inputs are active
+  const [customCaller,  setCustomCaller]  = useState(false);
+  const [customDevice,  setCustomDevice]  = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const PRESET_CALLERS  = [0,1,2,3,5,8,10,15,20];
+  const PRESET_DEVICES  = [1,2,3,5];
+
+  const isCustomCaller = !PRESET_CALLERS.includes(form.auto_caller ?? 1);
+  const isCustomDevice = !PRESET_DEVICES.includes(form.max_joins_per_device ?? 1) && (form.max_joins_per_device ?? 1) < 99;
 
   const S = {
     input: { width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)",
       borderRadius:8, padding:"9px 12px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" },
     label: { display:"block", fontSize:12, fontWeight:700, color:"var(--text2)", marginBottom:6 },
-    note:  { fontSize:11, color:"var(--text3)", marginTop:6, lineHeight:1.55 },
-    chips: { display:"flex", gap:6, flexWrap:"wrap" },
+    note:  { fontSize:11, color:"var(--text3)", marginTop:8, lineHeight:1.6 },
+    chips: { display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" },
     section: { fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.09em",
-      color:"var(--text3)", marginBottom:12 },
+      color:"var(--text3)", marginBottom:12, paddingBottom:8, borderBottom:"1px solid var(--border)" },
   };
 
-  const Chip = ({ val, current, onChange }) => (
-    <button type="button" onClick={() => onChange(val)}
-      style={{ background: current===val ? "var(--accent)" : "var(--bg3)",
-        border:`1.5px solid ${current===val ? "var(--accent)" : "var(--border)"}`,
-        color: current===val ? "#fff" : "var(--text2)",
-        borderRadius:8, padding:"5px 14px", fontSize:13, fontWeight:600,
-        cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-      {val === 99 ? "∞" : val}
-    </button>
-  );
+  const Chip = ({ val, current, onChange, label }) => {
+    const active = current === val;
+    return (
+      <button type="button" onClick={() => onChange(val)}
+        style={{ background: active ? "var(--accent)" : "var(--bg3)",
+          border:`1.5px solid ${active ? "var(--accent)" : "var(--border)"}`,
+          color: active ? "#fff" : "var(--text2)",
+          borderRadius:8, padding:"6px 14px", fontSize:13, fontWeight:600,
+          cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit", flexShrink:0 }}>
+        {label ?? (val === 99 ? "∞" : val === 0 ? "Off" : val)}
+      </button>
+    );
+  };
+
+  const autoCallerN   = form.auto_caller ?? 1;
+  const maxJoinsN     = form.max_joins_per_device ?? 1;
 
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex",
-      alignItems:"center", justifyContent:"center", zIndex:500, padding:24, backdropFilter:"blur(6px)" }}
+    /* Overlay — scrollable, top-aligned so the card never gets cut off */
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)",
+      overflowY:"auto", zIndex:500, backdropFilter:"blur(6px)",
+      display:"flex", justifyContent:"center", alignItems:"flex-start", padding:"32px 16px 48px" }}
       onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
-        borderRadius:18, width:"100%", maxWidth:520, maxHeight:"92vh", overflowY:"auto",
-        boxShadow:"0 28px 60px rgba(0,0,0,0.5)" }}>
 
-        {/* Header */}
-        <div style={{ padding:"20px 24px", borderBottom:"1.5px solid var(--border)",
-          display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0,
-          background:"var(--bg2)", borderRadius:"18px 18px 0 0", zIndex:1 }}>
+      {/* Card */}
+      <div onClick={e => e.stopPropagation()}
+        style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:18,
+          width:"100%", maxWidth:500, boxShadow:"0 24px 60px rgba(0,0,0,0.45)",
+          display:"flex", flexDirection:"column" }}>
+
+        {/* ── Sticky header ── */}
+        <div style={{ padding:"18px 22px", borderBottom:"1.5px solid var(--border)",
+          display:"flex", justifyContent:"space-between", alignItems:"center",
+          position:"sticky", top:0, background:"var(--bg2)", borderRadius:"18px 18px 0 0", zIndex:2 }}>
           <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>
-            {form.id ? "Edit Queue" : "Create Queue"}
+            {form.id ? "Edit Queue" : "New Queue"}
           </div>
           <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)",
-            borderRadius:8, padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:13 }}>✕</button>
+            borderRadius:8, padding:"4px 10px", color:"var(--text2)", cursor:"pointer", fontSize:14, lineHeight:1.4 }}>✕</button>
         </div>
 
-        <div style={{ padding:"22px 24px", display:"flex", flexDirection:"column", gap:20 }}>
+        {/* ── Body ── */}
+        <div style={{ padding:"22px 22px 4px", display:"flex", flexDirection:"column", gap:22 }}>
 
-          {/* ── Basics ── */}
+          {/* Queue basics */}
           <div>
             <div style={S.section}>Queue Info</div>
             <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
               <div>
                 <label style={S.label}>Queue Name *</label>
                 <input value={form.name} onChange={e=>set("name",e.target.value)} style={S.input}
-                  placeholder="e.g. Gelato Station, Photo Booth, Bar" />
+                  placeholder="e.g. Gelato Station, Photo Booth, Bar" autoFocus />
               </div>
               <div>
-                <label style={S.label}>Description (shown to guests)</label>
+                <label style={S.label}>Description <span style={{ fontWeight:400, color:"var(--text3)" }}>(shown to guests)</span></label>
                 <textarea value={form.description||""} onChange={e=>set("description",e.target.value)}
                   rows={2} style={{ ...S.input, resize:"vertical" }}
-                  placeholder="e.g. 1 free gelato scoop per person" />
+                  placeholder="e.g. 1 free scoop per person" />
               </div>
               <div>
                 <label style={S.label}>Max party size per entry</label>
@@ -111,53 +132,103 @@ function QueueFormModal({ queue, onSave, onClose }) {
             </div>
           </div>
 
-          <div style={{ borderTop:"1.5px solid var(--border)" }} />
-
-          {/* ── Auto-caller ── */}
+          {/* Auto-caller */}
           <div>
             <div style={S.section}>Auto-Caller</div>
             <label style={S.label}>How many people to keep called at once</label>
             <div style={S.chips}>
-              {[1,2,3,4,5,6,8,10,12,15,20].map(n => <Chip key={n} val={n} current={form.auto_caller||1} onChange={v=>set("auto_caller",v)} />)}
+              {PRESET_CALLERS.map(n => (
+                <Chip key={n} val={n} current={isCustomCaller ? -1 : autoCallerN}
+                  onChange={v => { set("auto_caller", v); setCustomCaller(false); }}
+                  label={n === 0 ? "Off (manual)" : n} />
+              ))}
+              {/* Custom chip */}
+              <button type="button"
+                onClick={() => setCustomCaller(true)}
+                style={{ background: isCustomCaller ? "var(--accent)" : "var(--bg3)",
+                  border:`1.5px solid ${isCustomCaller ? "var(--accent)" : "var(--border)"}`,
+                  color: isCustomCaller ? "#fff" : "var(--text2)",
+                  borderRadius:8, padding:"6px 14px", fontSize:13, fontWeight:600,
+                  cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit", flexShrink:0 }}>
+                Custom
+              </button>
             </div>
+            {isCustomCaller && (
+              <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
+                <input type="number" min={0} max={200}
+                  value={autoCallerN}
+                  onChange={e => set("auto_caller", Math.max(0, parseInt(e.target.value)||0))}
+                  style={{ ...S.input, width:100 }}
+                  placeholder="e.g. 25" />
+                <span style={{ fontSize:13, color:"var(--text3)" }}>simultaneous called slots</span>
+              </div>
+            )}
             <p style={S.note}>
-              When you hit <strong>✓ Served</strong>, the next person is automatically called — keeping exactly{" "}
-              <strong>{form.auto_caller||1}</strong> {(form.auto_caller||1)===1?"person":"people"} in the called state at all times.
-              For a large event like a ball, set this to <strong>10</strong> so staff can serve a whole batch before the queue catches up.
+              {autoCallerN === 0
+                ? <><strong>Manual only</strong> — no one is auto-called. Use the "Call Now" button to call people yourself.</>
+                : <>Serving someone auto-calls the next person, keeping exactly <strong>{autoCallerN}</strong> {autoCallerN===1?"person":"people"} called at once.
+                  For a large event, try <strong>10–20</strong> so staff can work through a batch.</>
+              }
             </p>
           </div>
 
-          <div style={{ borderTop:"1.5px solid var(--border)" }} />
-
-          {/* ── Device limit ── */}
+          {/* Device limit */}
           <div>
             <div style={S.section}>Access Control</div>
-            <label style={S.label}>Max joins per device</label>
+            <label style={S.label}>Max served visits per device</label>
             <div style={S.chips}>
-              {[1,2,3,5].map(n => <Chip key={n} val={n} current={form.max_joins_per_device||1} onChange={v=>set("max_joins_per_device",v)} />)}
-              <Chip val={99} current={form.max_joins_per_device||1} onChange={v=>set("max_joins_per_device",v)} />
+              {PRESET_DEVICES.map(n => (
+                <Chip key={n} val={n} current={isCustomDevice ? -1 : maxJoinsN}
+                  onChange={v => { set("max_joins_per_device", v); setCustomDevice(false); }} />
+              ))}
+              <Chip val={99} current={isCustomDevice ? -1 : maxJoinsN}
+                onChange={v => { set("max_joins_per_device", v); setCustomDevice(false); }} />
+              <button type="button"
+                onClick={() => setCustomDevice(true)}
+                style={{ background: isCustomDevice ? "var(--accent)" : "var(--bg3)",
+                  border:`1.5px solid ${isCustomDevice ? "var(--accent)" : "var(--border)"}`,
+                  color: isCustomDevice ? "#fff" : "var(--text2)",
+                  borderRadius:8, padding:"6px 14px", fontSize:13, fontWeight:600,
+                  cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit", flexShrink:0 }}>
+                Custom
+              </button>
             </div>
+            {isCustomDevice && (
+              <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
+                <input type="number" min={1} max={100}
+                  value={maxJoinsN < 99 ? maxJoinsN : ""}
+                  onChange={e => set("max_joins_per_device", Math.max(1, parseInt(e.target.value)||1))}
+                  style={{ ...S.input, width:100 }}
+                  placeholder="e.g. 4" />
+                <span style={{ fontSize:13, color:"var(--text3)" }}>visits per device</span>
+              </div>
+            )}
             <p style={S.note}>
-              Each device (phone/laptop) can only join this queue{" "}
-              {(form.max_joins_per_device||1) >= 99
-                ? "unlimited times"
-                : <><strong>{form.max_joins_per_device||1}</strong> {(form.max_joins_per_device||1)===1?"time":"times"}</>
-              }.
-              Set to <strong>1</strong> to prevent people from joining again after being served — ideal for 1 per person perks like free gelato.
+              {maxJoinsN >= 99
+                ? <>Guests can join unlimited times. Leaving the queue <strong>never</strong> counts against this.</>
+                : <>Each device can be <strong>served</strong> up to <strong>{maxJoinsN}</strong> {maxJoinsN===1?"time":"times"}.
+                  Leaving the queue without being served <strong>does not</strong> count — only completed visits do.</>
+              }
             </p>
           </div>
 
-          {/* Buttons */}
-          <div style={{ display:"flex", gap:10, paddingTop:4 }}>
-            <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
-              borderRadius:9, padding:"11px", fontSize:14, color:"var(--text2)", cursor:"pointer" }}>Cancel</button>
-            <button onClick={() => onSave(form)} disabled={!form.name?.trim()}
-              style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:9,
-                padding:"11px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer",
-                opacity:!form.name?.trim() ? 0.4 : 1 }}>
-              {form.id ? "Save Changes" : "Create Queue"}
-            </button>
-          </div>
+        </div>
+
+        {/* ── Sticky footer with action buttons ── */}
+        <div style={{ padding:"16px 22px", borderTop:"1.5px solid var(--border)", marginTop:8,
+          display:"flex", gap:10, position:"sticky", bottom:0, background:"var(--bg2)",
+          borderRadius:"0 0 18px 18px", zIndex:2 }}>
+          <button onClick={onClose}
+            style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
+              borderRadius:9, padding:"11px", fontSize:14, color:"var(--text2)", cursor:"pointer", fontFamily:"inherit" }}>
+            Cancel
+          </button>
+          <button onClick={() => onSave(form)} disabled={!form.name?.trim()}
+            style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:9,
+              padding:"11px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer", fontFamily:"inherit",
+              opacity:!form.name?.trim() ? 0.4 : 1 }}>
+            {form.id ? "Save Changes" : "Create Queue"}
+          </button>
         </div>
       </div>
     </div>
@@ -247,8 +318,9 @@ export default function QueueManager({ eventId }) {
   };
 
   // ── Core: fill called slots up to auto_caller count ────────
-  // This is the single function that keeps the called list topped up.
+  // auto_caller=0 means manual-only — never auto-fill
   const fillSlots = async (queueId, autoCallerN) => {
+    if (autoCallerN === 0) return; // manual mode
     // Always re-fetch fresh state so we don't race on stale local state
     const { data: fresh } = await supabase.from("queue_entries")
       .select("*").eq("queue_id", queueId).order("position");
@@ -289,12 +361,17 @@ export default function QueueManager({ eventId }) {
     setBusy(false);
   };
 
-  // ── Manual fill: top up all open slots now ─────────────────
+  // ── Manual fill: in auto mode tops up all open slots; in manual mode calls 1 ──
   const handleFillNow = async () => {
     if (busy) return;
     setBusy(true);
     const q = queues.find(q => q.id === active);
-    await fillSlots(active, q?.auto_caller || 1);
+    if ((q?.auto_caller ?? 1) === 0) {
+      // Manual mode: call just the next 1 person
+      await fillSlots(active, 1);
+    } else {
+      await fillSlots(active, q?.auto_caller || 1);
+    }
     setBusy(false);
   };
 
@@ -316,14 +393,15 @@ export default function QueueManager({ eventId }) {
 
   // ── Derived state ──────────────────────────────────────────
   const activeQueue   = queues.find(q => q.id === active);
-  const autoCallerN   = activeQueue?.auto_caller || 1;
+  const autoCallerN   = activeQueue?.auto_caller ?? 1;
   const maxPerDevice  = activeQueue?.max_joins_per_device || 1;
   const allEntries    = entries[active] || [];
   const waiting       = allEntries.filter(e => e.status === "waiting").sort((a,b)=>a.position-b.position);
   const called        = allEntries.filter(e => e.status === "called").sort((a,b)=>new Date(a.called_at)-new Date(b.called_at));
   const done          = allEntries.filter(e => ["done","left"].includes(e.status));
   const totalServed   = allEntries.filter(e => e.status === "done").length;
-  const openSlots     = Math.max(0, autoCallerN - called.length);
+  // In manual mode (0) there are always "open slots" — button always enabled if there's someone waiting
+  const openSlots     = autoCallerN === 0 ? (waiting.length > 0 ? 1 : 0) : Math.max(0, autoCallerN - called.length);
   const canFill       = openSlots > 0 && waiting.length > 0 && activeQueue?.status === "open";
 
   const btn = (label, onClick, opts={}) => (
@@ -394,7 +472,7 @@ export default function QueueManager({ eventId }) {
                     {qWaiting} waiting{qCalled>0?` · ${qCalled} called`:""}
                   </div>
                   <div style={{ fontSize:11, color:"var(--text3)" }}>
-                    📣 {q.auto_caller||1} simultaneous{" · "}
+                    📣 {(q.auto_caller ?? 1) === 0 ? "Manual" : `${q.auto_caller} simultaneous`}{" · "}
                     📱 {(q.max_joins_per_device||1)>=99?"∞":(q.max_joins_per_device||1)}×/device
                   </div>
                 </div>
@@ -452,26 +530,38 @@ export default function QueueManager({ eventId }) {
                   {/* Slot visualiser */}
                   <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
                     <div style={{ fontSize:11, fontWeight:700, color:"var(--text2)" }}>
-                      Called slots ({called.length}/{autoCallerN})
+                      {autoCallerN === 0 ? "Manual mode" : `Called slots (${called.length}/${autoCallerN})`}
                     </div>
-                    <div style={{ display:"flex", gap:3, flexWrap:"wrap" }}>
-                      {Array.from({length: autoCallerN}, (_, i) => (
-                        <div key={i} style={{ width:14, height:14, borderRadius:4,
-                          background: i < called.length ? "var(--success,#059669)" : "var(--bg2)",
-                          border:`1.5px solid ${i < called.length ? "rgba(5,150,105,0.4)" : "var(--border)"}`,
-                          transition:"background 0.25s" }}/>
-                      ))}
-                    </div>
+                    {autoCallerN > 0 && (
+                      <div style={{ display:"flex", gap:3, flexWrap:"wrap" }}>
+                        {Array.from({length: Math.min(autoCallerN, 30)}, (_, i) => (
+                          <div key={i} style={{ width:14, height:14, borderRadius:4,
+                            background: i < called.length ? "var(--success,#059669)" : "var(--bg2)",
+                            border:`1.5px solid ${i < called.length ? "rgba(5,150,105,0.4)" : "var(--border)"}`,
+                            transition:"background 0.25s" }}/>
+                        ))}
+                        {autoCallerN > 30 && <span style={{ fontSize:11, color:"var(--text3)" }}>+{autoCallerN-30}</span>}
+                      </div>
+                    )}
+                    {autoCallerN === 0 && (
+                      <div style={{ fontSize:11, color:"var(--text3)" }}>Call people manually with the button →</div>
+                    )}
                   </div>
 
                   <div style={{ width:1, height:32, background:"var(--border)", flexShrink:0 }}/>
 
                   <div style={{ flex:1 }}>
-                    {canFill ? (
+                    {autoCallerN === 0 ? (
+                      <div style={{ fontSize:13, color:"var(--text2)" }}>
+                        {waiting.length > 0
+                          ? <>Next: <strong style={{ color:"var(--text)" }}>{waiting[0]?.guest_name}</strong></>
+                          : "No one waiting"}
+                      </div>
+                    ) : canFill ? (
                       <div style={{ fontSize:13, color:"var(--text2)" }}>
                         <strong style={{ color:"var(--text)" }}>{openSlots}</strong> open slot{openSlots!==1?"s":""}{" — "}
                         <strong style={{ color:"var(--text)" }}>{waiting[0]?.guest_name}</strong>
-                        {waiting.length > 1 ? ` +${Math.min(openSlots,waiting.length)-1} more` : ""} will be called
+                        {openSlots > 1 && waiting.length > 1 ? ` +${Math.min(openSlots, waiting.length)-1} more` : ""} will be called
                       </div>
                     ) : called.length >= autoCallerN ? (
                       <div style={{ fontSize:13, color:"var(--text3)" }}>All slots filled — serve someone to call the next person</div>
@@ -481,17 +571,22 @@ export default function QueueManager({ eventId }) {
                       </div>
                     )}
                     <div style={{ fontSize:11, color:"var(--text3)", marginTop:3 }}>
-                      📱 Max {maxPerDevice>=99?"unlimited":maxPerDevice} join{maxPerDevice!==1?"s":""}/device
+                      📱 Max {maxPerDevice>=99?"unlimited":maxPerDevice} visit{maxPerDevice!==1?"s":""}/device
                     </div>
                   </div>
 
                   {btn(
-                    busy ? "…" : canFill ? `📣 Call ${Math.min(openSlots,waiting.length)} Now` : "Slots Full",
+                    busy ? "…" : autoCallerN === 0
+                      ? (waiting.length > 0 ? `📣 Call ${waiting[0]?.guest_name}` : "No one waiting")
+                      : canFill ? `📣 Call ${Math.min(openSlots,waiting.length)} Now` : "Slots Full",
                     handleFillNow,
-                    { disabled: !canFill || busy,
-                      bg: canFill ? "var(--success,#059669)" : "var(--bg3)",
-                      color: canFill ? "#fff" : "var(--text3)",
-                      border: canFill ? "none" : "1.5px solid var(--border)",
+                    { disabled: (autoCallerN === 0 ? waiting.length === 0 : !canFill) || busy || activeQueue?.status !== "open",
+                      bg: (autoCallerN === 0 ? waiting.length > 0 : canFill) && activeQueue?.status === "open"
+                        ? "var(--success,#059669)" : "var(--bg3)",
+                      color: (autoCallerN === 0 ? waiting.length > 0 : canFill) && activeQueue?.status === "open"
+                        ? "#fff" : "var(--text3)",
+                      border: (autoCallerN === 0 ? waiting.length > 0 : canFill) && activeQueue?.status === "open"
+                        ? "none" : "1.5px solid var(--border)",
                       pad:"9px 20px" }
                   )}
                 </div>

@@ -164,18 +164,20 @@ export default function Queue() {
         .eq("queue_id", queueId)
         .eq("device_fingerprint", fp);
 
+      // Active = currently in queue (don't let them join twice)
       const activeJoins = (existing || []).filter(e => ["waiting","called"].includes(e.status));
-      const totalJoins  = (existing || []).length;
+      // Served = completed visits only (leaving voluntarily does NOT count against the limit)
+      const servedJoins = (existing || []).filter(e => e.status === "done");
 
       if (activeJoins.length > 0) {
         setError("You are already in this queue.");
         setJoining(false); return;
       }
-      if (totalJoins >= maxJoins) {
+      if (servedJoins.length >= maxJoins) {
         setError(
           maxJoins === 1
             ? "You have already been served — this queue allows 1 visit per device."
-            : `This queue only allows ${maxJoins} visits per device and you have used all of them.`
+            : `This queue only allows ${maxJoins} visits per device and you have used all ${maxJoins}.`
         );
         setJoining(false); return;
       }
