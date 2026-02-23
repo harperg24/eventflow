@@ -158,26 +158,26 @@ export default function TicketScanner() {
   };
 
   const cfg = {
-    valid:     { bg: "rgba(16,185,129,0.15)",  border: "rgba(16,185,129,0.4)",  color: "#10b981", icon: "✓" },
+    valid:     { bg: "rgba(16,185,129,0.15)",  border: "rgba(16,185,129,0.4)",  color: "var(--success,#059669)", icon: "✓" },
     duplicate: { bg: "rgba(245,158,11,0.15)",  border: "rgba(245,158,11,0.4)",  color: "#f59e0b", icon: "⚠" },
     invalid:   { bg: "rgba(239,68,68,0.15)",   border: "rgba(239,68,68,0.4)",   color: "#ef4444", icon: "✕" },
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#06060e", fontFamily: "'DM Sans',sans-serif", color: "#e2d9cc" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)" }}>
       <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 
       {/* Header */}
-      <div style={{ background: "#0a0a14", borderBottom: "1px solid #1e1e2e", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ background: "var(--bg2)", borderBottom: "1.5px solid var(--border)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
         <button onClick={() => { stopCamera(); navigate(-1); }}
-          style={{ background: "none", border: "none", color: "#5a5a72", cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1 }}>←</button>
+          style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1 }}>←</button>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Ticket Scanner</div>
-          {event && <div style={{ fontSize: 12, color: "#5a5a72" }}>{event.name}</div>}
+          {event && <div style={{ fontSize: 12, color: "var(--text2)" }}>{event.name}</div>}
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#10b981" }}>{stats.scanned}</div>
-          <div style={{ fontSize: 11, color: "#3a3a52" }}>of {stats.total} scanned</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--success,#059669)" }}>{stats.scanned}</div>
+          <div style={{ fontSize: 11, color: "var(--text3)" }}>of {stats.total} scanned</div>
         </div>
       </div>
 
@@ -189,7 +189,7 @@ export default function TicketScanner() {
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "20px 16px" }}>
 
         {/* Camera viewfinder */}
-        <div style={{ position: "relative", background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 16, overflow: "hidden", marginBottom: 16, aspectRatio: "4/3" }}>
+        <div style={{ position: "relative", background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden", marginBottom: 16, aspectRatio: "4/3" }}>
           <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover", display: scanning ? "block" : "none" }} playsInline muted />
           <canvas ref={canvasRef} style={{ display: "none" }} />
 
@@ -218,11 +218,11 @@ export default function TicketScanner() {
           {!scanning && (
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
               <div style={{ fontSize: 48 }}>📷</div>
-              <p style={{ color: "#5a5a72", fontSize: 14, textAlign: "center", margin: 0 }}>
+              <p style={{ color: "var(--text2)", fontSize: 14, textAlign: "center", margin: 0 }}>
                 {camError || "Tap Start Scanner to begin"}
               </p>
               <button onClick={startCamera}
-                style={{ background: "linear-gradient(135deg,#c9a84c,#a8872e)", color: "#080810", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+                style={{ background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
                 Start Scanner
               </button>
             </div>
@@ -237,11 +237,11 @@ export default function TicketScanner() {
                   {c.icon}
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: "'Playfair Display',serif", marginBottom: 4 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: "inherit,serif", marginBottom: 4 }}>
                     {result.status === "valid" ? "Valid Ticket" : result.status === "duplicate" ? "Already Scanned" : "Invalid Ticket"}
                   </div>
-                  {result.name && <div style={{ fontSize: 16, color: "#e2d9cc", marginBottom: 2 }}>{result.name}</div>}
-                  {result.tier && <div style={{ fontSize: 13, color: "#8a8278" }}>{result.tier} · {result.ticket_number}</div>}
+                  {result.name && <div style={{ fontSize: 16, color: "var(--text)", marginBottom: 2 }}>{result.name}</div>}
+                  {result.tier && <div style={{ fontSize: 13, color: "var(--text2)" }}>{result.tier} · {result.ticket_number}</div>}
                   {result.message && <div style={{ fontSize: 12, color: c.color, marginTop: 6, opacity: 0.8 }}>{result.message}</div>}
                 </div>
               </div>
@@ -260,23 +260,23 @@ export default function TicketScanner() {
         {/* Controls */}
         {scanning && (
           <button onClick={stopCamera}
-            style={{ width: "100%", background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 10, padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 16 }}>
+            style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", marginBottom: 16 }}>
             Stop Scanner
           </button>
         )}
 
         {/* Manual token entry */}
         <details style={{ marginBottom: 20 }}>
-          <summary style={{ fontSize: 13, color: "#3a3a52", cursor: "pointer", userSelect: "none" }}>Manual entry</summary>
+          <summary style={{ fontSize: 13, color: "var(--text3)", cursor: "pointer", userSelect: "none" }}>Manual entry</summary>
           <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
             <input id="manual-token" placeholder="Paste ticket URL or token…"
-              style={{ flex: 1, background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 8, padding: "9px 12px", color: "#e2d9cc", fontSize: 13, outline: "none", fontFamily: "'DM Sans',sans-serif" }} />
+              style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "'Plus Jakarta Sans',sans-serif" }} />
             <button onClick={() => {
               const val = document.getElementById("manual-token").value.trim();
               const match = val.match(/\/ticket\/([a-f0-9]+)/) || val.match(/^([a-f0-9]{32})$/);
               if (match) { handleScan(match[1]); document.getElementById("manual-token").value = ""; }
             }}
-              style={{ background: "#c9a84c", color: "#080810", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>
+              style={{ background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
               Check
             </button>
           </div>
@@ -285,18 +285,18 @@ export default function TicketScanner() {
         {/* Scan log */}
         {scanLog.length > 0 && (
           <div>
-            <div style={{ fontSize: 11, color: "#3a3a52", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: "var(--text3)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10 }}>
               Recent Scans
             </div>
-            <div style={{ background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 12, overflow: "hidden" }}>
+            <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
               {scanLog.map((entry, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 16px", borderBottom: i < scanLog.length - 1 ? "1px solid #0a0a14" : "none" }}>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(16,185,129,0.12)", border: "1.5px solid #10b981", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#10b981", flexShrink: 0 }}>✓</div>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(5,150,105,0.1)", border: "1.5px solid #10b981", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--success,#059669)", flexShrink: 0 }}>✓</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 500 }}>{entry.name}</div>
-                    <div style={{ fontSize: 11, color: "#5a5a72" }}>{entry.tier} · {entry.ticket_number}</div>
+                    <div style={{ fontSize: 11, color: "var(--text2)" }}>{entry.tier} · {entry.ticket_number}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: "#3a3a52" }}>{timeAgo(entry.time)}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)" }}>{timeAgo(entry.time)}</div>
                 </div>
               ))}
             </div>

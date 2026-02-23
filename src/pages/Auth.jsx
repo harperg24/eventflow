@@ -1,19 +1,23 @@
 // ============================================================
-//  src/pages/Auth.jsx  —  Sign up / Sign in with magic link
+//  Auth.jsx  —  Sign in / Sign up (magic link)
 // ============================================================
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM } from "./theme";
 
 export default function Auth() {
-  const [email, setEmail]     = useState("");
-  const [sent, setSent]       = useState(false);
+  const [email,   setEmail]   = useState("");
+  const [sent,    setSent]    = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState(null);
+  const [error,   setError]   = useState(null);
+  const [prefs,   setPrefs]   = useState(loadThemePrefs());
+
+  useEffect(() => { applyThemeToDOM(prefs); }, [prefs]);
+  const t = getTheme(prefs);
 
   const handleSubmit = async () => {
     if (!email.trim()) return;
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
@@ -21,83 +25,115 @@ export default function Auth() {
       });
       if (error) throw error;
       setSent(true);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch(err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#0a0a0f",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "'DM Sans', sans-serif", color: "#e8e0d5", padding: 24,
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        .field { background: #13131a; border: 1px solid #2a2a35; border-radius: 10px; padding: 14px 16px; color: #e8e0d5; font-size: 15px; width: 100%; outline: none; transition: border-color 0.2s; font-family: 'DM Sans'; }
-        .field:focus { border-color: #d4a853; box-shadow: 0 0 0 3px rgba(212,168,83,0.1); }
-        .field::placeholder { color: #3a3a45; }
-        .btn { background: linear-gradient(135deg, #d4a853, #b8892f); color: #0a0a0f; border: none; padding: 14px; border-radius: 10px; font-family: 'DM Sans'; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; width: 100%; }
-        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(212,168,83,0.3); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-      `}</style>
+    <div style={{ minHeight:"100vh", background:t.bg, display:"flex", fontFamily:t.font }}>
+      <style>{globalCSS(t)}</style>
 
-      <div style={{ width: "100%", maxWidth: 420 }}>
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 48, justifyContent: "center" }}>
-          <div style={{ width: 36, height: 36, background: "linear-gradient(135deg, #d4a853, #b8892f)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>✦</div>
-          <span style={{ fontFamily: "'Playfair Display'", fontSize: 24, color: "#e8e0d5" }}>EventFlow</span>
+      {/* Left panel — decorative */}
+      <div style={{ flex:1, background:`linear-gradient(145deg, ${t.accent} 0%, ${t.accent}dd 60%, ${t.accent}99 100%)`, display:"flex", flexDirection:"column", justifyContent:"space-between", padding:"52px 56px", minHeight:"100vh" }}
+        className="auth-left">
+        <style>{`.auth-left { display: flex; } @media(max-width:768px){.auth-left{display:none!important}}`}</style>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:36, height:36, background:"rgba(255,255,255,0.25)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(8px)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <span style={{ fontSize:20, fontWeight:800, color:"white", letterSpacing:"-0.03em" }}>EventFlow</span>
         </div>
 
-        <div style={{ background: "#0f0f1a", border: "1px solid #1e1e2e", borderRadius: 16, padding: "36px 32px" }}>
+        <div>
+          <div style={{ fontSize:40, fontWeight:800, color:"white", letterSpacing:"-0.04em", lineHeight:1.15, marginBottom:16 }}>
+            Plan unforgettable events.
+          </div>
+          <p style={{ color:"rgba(255,255,255,0.75)", fontSize:17, lineHeight:1.7, maxWidth:340, marginBottom:40 }}>
+            Guests, budget, schedule, staff, tickets — everything you need, in one place.
+          </p>
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            {["Guest management & RSVPs","Budget tracking & vendors","Staff scheduling & timesheets","Ticketing with Stripe"].map(item => (
+              <div key={item} style={{ display:"flex", alignItems:"center", gap:10, color:"rgba(255,255,255,0.85)", fontSize:15 }}>
+                <div style={{ width:22, height:22, borderRadius:"50%", background:"rgba(255,255,255,0.2)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p style={{ color:"rgba(255,255,255,0.4)", fontSize:13 }}>© 2025 EventFlow</p>
+      </div>
+
+      {/* Right panel — form */}
+      <div style={{ width:"100%", maxWidth:500, display:"flex", alignItems:"center", justifyContent:"center", padding:"40px 40px", background:t.bg }}>
+        <div style={{ width:"100%", maxWidth:380 }} className="ef-fade-up">
+
+          {/* Mobile logo */}
+          <div style={{ display:"none", alignItems:"center", gap:10, marginBottom:40, justifyContent:"center" }}>
+            <style>{`@media(max-width:768px){.mob-logo{display:flex!important}}`}</style>
+            <div className="mob-logo" style={{ display:"none", alignItems:"center", gap:10, marginBottom:40, justifyContent:"center", width:"100%" }}>
+              <div style={{ width:32, height:32, background:t.accent, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <span style={{ fontSize:18, fontWeight:800, color:t.text, letterSpacing:"-0.03em" }}>EventFlow</span>
+            </div>
+          </div>
+
           {!sent ? (
             <>
-              <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 26, fontWeight: 600, marginBottom: 8, textAlign: "center" }}>
-                Welcome
-              </h1>
-              <p style={{ color: "#5a5a68", fontSize: 14, textAlign: "center", marginBottom: 32, fontWeight: 300, lineHeight: 1.6 }}>
-                Enter your email and we'll send you a magic link to sign in — no password needed.
+              <h1 style={{ fontSize:28, fontWeight:800, color:t.text, letterSpacing:"-0.04em", marginBottom:8 }}>Welcome back</h1>
+              <p style={{ color:t.text2, fontSize:15, marginBottom:36, lineHeight:1.6 }}>
+                Enter your email to receive a magic link — no password needed.
               </p>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 12, color: "#7a7268", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Email Address</label>
+              <div className="ef-form-row">
+                <label className="ef-label">Email address</label>
                 <input
-                  className="field"
+                  className="ef-input"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleSubmit()}
                   autoFocus
+                  style={{ fontSize:15, padding:"12px 14px" }}
                 />
               </div>
 
               {error && (
-                <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, fontSize: 13, color: "#ef4444" }}>
-                  ⚠ {error}
+                <div style={{ background:"rgba(220,38,38,0.08)", border:"1.5px solid rgba(220,38,38,0.2)", borderRadius:8, padding:"11px 14px", marginBottom:16, fontSize:13, color:"#dc2626", display:"flex", gap:8, alignItems:"center" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  {error}
                 </div>
               )}
 
-              <button className="btn" onClick={handleSubmit} disabled={loading || !email.trim()}>
-                {loading ? "Sending…" : "Send Magic Link →"}
+              <button
+                className="ef-btn ef-btn-lg"
+                style={{ width:"100%", fontSize:15, padding:"13px" }}
+                onClick={handleSubmit}
+                disabled={loading || !email.trim()}
+              >
+                {loading ? "Sending…" : "Continue with email →"}
               </button>
 
-              <p style={{ fontSize: 12, color: "#3a3a45", textAlign: "center", marginTop: 20, lineHeight: 1.6 }}>
-                New here? Just enter your email — an account will be created automatically.
+              <p style={{ fontSize:13, color:t.text3, textAlign:"center", marginTop:20, lineHeight:1.7 }}>
+                No account? One will be created automatically.
               </p>
             </>
           ) : (
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 20 }}>📬</div>
-              <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 22, marginBottom: 12 }}>Check your inbox</h2>
-              <p style={{ color: "#5a5a68", fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-                We've sent a magic link to <strong style={{ color: "#d4a853" }}>{email}</strong>.<br />
-                Click it to sign in and start planning your event.
+            <div style={{ textAlign:"center" }} className="ef-fade-up">
+              <div style={{ width:64, height:64, background:t.accentBg, border:`2px solid ${t.accentBorder}`, borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 24px", fontSize:28 }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={t.accent} strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <h2 style={{ fontSize:24, fontWeight:800, color:t.text, letterSpacing:"-0.03em", marginBottom:10 }}>Check your inbox</h2>
+              <p style={{ color:t.text2, fontSize:15, lineHeight:1.7, marginBottom:28 }}>
+                We sent a magic link to <strong style={{ color:t.accent }}>{email}</strong>.<br/>
+                Click it to sign in and start planning.
               </p>
-              <button onClick={() => { setSent(false); setEmail(""); }} style={{ background: "none", border: "none", color: "#5a5a68", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
+              <button onClick={() => { setSent(false); setEmail(""); }}
+                style={{ background:"none", border:"none", color:t.text3, fontSize:14, cursor:"pointer", textDecoration:"underline", fontFamily:"inherit" }}>
                 Use a different email
               </button>
             </div>

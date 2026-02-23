@@ -6,18 +6,20 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM } from "./theme";
 
-const page = { minHeight: "100vh", background: "#06060e", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', sans-serif", padding: 24 };
-const card = { background: "#0a0a14", border: "1px solid #1e1e2e", borderRadius: 20, padding: "36px 32px", maxWidth: 400, width: "100%", textAlign: "center" };
-const field = { width: "100%", boxSizing: "border-box", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 9, padding: "11px 14px", color: "#e2d9cc", fontSize: 14, outline: "none", fontFamily: "'DM Sans',sans-serif", marginBottom: 10 };
-const btnGreen = { width: "100%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 9, padding: 12, fontSize: 15, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontWeight: 600 };
-const btnGhost = { width: "100%", background: "none", border: "1px solid #1e1e2e", color: "#5a5a72", borderRadius: 9, padding: 11, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginTop: 8 };
+// page style uses CSS vars
+const page = { minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", padding: 24 };
+const card = { background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "36px 32px", maxWidth: 400, width: "100%", textAlign: "center" };
+const field = { width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "11px 14px", color: "var(--text)", fontSize: 14, outline: "none", fontFamily: "'Plus Jakarta Sans',sans-serif", marginBottom: 10 };
+const btnGreen = { width: "100%", background: "rgba(5,150,105,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "var(--success,#059669)", borderRadius: 9, padding: 12, fontSize: 15, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 600 };
+const btnGhost = { width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 9, padding: 11, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", marginTop: 8 };
 
 function Logo() {
   return (
     <div style={{ marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-      <div style={{ width: 26, height: 26, background: "linear-gradient(135deg,#c9a84c,#a8872e)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#080810" }}>✦</div>
-      <span style={{ fontSize: 14, color: "#5a5a72", letterSpacing: "0.05em" }}>EventFlow</span>
+      <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+      <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
     </div>
   );
 }
@@ -44,9 +46,9 @@ export function GuestCheckIn() {
   }, [guestId]);
 
   const cfgMap = {
-    loading: { icon: "⏳", title: "Checking you in…",   color: "#5a5a72" },
-    success: { icon: "🎉", title: `Welcome, ${guest?.name?.split(" ")[0] || "Guest"}!`, color: "#10b981" },
-    already: { icon: "✓",  title: "Already checked in", color: "#c9a84c" },
+    loading: { icon: "⏳", title: "Checking you in…",   color: "var(--text2)" },
+    success: { icon: "🎉", title: `Welcome, ${guest?.name?.split(" ")[0] || "Guest"}!`, color: "var(--success,#059669)" },
+    already: { icon: "✓",  title: "Already checked in", color: "var(--accent)" },
     error:   { icon: "⚠",  title: "Something went wrong", color: "#ef4444" },
   };
   const cfg = cfgMap[status] || cfgMap.loading;
@@ -57,13 +59,13 @@ export function GuestCheckIn() {
         <Logo />
         <div style={card}>
           <div style={{ fontSize: 52, marginBottom: 20 }}>{cfg.icon}</div>
-          {event && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 8, letterSpacing: "0.06em", textTransform: "uppercase" }}>{event.name}</div>}
-          <h1 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, fontWeight: 700, color: cfg.color, margin: "0 0 12px" }}>{cfg.title}</h1>
-          {status === "success" && <p style={{ fontSize: 14, color: "#5a5a72", lineHeight: 1.7, margin: 0 }}>You're on the list. Enjoy the event!</p>}
-          {status === "already" && <p style={{ fontSize: 14, color: "#5a5a72", lineHeight: 1.7, margin: 0 }}>Your ticket was already scanned earlier.</p>}
-          {status === "error"   && <p style={{ fontSize: 14, color: "#5a5a72", lineHeight: 1.7, margin: 0 }}>This QR code is invalid or the guest was not found.</p>}
+          {event && <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 8, letterSpacing: "0.06em", textTransform: "uppercase" }}>{event.name}</div>}
+          <h1 style={{ fontFamily: "inherit,Georgia,serif", fontSize: 26, fontWeight: 700, color: cfg.color, margin: "0 0 12px" }}>{cfg.title}</h1>
+          {status === "success" && <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>You're on the list. Enjoy the event!</p>}
+          {status === "already" && <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>Your ticket was already scanned earlier.</p>}
+          {status === "error"   && <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>This QR code is invalid or the guest was not found.</p>}
         </div>
-        {event?.date && <p style={{ marginTop: 20, fontSize: 12, color: "#2e2e42" }}>{new Date(event.date).toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>}
+        {event?.date && <p style={{ marginTop: 20, fontSize: 12, color: "var(--text3)" }}>{new Date(event.date).toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</p>}
       </div>
     </div>
   );
@@ -113,11 +115,11 @@ export function EventCheckIn() {
           <Logo />
           <div style={card}>
             <div style={{ fontSize: 52, marginBottom: 20 }}>{status === "success" ? "🎉" : "✓"}</div>
-            {event && <div style={{ fontSize: 12, color: "#5a5a72", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{event.name}</div>}
-            <h1 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, fontWeight: 700, color: status === "success" ? "#10b981" : "#c9a84c", margin: "0 0 12px" }}>
+            {event && <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{event.name}</div>}
+            <h1 style={{ fontFamily: "inherit,Georgia,serif", fontSize: 26, fontWeight: 700, color: status === "success" ? "var(--success,#059669)" : "var(--accent)", margin: "0 0 12px" }}>
               {status === "success" ? `Welcome, ${selected?.name?.split(" ")[0]}!` : "Already checked in"}
             </h1>
-            <p style={{ fontSize: 14, color: "#5a5a72", lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>
               {status === "success" ? "You're on the list. Enjoy the event!" : "Your ticket was already scanned earlier."}
             </p>
           </div>
@@ -132,8 +134,8 @@ export function EventCheckIn() {
         <Logo />
         <div style={card}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>👋</div>
-          {event && <h1 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 22, fontWeight: 700, color: "#f0e8db", margin: "0 0 4px" }}>{event.name}</h1>}
-          <p style={{ fontSize: 14, color: "#5a5a72", margin: "0 0 24px" }}>Find your name to check in</p>
+          {event && <h1 style={{ fontFamily: "inherit,Georgia,serif", fontSize: 22, fontWeight: 700, color: "#f0e8db", margin: "0 0 4px" }}>{event.name}</h1>}
+          <p style={{ fontSize: 14, color: "var(--text2)", margin: "0 0 24px" }}>Find your name to check in</p>
 
           {!selected ? (
             <>
@@ -142,32 +144,32 @@ export function EventCheckIn() {
                 style={{ ...field, textAlign: "left" }} autoFocus />
               <div style={{ maxHeight: 300, overflowY: "auto", textAlign: "left" }}>
                 {filtered.length === 0 && search && (
-                  <div style={{ padding: 16, color: "#3a3a52", fontSize: 13, textAlign: "center" }}>No guests found.</div>
+                  <div style={{ padding: 16, color: "var(--text3)", fontSize: 13, textAlign: "center" }}>No guests found.</div>
                 )}
                 {filtered.map(g => (
                   <div key={g.id} onClick={() => setSelected(g)}
                     style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 14px", borderRadius: 9, cursor: "pointer", transition: "background 0.15s", marginBottom: 2 }}
-                    onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.04)"}
+                    onMouseEnter={e => e.currentTarget.style.background="var(--bg3)"}
                     onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "#13131f", border: `1.5px solid ${g.checked_in ? "#10b981" : "#1e1e2e"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#e2d9cc", flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "var(--bg3)", border: `1.5px solid ${g.checked_in ? "var(--success,#059669)" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--text)", flexShrink: 0 }}>
                       {(g.name || g.email || "?")[0].toUpperCase()}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, color: g.checked_in ? "#5a8a72" : "#e2d9cc", fontWeight: 500 }}>{g.name || g.email}</div>
-                      {g.email && g.name && <div style={{ fontSize: 11, color: "#3a3a52", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.email}</div>}
+                      <div style={{ fontSize: 14, color: g.checked_in ? "#5a8a72" : "var(--text)", fontWeight: 500 }}>{g.name || g.email}</div>
+                      {g.email && g.name && <div style={{ fontSize: 11, color: "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.email}</div>}
                     </div>
-                    {g.checked_in && <span style={{ fontSize: 11, color: "#10b981", flexShrink: 0 }}>✓ In</span>}
+                    {g.checked_in && <span style={{ fontSize: 11, color: "var(--success,#059669)", flexShrink: 0 }}>✓ In</span>}
                   </div>
                 ))}
               </div>
             </>
           ) : (
             <>
-              <div style={{ background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 12, padding: "16px 20px", marginBottom: 20, textAlign: "left" }}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: "#e2d9cc", marginBottom: 2 }}>{selected.name || selected.email}</div>
-                {selected.email && selected.name && <div style={{ fontSize: 12, color: "#5a5a72" }}>{selected.email}</div>}
+              <div style={{ background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "16px 20px", marginBottom: 20, textAlign: "left" }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text)", marginBottom: 2 }}>{selected.name || selected.email}</div>
+                {selected.email && selected.name && <div style={{ fontSize: 12, color: "var(--text2)" }}>{selected.email}</div>}
               </div>
-              <p style={{ fontSize: 14, color: "#5a5a72", marginBottom: 20 }}>Is this you?</p>
+              <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 20 }}>Is this you?</p>
               <button onClick={handleCheckIn} disabled={status === "loading"} style={btnGreen}>
                 {status === "loading" ? "Checking in…" : "✓ Yes, check me in"}
               </button>

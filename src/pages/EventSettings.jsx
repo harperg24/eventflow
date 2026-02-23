@@ -3,6 +3,7 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { loadThemePrefs, getTheme } from "./theme";
 
 const ALL_FEATURES = [
   { id:"guests",    label:"Guest Management", desc:"Invite guests, track RSVPs.",             icon:"◉", color:"#818cf8" },
@@ -23,7 +24,8 @@ export default function EventSettings({ eventId, event, setEvent }) {
   const [saved,    setSaved]      = useState(false);
   const [editField, setEditField] = useState(null);
   const [form, setForm]           = useState({});
-  const [accent, setAccent]       = useState("#4f46e5");
+  const __tp = loadThemePrefs(); const __t = getTheme(__tp);
+  const [accent, setAccent]       = useState(__t.accent);
   const [danger, setDanger]       = useState(false);
 
   useEffect(() => {
@@ -59,11 +61,11 @@ export default function EventSettings({ eventId, event, setEvent }) {
   };
 
   const S = {
-    card:   { background:"#1a1a1e", border:"1px solid #222228", borderRadius:12, overflow:"hidden" },
-    label:  { display:"block", fontSize:11, color:"#6b6a7a", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6 },
-    input:  { width:"100%", boxSizing:"border-box", background:"#1c1c20", border:"1px solid #2a2a30", borderRadius:8, padding:"10px 13px", color:"#f0eff4", fontSize:13, outline:"none", fontFamily:"inherit" },
+    card:   { background:"var(--bg2)", border:"1px solid #222228", borderRadius:12, overflow:"hidden" },
+    label:  { display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6 },
+    input:  { width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1px solid #2a2a30", borderRadius:8, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" },
     btn:    { background:accent, border:"none", color:"#fff", borderRadius:8, padding:"9px 18px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
-    ghost:  { background:"none", border:"1px solid #222228", color:"#9998a8", borderRadius:8, padding:"9px 18px", fontSize:13, cursor:"pointer", fontFamily:"inherit" },
+    ghost:  { background:"none", border:"1px solid #222228", color:"var(--text2)", borderRadius:8, padding:"9px 18px", fontSize:13, cursor:"pointer", fontFamily:"inherit" },
     row:    { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:"1px solid #1c1c20" },
   };
 
@@ -73,12 +75,12 @@ export default function EventSettings({ eventId, event, setEvent }) {
     return (
       <div style={S.row}>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:11, color:"#6b6a7a", marginBottom:3 }}>{label}</div>
+          <div style={{ fontSize:11, color:"var(--text2)", marginBottom:3 }}>{label}</div>
           {isEditing
             ? (type === "textarea"
                 ? <textarea value={val} onChange={e=>setVal(e.target.value)} rows={3} style={{...S.input, marginTop:4, resize:"vertical"}}/>
                 : <input type={type} value={val} onChange={e=>setVal(e.target.value)} style={{...S.input, marginTop:4}}/>)
-            : <div style={{ fontSize:13, color: val ? "#f0eff4" : "#6b6a7a" }}>{val || "—"}</div>
+            : <div style={{ fontSize:13, color: val ? "var(--text)" : "var(--text2)" }}>{val || "—"}</div>
           }
         </div>
         <div style={{ marginLeft:16, flexShrink:0, display:"flex", gap:8 }}>
@@ -96,14 +98,14 @@ export default function EventSettings({ eventId, event, setEvent }) {
   };
 
   return (
-    <div style={{ fontFamily:"'Inter','Helvetica Neue',sans-serif", color:"#f0eff4" }}>
+    <div style={{ fontFamily:"'Inter','Helvetica Neue',sans-serif", color:"var(--text)" }}>
       <style>{`input:focus, select:focus, textarea:focus { border-color: ${accent} !important; outline: none; } * { box-sizing: border-box; }`}</style>
       <h1 style={{ fontSize:22, fontWeight:700, letterSpacing:"-0.03em", marginBottom:6 }}>Event Settings</h1>
-      <p style={{ color:"#6b6a7a", fontSize:14, marginBottom:28 }}>Manage features, details, and preferences for this event.</p>
+      <p style={{ color:"var(--text2)", fontSize:14, marginBottom:28 }}>Manage features, details, and preferences for this event.</p>
 
       {/* ── Event Details ── */}
       <div style={{ marginBottom:28 }}>
-        <div style={{ fontSize:12, color:"#6b6a7a", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Event Details</div>
+        <div style={{ fontSize:12, color:"var(--text2)", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Event Details</div>
         <div style={S.card}>
           <EditableRow label="Event Name"   fieldKey="name"          value={event?.name} />
           <EditableRow label="Date"         fieldKey="date"          value={event?.date} type="date" />
@@ -118,7 +120,7 @@ export default function EventSettings({ eventId, event, setEvent }) {
       {/* ── Feature Toggles ── */}
       <div style={{ marginBottom:28 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontSize:12, color:"#6b6a7a", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em" }}>Features</div>
+          <div style={{ fontSize:12, color:"var(--text2)", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em" }}>Features</div>
           <button onClick={saveFeatures} disabled={saving} style={{ ...S.btn, fontSize:12, padding:"7px 14px", opacity:saving?0.6:1 }}>
             {saving ? "Saving…" : saved ? "✓ Saved" : "Save Changes"}
           </button>
@@ -128,13 +130,13 @@ export default function EventSettings({ eventId, event, setEvent }) {
             const on = features.includes(f.id);
             return (
               <div key={f.id} onClick={() => toggleFeature(f.id)}
-                style={{ background:on?`${f.color}08`:"#1c1c20", border:`1px solid ${on?f.color+"35":"#2a2a30"}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, transition:"all 0.15s" }}>
-                <div style={{ width:30, height:30, borderRadius:8, background:on?`${f.color}18`:"#2a2a30", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:on?f.color:"#6b6a7a", flexShrink:0 }}>
+                style={{ background:on?`${f.color}08`:"var(--bg3)", border:`1px solid ${on?f.color+"35":"var(--border)"}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, transition:"all 0.15s" }}>
+                <div style={{ width:30, height:30, borderRadius:8, background:on?`${f.color}18`:"var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:on?f.color:"var(--text2)", flexShrink:0 }}>
                   {f.icon}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, fontWeight:600, color:on?"#f0eff4":"#9998a8", marginBottom:2 }}>{f.label}</div>
-                  <div style={{ fontSize:11, color:"#6b6a7a", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.desc}</div>
+                  <div style={{ fontSize:13, fontWeight:600, color:on?"var(--text)":"var(--text2)", marginBottom:2 }}>{f.label}</div>
+                  <div style={{ fontSize:11, color:"var(--text2)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.desc}</div>
                 </div>
                 <div style={{ width:18, height:18, borderRadius:"50%", background:on?accent:"transparent", border:`2px solid ${on?accent:"#3a3a45"}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all 0.15s" }}>
                   {on && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>}
@@ -143,19 +145,19 @@ export default function EventSettings({ eventId, event, setEvent }) {
             );
           })}
         </div>
-        <div style={{ marginTop:10, fontSize:12, color:"#6b6a7a" }}>
+        <div style={{ marginTop:10, fontSize:12, color:"var(--text2)" }}>
           Overview is always enabled. {features.length} additional feature{features.length!==1?"s":""} active.
         </div>
       </div>
 
       {/* ── Invite Link ── */}
       <div style={{ marginBottom:28 }}>
-        <div style={{ fontSize:12, color:"#6b6a7a", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Share & Invite</div>
+        <div style={{ fontSize:12, color:"var(--text2)", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Share & Invite</div>
         <div style={{ ...S.card, padding:"16px 18px" }}>
-          <div style={{ fontSize:13, color:"#9998a8", marginBottom:10 }}>RSVP link for guests:</div>
+          <div style={{ fontSize:13, color:"var(--text2)", marginBottom:10 }}>RSVP link for guests:</div>
           <div style={{ display:"flex", gap:10 }}>
             <input readOnly value={event?.invite_slug ? `${window.location.origin}/rsvp/${event.invite_slug}` : "—"}
-              style={{...S.input, flex:1, color:"#6b6a7a", fontSize:12, fontFamily:"'Courier New',monospace"}}/>
+              style={{...S.input, flex:1, color:"var(--text2)", fontSize:12, fontFamily:"'Courier New',monospace"}}/>
             <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/rsvp/${event?.invite_slug}`)}
               style={{...S.ghost, fontSize:12, padding:"9px 14px", whiteSpace:"nowrap"}}>Copy Link</button>
           </div>
@@ -170,7 +172,7 @@ export default function EventSettings({ eventId, event, setEvent }) {
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <div>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>Delete this event</div>
-                <div style={{ fontSize:12, color:"#6b6a7a" }}>This permanently removes the event and all associated data.</div>
+                <div style={{ fontSize:12, color:"var(--text2)" }}>This permanently removes the event and all associated data.</div>
               </div>
               <button onClick={() => setDanger(true)} style={{ background:"none", border:"1px solid #5a2020", color:"#ef4444", borderRadius:8, padding:"9px 16px", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>Delete Event</button>
             </div>

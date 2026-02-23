@@ -30,7 +30,7 @@ export default function App() {
   }, []);
 
   if (session === undefined) return (
-    <div style={{ minHeight: "100vh", background: "#080810", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif", color: "#c9a84c", fontSize: 14 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif", color: "var(--accent)", fontSize: 14 }}>
       Loading…
     </div>
   );
