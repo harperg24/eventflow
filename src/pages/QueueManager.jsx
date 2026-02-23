@@ -1,7 +1,5 @@
 // ============================================================
-//  QueueManager.jsx
-//  Manager-facing queue control panel — embedded in Dashboard
-//  as activeNav === "queue"
+//  QueueManager.jsx  —  Manager-facing queue control panel
 // ============================================================
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "../lib/supabase";
@@ -24,46 +22,139 @@ function StatusBadge({ status }) {
   );
 }
 
-function QueueFormModal({ queue, onSave, onClose }) {
-  const [form, setForm] = useState(queue || { name:"", description:"", max_per_person:1 });
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const inputStyle = { width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)",
-    borderRadius:8, padding:"9px 12px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" };
-  const labelStyle = { display:"block", fontSize:12, fontWeight:700, color:"var(--text2)", marginBottom:6 };
+// ── Live elapsed timer for a called entry ─────────────────────
+function ElapsedTimer({ since }) {
+  const [secs, setSecs] = useState(() => Math.floor((Date.now() - new Date(since)) / 1000));
+  useEffect(() => {
+    const iv = setInterval(() => setSecs(Math.floor((Date.now() - new Date(since)) / 1000)), 1000);
+    return () => clearInterval(iv);
+  }, [since]);
+  const m = Math.floor(secs / 60), s = secs % 60;
+  const isLate = secs > 120;
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center",
-      justifyContent:"center", zIndex:500, padding:24, backdropFilter:"blur(6px)" }} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
-        borderRadius:18, width:"100%", maxWidth:460, boxShadow:"0 24px 60px rgba(0,0,0,0.4)" }}>
-        <div style={{ padding:"20px 24px", borderBottom:"1.5px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>{form.id ? "Edit Queue" : "Create Queue"}</div>
-          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:8,
-            padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:13 }}>✕</button>
+    <span style={{ fontSize:11, color: isLate ? "#f59e0b" : "var(--text3)", fontVariantNumeric:"tabular-nums" }}>
+      {isLate ? "⚠ " : ""}{m > 0 ? `${m}m ` : ""}{String(s).padStart(2,"0")}s
+    </span>
+  );
+}
+
+// ── Queue create / edit modal ─────────────────────────────────
+function QueueFormModal({ queue, onSave, onClose }) {
+  const [form, setForm] = useState(queue || {
+    name:"", description:"", max_per_person:1, auto_caller:1, max_joins_per_device:1
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const S = {
+    input: { width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)",
+      borderRadius:8, padding:"9px 12px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" },
+    label: { display:"block", fontSize:12, fontWeight:700, color:"var(--text2)", marginBottom:6 },
+    note:  { fontSize:11, color:"var(--text3)", marginTop:6, lineHeight:1.55 },
+    chips: { display:"flex", gap:6, flexWrap:"wrap" },
+    section: { fontSize:10, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.09em",
+      color:"var(--text3)", marginBottom:12 },
+  };
+
+  const Chip = ({ val, current, onChange }) => (
+    <button type="button" onClick={() => onChange(val)}
+      style={{ background: current===val ? "var(--accent)" : "var(--bg3)",
+        border:`1.5px solid ${current===val ? "var(--accent)" : "var(--border)"}`,
+        color: current===val ? "#fff" : "var(--text2)",
+        borderRadius:8, padding:"5px 14px", fontSize:13, fontWeight:600,
+        cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
+      {val === 99 ? "∞" : val}
+    </button>
+  );
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex",
+      alignItems:"center", justifyContent:"center", zIndex:500, padding:24, backdropFilter:"blur(6px)" }}
+      onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
+        borderRadius:18, width:"100%", maxWidth:520, maxHeight:"92vh", overflowY:"auto",
+        boxShadow:"0 28px 60px rgba(0,0,0,0.5)" }}>
+
+        {/* Header */}
+        <div style={{ padding:"20px 24px", borderBottom:"1.5px solid var(--border)",
+          display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0,
+          background:"var(--bg2)", borderRadius:"18px 18px 0 0", zIndex:1 }}>
+          <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>
+            {form.id ? "Edit Queue" : "Create Queue"}
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)",
+            borderRadius:8, padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:13 }}>✕</button>
         </div>
-        <div style={{ padding:"20px 24px", display:"flex", flexDirection:"column", gap:16 }}>
+
+        <div style={{ padding:"22px 24px", display:"flex", flexDirection:"column", gap:20 }}>
+
+          {/* ── Basics ── */}
           <div>
-            <label style={labelStyle}>Queue Name *</label>
-            <input value={form.name} onChange={e=>set("name",e.target.value)} style={inputStyle}
-              placeholder="e.g. Gelato Station, Photo Booth, Bar Queue" />
+            <div style={S.section}>Queue Info</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              <div>
+                <label style={S.label}>Queue Name *</label>
+                <input value={form.name} onChange={e=>set("name",e.target.value)} style={S.input}
+                  placeholder="e.g. Gelato Station, Photo Booth, Bar" />
+              </div>
+              <div>
+                <label style={S.label}>Description (shown to guests)</label>
+                <textarea value={form.description||""} onChange={e=>set("description",e.target.value)}
+                  rows={2} style={{ ...S.input, resize:"vertical" }}
+                  placeholder="e.g. 1 free gelato scoop per person" />
+              </div>
+              <div>
+                <label style={S.label}>Max party size per entry</label>
+                <div style={S.chips}>
+                  {[1,2,3,4,5,6,8,10].map(n => <Chip key={n} val={n} current={form.max_per_person||1} onChange={v=>set("max_per_person",v)} />)}
+                </div>
+              </div>
+            </div>
           </div>
+
+          <div style={{ borderTop:"1.5px solid var(--border)" }} />
+
+          {/* ── Auto-caller ── */}
           <div>
-            <label style={labelStyle}>Description (shown to guests)</label>
-            <textarea value={form.description||""} onChange={e=>set("description",e.target.value)}
-              rows={2} style={{ ...inputStyle, resize:"vertical" }}
-              placeholder="e.g. Complimentary gelato — 1 scoop per person" />
+            <div style={S.section}>Auto-Caller</div>
+            <label style={S.label}>How many people to keep called at once</label>
+            <div style={S.chips}>
+              {[1,2,3,4,5,6,8,10,12,15,20].map(n => <Chip key={n} val={n} current={form.auto_caller||1} onChange={v=>set("auto_caller",v)} />)}
+            </div>
+            <p style={S.note}>
+              When you hit <strong>✓ Served</strong>, the next person is automatically called — keeping exactly{" "}
+              <strong>{form.auto_caller||1}</strong> {(form.auto_caller||1)===1?"person":"people"} in the called state at all times.
+              For a large event like a ball, set this to <strong>10</strong> so staff can serve a whole batch before the queue catches up.
+            </p>
           </div>
+
+          <div style={{ borderTop:"1.5px solid var(--border)" }} />
+
+          {/* ── Device limit ── */}
           <div>
-            <label style={labelStyle}>Max per person</label>
-            <select value={form.max_per_person||1} onChange={e=>set("max_per_person",parseInt(e.target.value))}
-              style={inputStyle}>
-              {[1,2,3,4,5,6,8,10].map(n=><option key={n} value={n}>{n} {n===1?"person":"people"}</option>)}
-            </select>
+            <div style={S.section}>Access Control</div>
+            <label style={S.label}>Max joins per device</label>
+            <div style={S.chips}>
+              {[1,2,3,5].map(n => <Chip key={n} val={n} current={form.max_joins_per_device||1} onChange={v=>set("max_joins_per_device",v)} />)}
+              <Chip val={99} current={form.max_joins_per_device||1} onChange={v=>set("max_joins_per_device",v)} />
+            </div>
+            <p style={S.note}>
+              Each device (phone/laptop) can only join this queue{" "}
+              {(form.max_joins_per_device||1) >= 99
+                ? "unlimited times"
+                : <><strong>{form.max_joins_per_device||1}</strong> {(form.max_joins_per_device||1)===1?"time":"times"}</>
+              }.
+              Set to <strong>1</strong> to prevent people from joining again after being served — ideal for 1 per person perks like free gelato.
+            </p>
           </div>
+
+          {/* Buttons */}
           <div style={{ display:"flex", gap:10, paddingTop:4 }}>
             <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
-              borderRadius:9, padding:"10px", fontSize:14, color:"var(--text2)", cursor:"pointer" }}>Cancel</button>
-            <button onClick={()=>onSave(form)} style={{ flex:2, background:"var(--accent)", border:"none",
-              borderRadius:9, padding:"10px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+              borderRadius:9, padding:"11px", fontSize:14, color:"var(--text2)", cursor:"pointer" }}>Cancel</button>
+            <button onClick={() => onSave(form)} disabled={!form.name?.trim()}
+              style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:9,
+                padding:"11px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer",
+                opacity:!form.name?.trim() ? 0.4 : 1 }}>
               {form.id ? "Save Changes" : "Create Queue"}
             </button>
           </div>
@@ -73,59 +164,66 @@ function QueueFormModal({ queue, onSave, onClose }) {
   );
 }
 
+// ── Main component ────────────────────────────────────────────
 export default function QueueManager({ eventId }) {
   const [queues,  setQueues]  = useState([]);
   const [entries, setEntries] = useState({}); // queueId → entries[]
   const [loading, setLoading] = useState(true);
-  const [modal,   setModal]   = useState(null);   // null | queue obj (for create/edit)
-  const [active,  setActive]  = useState(null);   // currently selected queue id
-  const [calling, setCalling] = useState(false);
-  const subRefs = useRef({});
+  const [modal,   setModal]   = useState(null);
+  const [active,  setActive]  = useState(null);
+  const [busy,    setBusy]    = useState(false);
 
-  // ── Load ────────────────────────────────────────────────────
+  // ── Load all queues + entries ──────────────────────────────
   const load = useCallback(async () => {
     const { data: qs } = await supabase.from("queues").select("*").eq("event_id", eventId).order("created_at");
     setQueues(qs || []);
-
     const all = {};
     await Promise.all((qs||[]).map(async q => {
-      const { data: es } = await supabase.from("queue_entries").select("*").eq("queue_id", q.id)
-        .order("position");
+      const { data: es } = await supabase.from("queue_entries").select("*").eq("queue_id", q.id).order("position");
       all[q.id] = es || [];
     }));
     setEntries(all);
     setLoading(false);
     if ((qs||[]).length > 0 && !active) setActive(qs[0].id);
-  }, [eventId]);
+  }, [eventId]); // eslint-disable-line
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Realtime for active queue ─────────────────────────────
+  // ── Realtime for active queue ──────────────────────────────
   useEffect(() => {
     if (!active) return;
     const ch = supabase.channel(`qm_${active}`)
       .on("postgres_changes", { event:"*", schema:"public", table:"queue_entries", filter:`queue_id=eq.${active}` },
-        (payload) => {
-          const row = payload.new || payload.old;
+        ({ eventType, new: row, old }) => {
+          const r = row || old;
           setEntries(prev => {
             const list = prev[active] || [];
-            if (payload.eventType === "DELETE") return { ...prev, [active]: list.filter(e=>e.id!==row.id) };
-            const updated = list.some(e=>e.id===row.id)
-              ? list.map(e=>e.id===row.id?row:e)
-              : [...list, row];
+            if (eventType === "DELETE") return { ...prev, [active]: list.filter(e=>e.id!==r.id) };
+            const updated = list.some(e=>e.id===r.id) ? list.map(e=>e.id===r.id?r:e) : [...list, r];
             return { ...prev, [active]: updated.sort((a,b)=>a.position-b.position) };
           });
         }
-      ).subscribe();
+      )
+      .on("postgres_changes", { event:"UPDATE", schema:"public", table:"queues", filter:`id=eq.${active}` },
+        ({ new: row }) => setQueues(qs => qs.map(q => q.id===active ? row : q))
+      )
+      .subscribe();
     return () => supabase.removeChannel(ch);
   }, [active]);
 
-  // ── CRUD ────────────────────────────────────────────────────
+  // ── CRUD helpers ──────────────────────────────────────────
   const saveQueue = async (form) => {
-    const row = { event_id:eventId, name:form.name.trim(), description:form.description?.trim()||null, max_per_person:form.max_per_person||1 };
+    const row = {
+      event_id:             eventId,
+      name:                 form.name.trim(),
+      description:          form.description?.trim() || null,
+      max_per_person:       form.max_per_person    || 1,
+      auto_caller:          form.auto_caller        || 1,
+      max_joins_per_device: form.max_joins_per_device || 1,
+    };
     if (form.id) {
-      const { data } = await supabase.from("queues").update(row).eq("id",form.id).select().single();
-      setQueues(qs => qs.map(q=>q.id===form.id?data:q));
+      const { data } = await supabase.from("queues").update(row).eq("id", form.id).select().single();
+      setQueues(qs => qs.map(q => q.id===form.id ? data : q));
     } else {
       const { data } = await supabase.from("queues").insert(row).select().single();
       setQueues(qs => [...qs, data]);
@@ -136,263 +234,388 @@ export default function QueueManager({ eventId }) {
   };
 
   const deleteQueue = async (id) => {
-    if (!window.confirm("Delete this queue? All entries will be removed.")) return;
+    if (!window.confirm("Delete this queue and all its entries?")) return;
     await supabase.from("queues").delete().eq("id", id);
-    setQueues(qs => qs.filter(q=>q.id!==id));
-    setEntries(prev => { const next={...prev}; delete next[id]; return next; });
+    setQueues(qs => qs.filter(q => q.id!==id));
+    setEntries(prev => { const n={...prev}; delete n[id]; return n; });
     if (active === id) setActive(queues.filter(q=>q.id!==id)[0]?.id || null);
   };
 
-  const setStatus = async (queueId, status) => {
+  const setQueueStatus = async (queueId, status) => {
     const { data } = await supabase.from("queues").update({ status }).eq("id", queueId).select().single();
-    setQueues(qs => qs.map(q=>q.id===queueId?data:q));
+    setQueues(qs => qs.map(q => q.id===queueId ? data : q));
   };
 
-  // ── Call next person ────────────────────────────────────────
-  const callNext = async () => {
-    if (!active || calling) return;
-    const qEntries = entries[active] || [];
-    const waiting = qEntries.filter(e => e.status === "waiting").sort((a,b)=>a.position-b.position);
-    if (waiting.length === 0) return;
-    // First un-call any currently called entry (mark done if they haven't responded)
-    const prevCalled = qEntries.filter(e => e.status === "called");
-    for (const e of prevCalled) {
-      await supabase.from("queue_entries").update({ status:"done", done_at:new Date().toISOString() }).eq("id", e.id);
-    }
-    const next = waiting[0];
-    setCalling(true);
-    await supabase.from("queue_entries").update({ status:"called", called_at:new Date().toISOString() }).eq("id", next.id);
-    setCalling(false);
+  // ── Core: fill called slots up to auto_caller count ────────
+  // This is the single function that keeps the called list topped up.
+  const fillSlots = async (queueId, autoCallerN) => {
+    // Always re-fetch fresh state so we don't race on stale local state
+    const { data: fresh } = await supabase.from("queue_entries")
+      .select("*").eq("queue_id", queueId).order("position");
+    if (!fresh) return;
+
+    const nowCalled  = fresh.filter(e => e.status === "called");
+    const nowWaiting = fresh.filter(e => e.status === "waiting");
+    const slotsNeeded = Math.max(0, autoCallerN - nowCalled.length);
+    if (slotsNeeded === 0 || nowWaiting.length === 0) return;
+
+    const toCall = nowWaiting.slice(0, slotsNeeded);
+    await Promise.all(toCall.map(e =>
+      supabase.from("queue_entries")
+        .update({ status:"called", called_at: new Date().toISOString() })
+        .eq("id", e.id)
+    ));
   };
 
-  const markDone = async (entryId) => {
-    await supabase.from("queue_entries").update({ status:"done", done_at:new Date().toISOString() }).eq("id", entryId);
+  // ── Serve: mark done → auto-fill empty slot ───────────────
+  const handleServed = async (entryId) => {
+    if (busy) return;
+    setBusy(true);
+    const q = queues.find(q => q.id === active);
+    await supabase.from("queue_entries")
+      .update({ status:"done", done_at: new Date().toISOString() })
+      .eq("id", entryId);
+    await fillSlots(active, q?.auto_caller || 1);
+    setBusy(false);
   };
 
-  const removeEntry = async (entryId) => {
+  // ── Skip a called person → mark left + fill ───────────────
+  const handleSkip = async (entryId) => {
+    if (busy) return;
+    setBusy(true);
+    const q = queues.find(q => q.id === active);
+    await supabase.from("queue_entries").update({ status:"left" }).eq("id", entryId);
+    await fillSlots(active, q?.auto_caller || 1);
+    setBusy(false);
+  };
+
+  // ── Manual fill: top up all open slots now ─────────────────
+  const handleFillNow = async () => {
+    if (busy) return;
+    setBusy(true);
+    const q = queues.find(q => q.id === active);
+    await fillSlots(active, q?.auto_caller || 1);
+    setBusy(false);
+  };
+
+  const removeWaiting = async (entryId) => {
     await supabase.from("queue_entries").update({ status:"left" }).eq("id", entryId);
   };
 
   const clearDone = async () => {
-    if (!active) return;
-    if (!window.confirm("Clear all done/left entries from this queue?")) return;
+    if (!active || !window.confirm("Clear all served/left entries?")) return;
     await supabase.from("queue_entries").delete().eq("queue_id", active).in("status", ["done","left"]);
     setEntries(prev => ({ ...prev, [active]: (prev[active]||[]).filter(e=>!["done","left"].includes(e.status)) }));
   };
 
-  const getQueueUrl = (q) => `${window.location.origin}/queue/${q.id}`;
-  const copyQueueUrl = (q) => {
-    navigator.clipboard.writeText(getQueueUrl(q));
-    alert(`Queue link copied!\n${getQueueUrl(q)}`);
+  const copyLink = (q) => {
+    const url = `${window.location.origin}/queue/${q.id}`;
+    navigator.clipboard.writeText(url);
+    alert(`Queue link copied!\n${url}`);
   };
 
-  // ── Computed ────────────────────────────────────────────────
+  // ── Derived state ──────────────────────────────────────────
   const activeQueue   = queues.find(q => q.id === active);
-  const activeEntries = entries[active] || [];
-  const waiting  = activeEntries.filter(e => e.status === "waiting").sort((a,b)=>a.position-b.position);
-  const called   = activeEntries.filter(e => e.status === "called");
-  const done     = activeEntries.filter(e => e.status === "done");
-  const totalServed = done.length;
+  const autoCallerN   = activeQueue?.auto_caller || 1;
+  const maxPerDevice  = activeQueue?.max_joins_per_device || 1;
+  const allEntries    = entries[active] || [];
+  const waiting       = allEntries.filter(e => e.status === "waiting").sort((a,b)=>a.position-b.position);
+  const called        = allEntries.filter(e => e.status === "called").sort((a,b)=>new Date(a.called_at)-new Date(b.called_at));
+  const done          = allEntries.filter(e => ["done","left"].includes(e.status));
+  const totalServed   = allEntries.filter(e => e.status === "done").length;
+  const openSlots     = Math.max(0, autoCallerN - called.length);
+  const canFill       = openSlots > 0 && waiting.length > 0 && activeQueue?.status === "open";
 
-  const btnStyle = (color="#fff", bg="var(--accent)", extra={}) => ({
-    background:bg, border:"none", color, borderRadius:9, padding:"9px 16px",
-    fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
-    transition:"opacity 0.15s", ...extra
-  });
-  const ghostBtn = (extra={}) => ({
-    background:"none", border:"1.5px solid var(--border)", color:"var(--text2)",
-    borderRadius:9, padding:"7px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit", ...extra
-  });
+  const btn = (label, onClick, opts={}) => (
+    <button onClick={onClick} disabled={opts.disabled}
+      style={{ background: opts.bg || "var(--accent)", border: opts.border || "none",
+        color: opts.color || "#fff", borderRadius:9, padding: opts.pad || "8px 16px",
+        fontSize: opts.fs || 13, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
+        transition:"opacity 0.12s", opacity: opts.disabled ? 0.45 : 1,
+        whiteSpace:"nowrap", ...opts.extra }}>
+      {label}
+    </button>
+  );
+
+  const ghost = (label, onClick, opts={}) =>
+    btn(label, onClick, { bg:"none", border:"1.5px solid var(--border)", color:"var(--text2)",
+      pad:"6px 12px", ...opts });
 
   if (loading) return <div style={{ padding:40, textAlign:"center", color:"var(--text3)", fontSize:14 }}>Loading queues…</div>;
 
   return (
     <div className="fade-up">
-      {/* ── Header ── */}
+
+      {/* ── Page header ── */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:20 }}>
         <div>
           <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:"-0.04em", marginBottom:4 }}>Queue Manager</h1>
-          <p style={{ color:"var(--text2)", fontSize:14 }}>{queues.length} queue{queues.length!==1?"s":""}{"  ·  "}virtual line system</p>
+          <p style={{ color:"var(--text2)", fontSize:14 }}>
+            {queues.length} queue{queues.length!==1?"s":""}{"  ·  "}virtual line system
+          </p>
         </div>
-        <button onClick={()=>setModal({})} style={btnStyle()}>+ New Queue</button>
+        {btn("+ New Queue", () => setModal({}))}
       </div>
 
       {queues.length === 0 ? (
-        <div style={{ textAlign:"center", padding:"80px 20px", background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:16 }}>
+        <div style={{ textAlign:"center", padding:"80px 20px", background:"var(--bg2)",
+          border:"1.5px solid var(--border)", borderRadius:16 }}>
           <div style={{ fontSize:48, marginBottom:16 }}>🎟</div>
           <h2 style={{ fontSize:20, fontWeight:800, marginBottom:8 }}>No queues yet</h2>
-          <p style={{ color:"var(--text2)", fontSize:14, marginBottom:24 }}>
-            Create a virtual queue for gelato, photo booths, bars, or any station at your event.
+          <p style={{ color:"var(--text2)", fontSize:14, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
+            Create a virtual queue for gelato, photo booths, bars — anything with a line.
           </p>
-          <button onClick={()=>setModal({})} style={btnStyle()}>+ Create First Queue</button>
+          {btn("+ Create First Queue", () => setModal({}))}
         </div>
       ) : (
-        <div style={{ display:"grid", gridTemplateColumns:"280px 1fr", gap:20, alignItems:"start" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"256px 1fr", gap:20, alignItems:"start" }}>
 
-          {/* ── Queue list sidebar ── */}
+          {/* ── Left sidebar ── */}
           <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
             {queues.map(q => {
-              const qEntries = entries[q.id] || [];
-              const qWaiting = qEntries.filter(e=>e.status==="waiting").length;
-              const qCalled  = qEntries.filter(e=>e.status==="called").length;
+              const qe = entries[q.id] || [];
+              const qWaiting = qe.filter(e=>e.status==="waiting").length;
+              const qCalled  = qe.filter(e=>e.status==="called").length;
               const isActive = q.id === active;
-              const statusColor = q.status === "open" ? "var(--success,#059669)" : q.status === "paused" ? "#f59e0b" : "var(--text3)";
+              const dotColor = q.status==="open" ? "var(--success,#059669)" : q.status==="paused" ? "#f59e0b" : "var(--text3)";
               return (
-                <div key={q.id}
-                  onClick={()=>setActive(q.id)}
+                <div key={q.id} onClick={()=>setActive(q.id)}
                   style={{ background: isActive ? "var(--accentBg)" : "var(--bg2)",
-                    border: `1.5px solid ${isActive?"var(--accent)":"var(--border)"}`,
+                    border:`1.5px solid ${isActive?"var(--accent)":"var(--border)"}`,
                     borderRadius:12, padding:"14px 16px", cursor:"pointer",
-                    boxShadow: isActive?"0 0 0 3px var(--accentBg)":"none",
+                    boxShadow: isActive ? "0 0 0 3px var(--accentBg)" : "none",
                     transition:"all 0.15s" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:6 }}>
-                    <div style={{ fontSize:14, fontWeight:700, color:"var(--text)" }}>{q.name}</div>
-                    <span style={{ width:8, height:8, borderRadius:"50%", background:statusColor, display:"inline-block", marginTop:4, flexShrink:0 }}/>
+                  <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
+                    <div style={{ fontSize:14, fontWeight:700 }}>{q.name}</div>
+                    <span style={{ width:8, height:8, borderRadius:"50%", background:dotColor,
+                      display:"inline-block", marginTop:4, flexShrink:0 }}/>
                   </div>
-                  <div style={{ fontSize:12, color:"var(--text2)" }}>
-                    {qWaiting} waiting{qCalled > 0 ? ` · ${qCalled} called` : ""}
+                  <div style={{ fontSize:12, color:"var(--text2)", marginBottom:3 }}>
+                    {qWaiting} waiting{qCalled>0?` · ${qCalled} called`:""}
+                  </div>
+                  <div style={{ fontSize:11, color:"var(--text3)" }}>
+                    📣 {q.auto_caller||1} simultaneous{" · "}
+                    📱 {(q.max_joins_per_device||1)>=99?"∞":(q.max_joins_per_device||1)}×/device
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* ── Active queue panel ── */}
+          {/* ── Right panel ── */}
           {activeQueue && (
-            <div>
-              {/* Queue header */}
-              <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:16, padding:"20px 22px", marginBottom:16 }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12 }}>
-                  <div>
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+
+              {/* ── Queue header card ── */}
+              <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:16, padding:"20px 22px" }}>
+
+                {/* Top row: title + stats */}
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12, marginBottom:16 }}>
+                  <div style={{ flex:1 }}>
                     <h2 style={{ fontSize:20, fontWeight:800, letterSpacing:"-0.03em", marginBottom:4 }}>{activeQueue.name}</h2>
-                    {activeQueue.description && <p style={{ color:"var(--text2)", fontSize:13, margin:"0 0 8px" }}>{activeQueue.description}</p>}
+                    {activeQueue.description && <p style={{ color:"var(--text2)", fontSize:13, margin:"0 0 10px" }}>{activeQueue.description}</p>}
                     <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                      {/* Status toggle */}
                       <div style={{ display:"inline-flex", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:8, overflow:"hidden" }}>
                         {["open","paused","closed"].map(s => (
-                          <button key={s} onClick={()=>setStatus(activeQueue.id, s)}
-                            style={{ background:activeQueue.status===s?"var(--accent)":"none", color:activeQueue.status===s?"#fff":"var(--text3)",
-                              border:"none", padding:"5px 12px", fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
-                              textTransform:"capitalize", transition:"all 0.15s" }}>
+                          <button key={s} onClick={()=>setQueueStatus(activeQueue.id, s)}
+                            style={{ background:activeQueue.status===s?"var(--accent)":"none",
+                              color:activeQueue.status===s?"#fff":"var(--text3)",
+                              border:"none", padding:"5px 12px", fontSize:12, fontWeight:700,
+                              cursor:"pointer", fontFamily:"inherit", transition:"all 0.15s" }}>
                             {s==="open"?"▶ Open":s==="paused"?"⏸ Pause":"⏹ Close"}
                           </button>
                         ))}
                       </div>
-                      <button onClick={()=>copyQueueUrl(activeQueue)} style={ghostBtn()}>🔗 Share Link</button>
-                      <button onClick={()=>setModal({...activeQueue})} style={ghostBtn()}>✎ Edit</button>
-                      <button onClick={()=>deleteQueue(activeQueue.id)} style={ghostBtn({ color:"var(--danger,#dc2626)", borderColor:"rgba(220,38,38,0.2)" })}>✕</button>
+                      {ghost("🔗 Share", () => copyLink(activeQueue))}
+                      {ghost("✎ Edit", () => setModal({...activeQueue}))}
+                      {ghost("✕", () => deleteQueue(activeQueue.id),
+                        { color:"var(--danger,#dc2626)", extra:{ borderColor:"rgba(220,38,38,0.2)" }})}
                     </div>
                   </div>
 
-                  {/* Stats */}
-                  <div style={{ display:"flex", gap:12 }}>
-                    {[["Waiting", waiting.length, "#818cf8"],["Called", called.length, "var(--success,#059669)"],["Served", totalServed, "var(--accent)"]].map(([l,v,c]) => (
-                      <div key={l} style={{ textAlign:"center", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"10px 16px", minWidth:60 }}>
-                        <div style={{ fontSize:22, fontWeight:800, color:c, letterSpacing:"-0.03em" }}>{v}</div>
-                        <div style={{ fontSize:11, color:"var(--text3)", fontWeight:600 }}>{l}</div>
+                  {/* Stats chips */}
+                  <div style={{ display:"flex", gap:10 }}>
+                    {[["Waiting",waiting.length,"#818cf8"],["Called",called.length,"var(--success,#059669)"],["Served",totalServed,"var(--accent)"]].map(([l,v,c])=>(
+                      <div key={l} style={{ textAlign:"center", background:"var(--bg3)", border:"1.5px solid var(--border)",
+                        borderRadius:10, padding:"10px 14px", minWidth:58 }}>
+                        <div style={{ fontSize:20, fontWeight:800, color:c, letterSpacing:"-0.02em" }}>{v}</div>
+                        <div style={{ fontSize:10, color:"var(--text3)", fontWeight:700, textTransform:"uppercase" }}>{l}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Call next button — big prominent CTA */}
-                <div style={{ marginTop:16, paddingTop:16, borderTop:"1.5px solid var(--border)" }}>
-                  <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-                    <button onClick={callNext} disabled={calling || waiting.length === 0 || activeQueue.status !== "open"}
-                      style={{ ...btnStyle(), fontSize:15, padding:"12px 28px",
-                        background: waiting.length > 0 && activeQueue.status === "open" ? "var(--success,#059669)" : "var(--bg3)",
-                        color: waiting.length > 0 && activeQueue.status === "open" ? "#fff" : "var(--text3)",
-                        border: waiting.length > 0 && activeQueue.status === "open" ? "none" : "1.5px solid var(--border)",
-                        opacity: calling ? 0.6 : 1, minWidth:160 }}>
-                      {calling ? "Calling…" : `📣 Call Next ${waiting.length > 0 ? `(#${waiting[0]?.position})` : ""}`}
-                    </button>
-                    {waiting.length === 0 && <span style={{ fontSize:13, color:"var(--text3)" }}>Queue is empty</span>}
-                    {waiting.length > 0 && <span style={{ fontSize:13, color:"var(--text2)" }}>
-                      Next: <strong style={{ color:"var(--text)" }}>{waiting[0]?.guest_name}</strong>
-                      {waiting[0]?.party_size > 1 && <span style={{ color:"var(--accent)" }}> ×{waiting[0].party_size}</span>}
-                    </span>}
-                    {done.length > 0 && <button onClick={clearDone} style={ghostBtn({ marginLeft:"auto", fontSize:11 })}>Clear done</button>}
+                {/* ── Auto-caller status bar ── */}
+                <div style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10,
+                  padding:"12px 16px", display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
+
+                  {/* Slot visualiser */}
+                  <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:"var(--text2)" }}>
+                      Called slots ({called.length}/{autoCallerN})
+                    </div>
+                    <div style={{ display:"flex", gap:3, flexWrap:"wrap" }}>
+                      {Array.from({length: autoCallerN}, (_, i) => (
+                        <div key={i} style={{ width:14, height:14, borderRadius:4,
+                          background: i < called.length ? "var(--success,#059669)" : "var(--bg2)",
+                          border:`1.5px solid ${i < called.length ? "rgba(5,150,105,0.4)" : "var(--border)"}`,
+                          transition:"background 0.25s" }}/>
+                      ))}
+                    </div>
                   </div>
+
+                  <div style={{ width:1, height:32, background:"var(--border)", flexShrink:0 }}/>
+
+                  <div style={{ flex:1 }}>
+                    {canFill ? (
+                      <div style={{ fontSize:13, color:"var(--text2)" }}>
+                        <strong style={{ color:"var(--text)" }}>{openSlots}</strong> open slot{openSlots!==1?"s":""}{" — "}
+                        <strong style={{ color:"var(--text)" }}>{waiting[0]?.guest_name}</strong>
+                        {waiting.length > 1 ? ` +${Math.min(openSlots,waiting.length)-1} more` : ""} will be called
+                      </div>
+                    ) : called.length >= autoCallerN ? (
+                      <div style={{ fontSize:13, color:"var(--text3)" }}>All slots filled — serve someone to call the next person</div>
+                    ) : (
+                      <div style={{ fontSize:13, color:"var(--text3)" }}>
+                        {waiting.length === 0 ? "No one waiting" : "Queue is not open"}
+                      </div>
+                    )}
+                    <div style={{ fontSize:11, color:"var(--text3)", marginTop:3 }}>
+                      📱 Max {maxPerDevice>=99?"unlimited":maxPerDevice} join{maxPerDevice!==1?"s":""}/device
+                    </div>
+                  </div>
+
+                  {btn(
+                    busy ? "…" : canFill ? `📣 Call ${Math.min(openSlots,waiting.length)} Now` : "Slots Full",
+                    handleFillNow,
+                    { disabled: !canFill || busy,
+                      bg: canFill ? "var(--success,#059669)" : "var(--bg3)",
+                      color: canFill ? "#fff" : "var(--text3)",
+                      border: canFill ? "none" : "1.5px solid var(--border)",
+                      pad:"9px 20px" }
+                  )}
                 </div>
               </div>
 
-              {/* Called now banner */}
+              {/* ── Called list ── */}
               {called.length > 0 && (
-                <div style={{ background:"rgba(5,150,105,0.06)", border:"1.5px solid rgba(5,150,105,0.3)", borderRadius:14, padding:"16px 18px", marginBottom:16 }}>
-                  <div style={{ fontSize:12, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--success,#059669)", marginBottom:10 }}>
-                    📣 Currently Called
-                  </div>
-                  {called.map(e => (
-                    <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12 }}>
-                      <div style={{ flex:1 }}>
-                        <span style={{ fontSize:15, fontWeight:700 }}>{e.guest_name}</span>
-                        {e.party_size > 1 && <span style={{ color:"var(--accent)", marginLeft:8, fontWeight:600 }}>×{e.party_size}</span>}
-                        {e.called_at && <span style={{ fontSize:12, color:"var(--text3)", marginLeft:10 }}>
-                          called {Math.floor((Date.now()-new Date(e.called_at))/60000)}m ago
-                        </span>}
-                      </div>
-                      <button onClick={()=>markDone(e.id)} style={btnStyle("#fff","var(--success,#059669)",{ padding:"6px 14px", fontSize:12 })}>
-                        ✓ Served
-                      </button>
-                      <button onClick={()=>removeEntry(e.id)} style={ghostBtn({ padding:"5px 10px", fontSize:12 })}>Skip</button>
+                <div style={{ background:"var(--bg2)", border:"2px solid rgba(5,150,105,0.3)",
+                  borderRadius:14, overflow:"hidden" }}>
+                  <div style={{ padding:"12px 18px", borderBottom:"1.5px solid rgba(5,150,105,0.15)",
+                    background:"rgba(5,150,105,0.04)",
+                    display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:"var(--success,#059669)" }}>
+                      📣 Currently Called
                     </div>
-                  ))}
+                    <div style={{ fontSize:12, color:"var(--text3)" }}>
+                      Serving {called.length} / {autoCallerN} slots — hit Served when done, next person auto-calls
+                    </div>
+                  </div>
+                  <div style={{ padding:"0 18px" }}>
+                    {called.map((e, i) => (
+                      <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12,
+                        padding:"13px 0", borderBottom:i<called.length-1?"1px solid var(--border)":"none" }}>
+                        <div style={{ width:36, height:36, borderRadius:"50%", flexShrink:0,
+                          background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.3)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:14, fontWeight:800, color:"var(--success,#059669)" }}>
+                          {e.position}
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontSize:14, fontWeight:700 }}>
+                            {e.guest_name}
+                            {e.party_size>1 && <span style={{ color:"var(--accent)", marginLeft:6 }}>×{e.party_size}</span>}
+                          </div>
+                          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:2 }}>
+                            {e.guest_email && <span style={{ fontSize:11, color:"var(--text3)" }}>{e.guest_email}</span>}
+                            {e.called_at && <ElapsedTimer since={e.called_at} />}
+                          </div>
+                        </div>
+                        {btn("✓ Served", () => handleServed(e.id), {
+                          bg:"var(--success,#059669)", pad:"7px 16px", fs:12, disabled:busy })}
+                        {ghost("Skip", () => handleSkip(e.id), { pad:"6px 12px", fs:12, extra:{ opacity:busy?0.4:1 }})}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Waiting list */}
+              {/* ── Waiting list ── */}
               <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:14, overflow:"hidden" }}>
-                <div style={{ padding:"14px 18px", borderBottom:"1.5px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div style={{ padding:"12px 18px", borderBottom:"1.5px solid var(--border)",
+                  display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div style={{ fontSize:13, fontWeight:700 }}>Waiting List</div>
-                  <div style={{ fontSize:12, color:"var(--text3)" }}>{waiting.length} in queue</div>
+                  <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                    <span style={{ fontSize:12, color:"var(--text3)" }}>{waiting.length} in queue</span>
+                    {done.length > 0 && ghost("Clear done", clearDone, { pad:"4px 10px", fs:11 })}
+                  </div>
                 </div>
 
                 {waiting.length === 0 ? (
-                  <div style={{ padding:"32px", textAlign:"center", color:"var(--text3)", fontSize:13 }}>
-                    {activeQueue.status === "open" ? "No one in queue yet — share the link!" : "Queue is not open."}
+                  <div style={{ padding:"36px", textAlign:"center", color:"var(--text3)", fontSize:13 }}>
+                    {activeQueue.status==="open" ? "No one waiting — share the link!" : "Queue is not open."}
                   </div>
                 ) : (
-                  waiting.map((e, i) => (
-                    <div key={e.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"13px 18px",
-                      borderBottom:i<waiting.length-1?"1px solid var(--border)":"none",
-                      background: i===0 ? "rgba(5,150,105,0.03)" : "transparent" }}>
-                      {/* Position badge */}
-                      <div style={{ width:32, height:32, borderRadius:"50%", flexShrink:0,
-                        background: i===0?"rgba(5,150,105,0.1)":"var(--bg3)",
-                        border:`1.5px solid ${i===0?"rgba(5,150,105,0.3)":"var(--border)"}`,
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:13, fontWeight:800, color:i===0?"var(--success,#059669)":"var(--text3)" }}>
-                        {e.position}
-                      </div>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:14, fontWeight:600 }}>{e.guest_name}
-                          {e.party_size > 1 && <span style={{ color:"var(--accent)", fontWeight:700 }}> ×{e.party_size}</span>}
+                  waiting.map((e, i) => {
+                    // Highlight entries that would fill an open slot
+                    const willBeCalled = i < openSlots && activeQueue.status === "open";
+                    return (
+                      <div key={e.id} style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 18px",
+                        borderBottom:i<waiting.length-1?"1px solid var(--border)":"none",
+                        background: willBeCalled ? "rgba(5,150,105,0.02)" : "transparent",
+                        transition:"background 0.2s" }}>
+                        <div style={{ width:30, height:30, borderRadius:"50%", flexShrink:0,
+                          background: willBeCalled ? "rgba(5,150,105,0.1)" : "var(--bg3)",
+                          border:`1.5px solid ${willBeCalled?"rgba(5,150,105,0.3)":"var(--border)"}`,
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:12, fontWeight:800,
+                          color: willBeCalled ? "var(--success,#059669)" : "var(--text3)" }}>
+                          {e.position}
                         </div>
-                        <div style={{ fontSize:11, color:"var(--text3)" }}>
-                          Joined {new Date(e.joined_at).toLocaleTimeString("en-NZ", { hour:"2-digit", minute:"2-digit" })}
-                          {e.guest_email && ` · ${e.guest_email}`}
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:14, fontWeight:600 }}>
+                            {e.guest_name}
+                            {e.party_size>1 && <span style={{ color:"var(--accent)", fontWeight:700 }}> ×{e.party_size}</span>}
+                          </div>
+                          <div style={{ fontSize:11, color:"var(--text3)" }}>
+                            {new Date(e.joined_at).toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"})}
+                            {e.guest_email && ` · ${e.guest_email}`}
+                          </div>
                         </div>
+                        {willBeCalled && (
+                          <span style={{ fontSize:11, color:"var(--success,#059669)", fontWeight:700,
+                            background:"rgba(5,150,105,0.08)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" }}>
+                            Filling slot…
+                          </span>
+                        )}
+                        {!willBeCalled && i < autoCallerN * 2 && (
+                          <span style={{ fontSize:11, color:"var(--text3)", whiteSpace:"nowrap" }}>
+                            ~{Math.ceil((i - openSlots + 1) / autoCallerN * 2)}m
+                          </span>
+                        )}
+                        <button onClick={()=>removeWaiting(e.id)}
+                          style={{ background:"none", border:"none", color:"var(--text3)",
+                            cursor:"pointer", fontSize:15, padding:"3px 5px" }}>✕</button>
                       </div>
-                      {i === 0 && <span style={{ fontSize:11, color:"var(--success,#059669)", fontWeight:700, background:"rgba(5,150,105,0.08)", padding:"3px 10px", borderRadius:20 }}>Next up</span>}
-                      <button onClick={()=>removeEntry(e.id)}
-                        style={{ background:"none", border:"none", color:"var(--text3)", cursor:"pointer", fontSize:16, padding:"4px 6px" }}>✕</button>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
-              {/* Done / left entries (collapsible) */}
+              {/* ── Done / left (collapsible) ── */}
               {done.length > 0 && (
-                <details style={{ marginTop:12 }}>
-                  <summary style={{ cursor:"pointer", fontSize:13, color:"var(--text3)", padding:"8px 0", userSelect:"none" }}>
-                    {done.length} served / left (click to expand)
+                <details>
+                  <summary style={{ cursor:"pointer", fontSize:13, color:"var(--text3)",
+                    padding:"6px 2px", userSelect:"none", listStyle:"none" }}>
+                    ▸ {done.length} served / left (expand)
                   </summary>
-                  <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:12, marginTop:8, overflow:"hidden" }}>
+                  <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
+                    borderRadius:12, marginTop:8, overflow:"hidden" }}>
                     {done.map((e,i) => (
-                      <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 16px",
-                        borderBottom:i<done.length-1?"1px solid var(--border)":"none", opacity:0.7 }}>
-                        <div style={{ flex:1 }}>
-                          <span style={{ fontSize:13 }}>{e.guest_name}</span>
+                      <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 16px",
+                        borderBottom:i<done.length-1?"1px solid var(--border)":"none", opacity:0.65 }}>
+                        <div style={{ flex:1, fontSize:13 }}>
+                          {e.guest_name}
                           {e.party_size>1 && <span style={{ color:"var(--text3)", marginLeft:6 }}>×{e.party_size}</span>}
                         </div>
                         <StatusBadge status={e.status}/>
@@ -406,7 +629,9 @@ export default function QueueManager({ eventId }) {
         </div>
       )}
 
-      {modal !== null && <QueueFormModal queue={modal.id?modal:null} onSave={saveQueue} onClose={()=>setModal(null)}/>}
+      {modal !== null && (
+        <QueueFormModal queue={modal.id?modal:null} onSave={saveQueue} onClose={()=>setModal(null)} />
+      )}
     </div>
   );
 }

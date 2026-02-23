@@ -53,6 +53,20 @@ function PulsingDot({ color }) {
   );
 }
 
+
+// ── Device fingerprint ─────────────────────────────────────────
+// Stable per-browser identifier stored in localStorage
+function getDeviceFingerprint() {
+  const key = "__ef_dfp";
+  let fp = localStorage.getItem(key);
+  if (!fp) {
+    // Generate a random stable ID for this browser
+    fp = "dfp_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem(key, fp);
+  }
+  return fp;
+}
+
 export default function Queue() {
   const { queueId } = useParams();
   const [queue,    setQueue]    = useState(null);
@@ -138,12 +152,42 @@ export default function Queue() {
   const handleJoin = async () => {
     if (!form.name.trim()) { setError("Please enter your name"); return; }
     setJoining(true); setError(null);
+
+    const fp = getDeviceFingerprint();
+    const maxJoins = queue?.max_joins_per_device || 1;
+
+    // Check how many times this device has already joined (any status)
+    if (maxJoins < 99) {
+      const { data: existing } = await supabase
+        .from("queue_entries")
+        .select("id, status")
+        .eq("queue_id", queueId)
+        .eq("device_fingerprint", fp);
+
+      const activeJoins = (existing || []).filter(e => ["waiting","called"].includes(e.status));
+      const totalJoins  = (existing || []).length;
+
+      if (activeJoins.length > 0) {
+        setError("You are already in this queue.");
+        setJoining(false); return;
+      }
+      if (totalJoins >= maxJoins) {
+        setError(
+          maxJoins === 1
+            ? "You have already been served — this queue allows 1 visit per device."
+            : `This queue only allows ${maxJoins} visits per device and you have used all of them.`
+        );
+        setJoining(false); return;
+      }
+    }
+
     const { data, error: err } = await supabase.from("queue_entries").insert({
-      queue_id:   queueId,
-      event_id:   queue.event_id,
-      guest_name: form.name.trim(),
-      guest_email: form.email.trim() || null,
-      party_size: parseInt(form.party_size) || 1,
+      queue_id:           queueId,
+      event_id:           queue.event_id,
+      guest_name:         form.name.trim(),
+      guest_email:        form.email.trim() || null,
+      party_size:         parseInt(form.party_size) || 1,
+      device_fingerprint: fp,
     }).select().single();
 
     if (err) { setError(err.message); setJoining(false); return; }
