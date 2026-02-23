@@ -260,6 +260,52 @@ export default function StaffPortal() {
 
       <div style={{ maxWidth:600, margin:"0 auto", padding:"24px 16px" }}>
 
+        {/* ── Manager edit alerts ── */}
+        {(() => {
+          const edited = entries.filter(e => e.manager_edited && !e.employee_alerted);
+          if (edited.length === 0) return null;
+          const dismiss = async () => {
+            await Promise.all(edited.map(e =>
+              supabase.from("time_entries").update({ employee_alerted: true }).eq("id", e.id)
+            ));
+            // Optimistically hide
+            window.location.reload();
+          };
+          return (
+            <div style={{ background:"rgba(245,158,11,0.07)", border:"1.5px solid rgba(245,158,11,0.3)", borderRadius:14, padding:"16px 18px", marginBottom:16 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
+                <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                  <span style={{ fontSize:18 }}>⚠️</span>
+                  <div>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#b45309" }}>Manager edited your time {edited.length > 1 ? `${edited.length} entries` : "entry"}</div>
+                    <div style={{ fontSize:12, color:"var(--text2)" }}>Please review the changes below</div>
+                  </div>
+                </div>
+                <button onClick={dismiss} style={{ background:"none", border:"1.5px solid rgba(245,158,11,0.3)", borderRadius:7, padding:"4px 10px", fontSize:12, color:"#b45309", cursor:"pointer" }}>
+                  Dismiss
+                </button>
+              </div>
+              {edited.map(e => (
+                <div key={e.id} style={{ background:"var(--bg2)", border:"1px solid rgba(245,158,11,0.15)", borderRadius:10, padding:"10px 14px", marginTop:8, fontSize:13 }}>
+                  <div style={{ fontWeight:600, marginBottom:4 }}>
+                    {fmt(e.clock_in)} — {fmtTime(e.clock_in)} → {e.clock_out ? fmtTime(e.clock_out) : "still active"}
+                  </div>
+                  {e.original_clock_in && (
+                    <div style={{ fontSize:12, color:"var(--text3)", marginBottom:4 }}>
+                      Originally: {fmtTime(e.original_clock_in)} → {e.original_clock_out ? fmtTime(e.original_clock_out) : "—"}
+                    </div>
+                  )}
+                  {e.manager_note && (
+                    <div style={{ fontSize:12, color:"var(--text2)", background:"rgba(0,0,0,0.04)", borderRadius:6, padding:"4px 8px" }}>
+                      Note: "{e.manager_note}"
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {/* ─────────────── CLOCK TAB ─────────────── */}
         {tab === "clock" && (
           <div>
@@ -327,11 +373,16 @@ export default function StaffPortal() {
                 : entries.slice(0, 6).map((e, i) => (
                   <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:i < Math.min(entries.length, 6)-1 ? "1px solid var(--border)" : "none" }}>
                     <div style={{ flex:1 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" }}>
                         <span style={{ fontSize:13, color:"var(--text2)" }}>{fmt(e.clock_in)}</span>
                         {e.is_exception && (
                           <span style={{ fontSize:10, padding:"1px 6px", borderRadius:10, background:e.approved===true?"rgba(5,150,105,0.1)":e.approved===false?"rgba(239,68,68,0.12)":"rgba(245,158,11,0.12)", color:e.approved===true?"var(--success,#059669)":e.approved===false?"#ef4444":"#f59e0b", border:`1px solid ${e.approved===true?"rgba(16,185,129,0.25)":e.approved===false?"rgba(239,68,68,0.25)":"rgba(245,158,11,0.25)"}` }}>
                             {e.approved===true ? "✓ Approved" : e.approved===false ? "✗ Rejected" : "⚠ Pending"}
+                          </span>
+                        )}
+                        {e.manager_edited && (
+                          <span style={{ fontSize:10, padding:"1px 6px", borderRadius:10, background:"rgba(245,158,11,0.1)", color:"#b45309", border:"1px solid rgba(245,158,11,0.2)", fontWeight:700 }}>
+                            ✎ Edited by manager
                           </span>
                         )}
                       </div>
@@ -340,6 +391,7 @@ export default function StaffPortal() {
                         {" → "}
                         <span style={{ color: e.clock_out ? "var(--text2)" : "#f59e0b" }}>{e.clock_out ? `■ ${fmtTime(e.clock_out)}` : "● Active"}</span>
                         {e.break_minutes > 0 && <span style={{ color:"var(--text3)" }}> · {e.break_minutes}m break</span>}
+                        {e.manager_note && <span style={{ color:"var(--text3)" }}> · "{e.manager_note}"</span>}
                       </div>
                     </div>
                     <div style={{ fontSize:13, fontWeight:600, color: e.is_exception && e.approved !== true ? "var(--text3)" : "#818cf8" }}>

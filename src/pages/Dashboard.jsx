@@ -6,6 +6,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EditEventModal from "../components/EditEventModal";
 import StaffManager from "./StaffManager";
+import QueueManager from "./QueueManager";
 import EventSettings from "./EventSettings";
 import { useAppTheme } from "./Home";
 import { globalCSS, loadThemePrefs, getTheme } from "./theme";
@@ -59,6 +60,7 @@ const NAV = [
   { id: "vendors",   label: "Vendors",     icon: "◇" },
   { id: "collab",    label: "Collaborate", icon: "◈" },
   { id: "checklist", label: "Checklist",   icon: "☑" },
+  { id: "queue",     label: "Queue",       icon: "↕" },
   { id: "tickets",   label: "Ticket Hub",  icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",    icon: "✓" },
   { id: "staff",     label: "Staff",       icon: "⏱" },
@@ -2113,6 +2115,11 @@ export default function Dashboard() {
         {/* CHECK-IN */}
         {/* ── CHECKLIST ── */}
         {/* ── TICKETS ── */}
+        {/* ── QUEUE ── */}
+        {activeNav === "queue" && (
+          <QueueManager eventId={eventId} />
+        )}
+
         {/* ── TICKET HUB ── */}
         {activeNav === "tickets" && (
           <div className="fade-up">

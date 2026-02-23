@@ -53,6 +53,121 @@ function calcPay(entries, emp) {
 
 const COLOR_PALETTE = ["#818cf8","#10b981","#f59e0b","#ec4899","#3b82f6","#8b5cf6","#ef4444","#14b8a6"];
 
+// ── Format datetime-local input value (NZ time) ───────────────
+const toDatetimeLocal = (iso) => {
+  if (!iso) return "";
+  // Convert UTC ISO to NZ local datetime-local string
+  const d = new Date(iso);
+  const nz = new Intl.DateTimeFormat("en-NZ", {
+    timeZone: NZ_TZ, year:"numeric", month:"2-digit", day:"2-digit",
+    hour:"2-digit", minute:"2-digit", hour12:false
+  }).formatToParts(d);
+  const get = (t) => nz.find(x=>x.type===t).value;
+  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+};
+
+const fromDatetimeLocal = (str) => {
+  if (!str) return null;
+  // Treat as NZ time → UTC ISO
+  return new Date(str.replace("T"," ") + " " + "Pacific/Auckland".replace(/\//g, "")).toISOString()
+    || new Date(str).toISOString();
+};
+
+// Parse a datetime-local string as NZ timezone → UTC ISO
+const nzLocalToUTC = (dtLocal) => {
+  if (!dtLocal) return null;
+  // Create date string as NZ time
+  const [datePart, timePart] = dtLocal.split("T");
+  const d = new Date(`${datePart}T${timePart}:00+12:00`); // approximate NZ offset
+  return d.toISOString();
+};
+
+// ── Edit Entry Modal (manager edits a time entry) ─────────────
+function EditEntryModal({ entry, emp, onSave, onClose }) {
+  const [clockIn,  setClockIn]  = useState(toDatetimeLocal(entry.clock_in));
+  const [clockOut, setClockOut] = useState(toDatetimeLocal(entry.clock_out));
+  const [breakMin, setBreakMin] = useState(entry.break_minutes || 0);
+  const [note,     setNote]     = useState(entry.manager_note || "");
+  const [saving,   setSaving]   = useState(false);
+
+  const labelStyle = { display:"block", fontSize:12, fontWeight:700, color:"var(--text2)", marginBottom:6 };
+  const inputStyle = { width:"100%", boxSizing:"border-box", background:"var(--bg2)", border:"1.5px solid var(--border)",
+    borderRadius:8, padding:"9px 12px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" };
+
+  const handleSave = async () => {
+    if (!clockIn) return;
+    setSaving(true);
+    await onSave({
+      ...entry,
+      clock_in:          nzLocalToUTC(clockIn),
+      clock_out:         clockOut ? nzLocalToUTC(clockOut) : null,
+      break_minutes:     parseInt(breakMin) || 0,
+      manager_note:      note || null,
+      manager_edited:    true,
+      manager_edited_at: new Date().toISOString(),
+      employee_alerted:  false, // reset so employee sees it again
+      original_clock_in:  entry.original_clock_in || entry.clock_in,
+      original_clock_out: entry.original_clock_out || entry.clock_out,
+    });
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center",
+      justifyContent:"center", zIndex:500, padding:24, backdropFilter:"blur(6px)" }} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
+        borderRadius:18, width:"100%", maxWidth:480, boxShadow:"0 24px 60px rgba(0,0,0,0.4)" }}>
+
+        {/* Header */}
+        <div style={{ padding:"20px 24px", borderBottom:"1.5px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div>
+            <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>Edit Time Entry</div>
+            <div style={{ fontSize:12, color:"var(--text2)", marginTop:2 }}>{emp?.name} · manager override</div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:8,
+            padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:13 }}>✕</button>
+        </div>
+
+        {/* Warning banner */}
+        <div style={{ margin:"16px 24px 0", background:"rgba(245,158,11,0.08)", border:"1.5px solid rgba(245,158,11,0.25)",
+          borderRadius:10, padding:"10px 14px", fontSize:12, color:"#b45309", lineHeight:1.5 }}>
+          ⚠ The employee will see an alert on their portal about this change.
+        </div>
+
+        {/* Form */}
+        <div style={{ padding:"16px 24px 24px", display:"flex", flexDirection:"column", gap:14 }}>
+          <div>
+            <label style={labelStyle}>Clock In (NZ time)</label>
+            <input type="datetime-local" value={clockIn} onChange={e=>setClockIn(e.target.value)} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Clock Out (NZ time) — leave empty if still active</label>
+            <input type="datetime-local" value={clockOut} onChange={e=>setClockOut(e.target.value)} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Break (minutes)</label>
+            <input type="number" min="0" value={breakMin} onChange={e=>setBreakMin(e.target.value)} style={{ ...inputStyle, width:"120px" }} />
+          </div>
+          <div>
+            <label style={labelStyle}>Reason / Note for employee</label>
+            <textarea value={note} onChange={e=>setNote(e.target.value)} rows={3}
+              placeholder="e.g. Forgot to clock out — adjusted to end of shift"
+              style={{ ...inputStyle, resize:"vertical" }} />
+          </div>
+          <div style={{ display:"flex", gap:10, marginTop:4 }}>
+            <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
+              borderRadius:9, padding:"10px", fontSize:14, color:"var(--text2)", cursor:"pointer" }}>Cancel</button>
+            <button onClick={handleSave} disabled={saving} style={{ flex:2, background:"var(--accent)", border:"none",
+              borderRadius:9, padding:"10px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+              {saving ? "Saving…" : "Save & Alert Employee"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Employee Modal ────────────────────────────────────────────
 function EmployeeModal({ emp, onSave, onClose }) {
   const [form, setForm] = useState(emp || { name:"", email:"", phone:"", role:"", hourly_rate:"", tax_rate:"", deductions:"", notes:"" });
@@ -318,7 +433,117 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
 }
 
 // ── Timesheet view for a single employee ─────────────────────
-function EmployeeTimesheet({ emp, entries, onClose }) {
+function EmployeeTimesheet({ emp, entries, onEditEntry, onClose }) {
+  const [weekCursor, setWeekCursor] = useState(weekStart(new Date()));
+  const ws2 = weekStart(weekCursor);
+  const we  = addDays(ws2, 7);
+  const weekEntries = entries.filter(e => {
+    const t = new Date(e.clock_in).getTime();
+    return t >= ws2.getTime() && t < we.getTime();
+  });
+  const { totalHours, gross, taxAmt, net } = calcPay(weekEntries, emp);
+  const weekDays2 = Array.from({length:7},(_,i)=>addDays(ws2,i));
+
+  const exportCSV = () => {
+    const rows = [["Employee","Date","Clock In","Clock Out","Break (min)","Hours","Gross Pay","Tax","Net Pay","Manager Edited","Note"]];
+    weekEntries.forEach(e=>{
+      const h = hoursWorked(e);
+      const g = h*(emp.hourly_rate||0);
+      const t = g*((emp.tax_rate||0)/100);
+      rows.push([emp.name, fmtDate(e.clock_in), fmtTime(e.clock_in), fmtTime(e.clock_out), e.break_minutes||0, h.toFixed(2), g.toFixed(2), t.toFixed(2), (g-t-(emp.deductions||0)/7).toFixed(2), e.manager_edited?"Yes":"No", e.manager_note||""]);
+    });
+    rows.push(["TOTAL","","","","",totalHours.toFixed(2),gross.toFixed(2),taxAmt.toFixed(2),net.toFixed(2),"",""]);
+    const csv = rows.map(r=>r.map(c=>`"${c}"`).join(",")).join("\n");
+    const a = document.createElement("a"); a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+    a.download=`timesheet_${emp.name.replace(/\s+/g,"_")}_week_${fmtDate(ws2)}.csv`; a.click();
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:400, padding:24, backdropFilter:"blur(8px)" }}
+      onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:20, width:"100%", maxWidth:680, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 32px 80px rgba(0,0,0,0.7)" }}>
+        <div style={{ padding:"24px 28px", borderBottom:"1.5px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div>
+            <h2 style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.03em", margin:"0 0 4px" }}>{emp.name}</h2>
+            <div style={{ fontSize:13, color:"var(--text2)" }}>{emp.role} · ${(emp.hourly_rate||0).toFixed(2)}/hr · {emp.tax_rate||0}% tax</div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:8, padding:"6px 12px", color:"var(--text2)", cursor:"pointer", fontSize:13, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>✕ Close</button>
+        </div>
+
+        {/* Week nav */}
+        <div style={{ padding:"16px 28px", borderBottom:"1.5px solid var(--border)", display:"flex", alignItems:"center", gap:12 }}>
+          <button onClick={()=>setWeekCursor(addDays(weekCursor,-7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>←</button>
+          <div style={{ flex:1, textAlign:"center", fontSize:14, fontWeight:600 }}>{fmt(ws2)} – {fmt(addDays(ws2,6))}</div>
+          <button onClick={()=>setWeekCursor(addDays(weekCursor,7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>→</button>
+          <button onClick={exportCSV} style={{ background:"none", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontFamily:"inherit", fontWeight:600 }}>⬇ Export CSV</button>
+        </div>
+
+        {/* Pay summary cards */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, padding:"20px 28px", borderBottom:"1.5px solid var(--border)" }}>
+          {[["Hours Worked", `${totalHours.toFixed(2)}h`, "#818cf8"],["Gross Pay", `$${gross.toFixed(2)}`, "var(--accent)"],["Tax", `-$${taxAmt.toFixed(2)}`, "#ef4444"],["Net Pay", `$${net.toFixed(2)}`, "#10b981"]].map(([l,v,c])=>(
+            <div key={l} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+              <div style={{ fontSize:11, color:"var(--text2)", marginBottom:6 }}>{l}</div>
+              <div style={{ fontSize:18, fontWeight:700, color:c }}>{v}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Daily breakdown */}
+        <div style={{ padding:"20px 28px" }}>
+          <div style={{ fontSize:11, color:"var(--text3)", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Daily Breakdown</div>
+          {weekDays2.map((day,di)=>{
+            const dayEntries = weekEntries.filter(e=>sameDay(e.clock_in,day));
+            const dayHrs = dayEntries.reduce((s,e)=>s+hoursWorked(e),0);
+            return (
+              <div key={di} style={{ display:"flex", alignItems:"flex-start", gap:16, padding:"10px 0", borderBottom:di<6?"1px solid var(--border)":"none" }}>
+                <div style={{ width:44, flexShrink:0 }}>
+                  <div style={{ fontSize:11, color:"var(--text2)" }}>{DAYS[di]}</div>
+                  <div style={{ fontSize:16, fontWeight:600, color:sameDay(day,new Date())?"var(--accent)":"var(--text)" }}>{day.getDate()}</div>
+                </div>
+                <div style={{ flex:1 }}>
+                  {dayEntries.length===0
+                    ? <div style={{ fontSize:12, color:"var(--text3)", paddingTop:4 }}>No entries</div>
+                    : dayEntries.map((e,i)=>(
+                      <div key={e.id} style={{ display:"flex", gap:8, alignItems:"center", fontSize:12, color:"var(--text2)", marginBottom:i<dayEntries.length-1?8:0,
+                        background: e.manager_edited ? "rgba(245,158,11,0.05)" : "transparent",
+                        border: e.manager_edited ? "1px solid rgba(245,158,11,0.15)" : "1px solid transparent",
+                        borderRadius:8, padding:"6px 8px" }}>
+                        <span style={{ color:"#10b981" }}>▶ {fmtTime(e.clock_in)}</span>
+                        <span>→</span>
+                        <span style={{ color: e.clock_out?"var(--text2)":"#f59e0b" }}>{e.clock_out ? `■ ${fmtTime(e.clock_out)}` : "● Active"}</span>
+                        {e.break_minutes>0 && <span>({e.break_minutes}m break)</span>}
+                        {e.manager_edited && <span style={{ fontSize:10, background:"rgba(245,158,11,0.15)", color:"#b45309", borderRadius:4, padding:"1px 6px", fontWeight:700 }}>edited</span>}
+                        <span style={{ marginLeft:"auto", color:"var(--text)", fontWeight:600 }}>{hoursWorked(e).toFixed(2)}h</span>
+                        <button onClick={()=>onEditEntry(e)}
+                          style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:6, padding:"3px 8px", color:"var(--text3)", cursor:"pointer", fontSize:11, fontFamily:"inherit", flexShrink:0 }}>
+                          ✎ Edit
+                        </button>
+                      </div>
+                    ))
+                  }
+                </div>
+                {dayHrs>0 && <div style={{ fontSize:13, fontWeight:600, color:"var(--text)", flexShrink:0 }}>{dayHrs.toFixed(1)}h</div>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Pay details */}
+        {emp.deductions>0 && (
+          <div style={{ margin:"0 28px 20px", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+            <div style={{ fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10 }}>Pay Calculation</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6, fontSize:13 }}>
+              <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--text2)" }}>Gross ({totalHours.toFixed(2)}h × ${(emp.hourly_rate||0).toFixed(2)})</span><span>${gross.toFixed(2)}</span></div>
+              <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--text2)" }}>Tax ({emp.tax_rate||0}%)</span><span style={{ color:"#ef4444" }}>−${taxAmt.toFixed(2)}</span></div>
+              <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--text2)" }}>Deductions</span><span style={{ color:"#ef4444" }}>−${(emp.deductions||0).toFixed(2)}</span></div>
+              <div style={{ display:"flex", justifyContent:"space-between", borderTop:"1.5px solid var(--border)", paddingTop:8, fontWeight:700, fontSize:14 }}><span>Net Pay</span><span style={{ color:"#10b981" }}>${net.toFixed(2)}</span></div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
   const [weekCursor, setWeekCursor] = useState(weekStart(new Date()));
   const ws2 = weekStart(weekCursor);
   const we  = addDays(ws2, 7);
@@ -434,6 +659,7 @@ export default function StaffManager({ eventId }) {
   const [empModal, setEmpModal]         = useState(null); // null | {} | emp object
   const [shiftModal, setShiftModal]     = useState(null);
   const [timesheetEmp, setTimesheetEmp] = useState(null);
+  const [editEntryModal, setEditEntryModal] = useState(null); // { entry, emp }
   const [tsWeekFilter, setTsWeekFilter] = useState(weekStart(new Date()));
   const [tsEmpFilter, setTsEmpFilter]   = useState("all");
 
@@ -510,6 +736,61 @@ export default function StaffManager({ eventId }) {
         if (newShift) setShifts(ss => [...ss, newShift]);
       }
     }
+  };
+
+  // ── Manager clock in/out ──────────────────────────────────
+  const managerClockIn = async (emp) => {
+    const note = window.prompt(`Clock in ${emp.name} now?\n\nOptional note (e.g. reason):`, "") ;
+    if (note === null) return; // cancelled
+    const { data } = await supabase.from("time_entries").insert({
+      event_id:         eventId,
+      employee_id:      emp.id,
+      clock_in:         new Date().toISOString(),
+      notes:            note || "Clocked in by manager",
+      is_exception:     false,
+      approved:         true,
+      manager_edited:   true,
+      manager_note:     note || "Clocked in by manager",
+      manager_edited_at: new Date().toISOString(),
+      employee_alerted: false,
+    }).select().single();
+    if (data) setEntries(es => [data, ...es]);
+  };
+
+  const managerClockOut = async (emp, activeEntry) => {
+    const note = window.prompt(`Clock out ${emp.name} now?\n\nOptional note (e.g. reason):`, "");
+    if (note === null) return;
+    const { data } = await supabase.from("time_entries")
+      .update({
+        clock_out:         new Date().toISOString(),
+        manager_edited:    true,
+        manager_note:      note || "Clocked out by manager",
+        manager_edited_at: new Date().toISOString(),
+        employee_alerted:  false,
+        original_clock_in:  activeEntry.original_clock_in || activeEntry.clock_in,
+        original_clock_out: null,
+      })
+      .eq("id", activeEntry.id).select().single();
+    if (data) setEntries(es => es.map(e => e.id === activeEntry.id ? data : e));
+  };
+
+  // ── Save edited entry ─────────────────────────────────────
+  const handleSaveEditedEntry = async (updated) => {
+    const { data } = await supabase.from("time_entries")
+      .update({
+        clock_in:           updated.clock_in,
+        clock_out:          updated.clock_out,
+        break_minutes:      updated.break_minutes,
+        manager_note:       updated.manager_note,
+        manager_edited:     true,
+        manager_edited_at:  updated.manager_edited_at,
+        employee_alerted:   false,
+        original_clock_in:  updated.original_clock_in,
+        original_clock_out: updated.original_clock_out,
+      })
+      .eq("id", updated.id).select().single();
+    if (data) setEntries(es => es.map(e => e.id === updated.id ? data : e));
+    setEditEntryModal(null);
   };
 
   // ── Copy portal link ───────────────────────────────────────
@@ -599,6 +880,19 @@ export default function StaffManager({ eventId }) {
                         ))}
                       </div>
                       {emp.email && <div style={{ fontSize:12, color:"var(--text2)", marginBottom:12, overflow:"hidden", textOverflow:"ellipsis" }}>✉ {emp.email}</div>}
+                      <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+                        {clocked ? (
+                          <button onClick={()=>managerClockOut(emp, clocked)}
+                            style={{ flex:1, background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.3)", color:"var(--success,#059669)", borderRadius:8, padding:"7px 0", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                            ■ Clock Out
+                          </button>
+                        ) : (
+                          <button onClick={()=>managerClockIn(emp)}
+                            style={{ flex:1, background:"var(--accentBg)", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:8, padding:"7px 0", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                            ▶ Clock In
+                          </button>
+                        )}
+                      </div>
                       <div style={{ display:"flex", gap:8 }}>
                         <button onClick={()=>copyPortalLink(emp)} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:8, padding:"7px 0", fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>🔗 Portal Link</button>
                         <button onClick={()=>setTimesheetEmp(emp)} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:8, padding:"7px 0", fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>📋 Timesheet</button>
@@ -723,7 +1017,8 @@ export default function StaffManager({ eventId }) {
       {/* ── Modals ── */}
       {empModal !== null && <EmployeeModal emp={empModal.id?empModal:null} onSave={saveEmployee} onClose={()=>setEmpModal(null)} />}
       {shiftModal !== null && <ShiftModal shift={shiftModal.id?shiftModal:null} employees={employees} onSave={saveShift} onClose={()=>setShiftModal(null)} />}
-      {timesheetEmp && <EmployeeTimesheet emp={timesheetEmp} entries={entries.filter(e=>e.employee_id===timesheetEmp.id)} onClose={()=>setTimesheetEmp(null)} />}
+      {timesheetEmp && <EmployeeTimesheet emp={timesheetEmp} entries={entries.filter(e=>e.employee_id===timesheetEmp.id)} onEditEntry={(entry)=>setEditEntryModal({entry, emp:timesheetEmp})} onClose={()=>setTimesheetEmp(null)} />}
+      {editEntryModal && <EditEntryModal entry={editEntryModal.entry} emp={editEntryModal.emp} onSave={handleSaveEditedEntry} onClose={()=>setEditEntryModal(null)} />}
     </div>
   );
 }

@@ -15,6 +15,7 @@ const ALL_FEATURES = [
   { id:"vendors",   label:"Vendors",              desc:"Suppliers, caterers, photographers.",   icon:"◇", color:"#06b6d4" },
   { id:"collab",    label:"Collaborate",          desc:"Co-organisers with access roles.",      icon:"◈", color:"#ec4899" },
   { id:"checklist", label:"Checklist",            desc:"Tasks and to-dos with due dates.",      icon:"☑", color:"#10b981" },
+  { id:"queue",     label:"Virtual Queue",        desc:"Online queue for stations & activities.",icon:"↕", color:"#8b5cf6" },
   { id:"tickets",   label:"Ticket Hub",           desc:"Sell tickets via Stripe.",              icon:"▣", color:"#f97316" },
   { id:"checkin",   label:"Check-in",             desc:"QR code scanning at the door.",         icon:"✓", color:"#4ade80" },
   { id:"staff",     label:"Staff & Timesheets",   desc:"Schedules, clock-in, payroll.",         icon:"⏱", color:"#60a5fa" },
@@ -22,12 +23,12 @@ const ALL_FEATURES = [
 
 const TYPE_PRESETS = {
   gig:       { label:"Music Gig",      icon:"♫", suggested:["guests","budget","playlist","vendors","checklist","tickets","checkin","staff"] },
-  ball:      { label:"Ball / Formal",  icon:"◇", suggested:["guests","budget","playlist","vendors","collab","checklist","checkin"] },
+  ball:      { label:"Ball / Formal",  icon:"◇", suggested:["guests","budget","playlist","vendors","collab","checklist","queue","checkin"] },
   party:     { label:"Party",          icon:"◆", suggested:["guests","budget","playlist","polls","checklist"] },
   wedding:   { label:"Wedding",        icon:"◇", suggested:["guests","budget","playlist","polls","vendors","collab","checklist"] },
   birthday:  { label:"Birthday",       icon:"◆", suggested:["guests","budget","playlist","polls","checklist"] },
   corporate: { label:"Corporate",      icon:"▣", suggested:["guests","budget","vendors","collab","checklist","staff"] },
-  festival:  { label:"Festival",       icon:"◈", suggested:["guests","budget","playlist","vendors","collab","checklist","tickets","checkin","staff"] },
+  festival:  { label:"Festival",       icon:"◈", suggested:["guests","budget","playlist","vendors","collab","checklist","queue","tickets","checkin","staff"] },
   other:     { label:"Other",          icon:"◆", suggested:["guests","budget","checklist"] },
 };
 
