@@ -1,6 +1,6 @@
 // ============================================================
 //  EventSettings.jsx  —  Per-event settings tab in Dashboard
-// ============================================================
+// =============================================================
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { loadThemePrefs, getTheme } from "./theme";
@@ -13,6 +13,7 @@ const ALL_FEATURES = [
   { id:"vendors",   label:"Vendors",          desc:"Manage suppliers and service providers.", icon:"◇", color:"#06b6d4" },
   { id:"collab",    label:"Collaborate",      desc:"Invite co-organisers with access roles.", icon:"◈", color:"#f472b6" },
   { id:"checklist", label:"Checklist",        desc:"Task management with due dates.",         icon:"☑", color:"#34d399" },
+  { id:"queue",     label:"Virtual Queue",    desc:"Online queue for stations & activities.", icon:"↕", color:"#8b5cf6" },
   { id:"tickets",   label:"Ticket Hub",       desc:"Online ticketing with Stripe.",           icon:"▣", color:"#fb923c" },
   { id:"checkin",   label:"Check-in",         desc:"QR code scanning at the door.",           icon:"✓", color:"#4ade80" },
   { id:"staff",     label:"Staff & Timesheets",desc:"Schedules, clock-in, payroll.",          icon:"⏱", color:"#60a5fa" },

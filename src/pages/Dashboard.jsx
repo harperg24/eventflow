@@ -1,7 +1,7 @@
 // ============================================================
 //  Dashboard.jsx  —  wired to Supabase with real-time updates
 //  Route: /dashboard/:eventId
-// ============================================================
+// =============================================================
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EditEventModal from "../components/EditEventModal";
@@ -38,11 +38,11 @@ function ReadOnlyBanner({ role }) {
 
 // Role-based access control
 const ROLE_ACCESS = {
-  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff","settings"],
-  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff","settings"],
+  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin","staff","settings"],
+  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin","staff","settings"],
   ticketing: ["overview","tickets","checkin","collab"],
   check_in:  ["overview","checkin","guests","tickets"],
-  view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
+  view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin"],
 };
 const ROLE_READONLY = {
   owner: [], admin: [],
