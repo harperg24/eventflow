@@ -28,7 +28,7 @@ export default function AuthCallback() {
       }
 
       // Forward to the intended page — either the RSVP page or /events
-      const next = searchParams.get("next") || "/events";
+      const next = searchParams.get("next") || "/home";
       navigate(next, { replace: true });
     };
 

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import Auth          from "./pages/Auth";
+import Home          from "./pages/Home";
 import EventList     from "./pages/EventList";
 import EventCreation from "./pages/EventCreation";
 import Dashboard     from "./pages/Dashboard";
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/staff/:token"                 element={<StaffPortal />} />
 
         {/* Protected */}
+        <Route path="/home"               element={<Home />} />
         <Route path="/events"              element={session ? <EventList />     : <Navigate to="/login" replace />} />
         <Route path="/create"              element={session ? <EventCreation /> : <Navigate to="/login" replace />} />
         <Route path="/dashboard/:eventId"  element={session ? <Dashboard />     : <Navigate to="/login" replace />} />

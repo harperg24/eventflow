@@ -6,6 +6,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EditEventModal from "../components/EditEventModal";
 import StaffManager from "./StaffManager";
+import EventSettings from "./EventSettings";
+import { useAccent } from "./Home";
 import {
   supabase,
   fetchEvent, fetchGuests, fetchTasks, fetchBudget, updateTask, deleteTask,
@@ -34,8 +36,8 @@ function ReadOnlyBanner({ role }) {
 
 // Role-based access control
 const ROLE_ACCESS = {
-  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff"],
-  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff"],
+  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff","settings"],
+  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin","staff","settings"],
   ticketing: ["overview","tickets","checkin","collab"],
   check_in:  ["overview","checkin","guests","tickets"],
   view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","tickets","checkin"],
@@ -59,6 +61,7 @@ const NAV = [
   { id: "tickets",   label: "Ticket Hub",  icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",    icon: "✓" },
   { id: "staff",     label: "Staff",       icon: "⏱" },
+  { id: "settings",  label: "Settings",    icon: "⚙" },
 ];
 
 // Inline AttendeeTab component — shows all tickets with check-in status
@@ -225,9 +228,11 @@ export default function Dashboard() {
   const [collabInviteRole,   setCollabInviteRole]   = useState("view_only");
   const [sendingCollab,      setSendingCollab]      = useState(false);
   const [userRole,           setUserRole]           = useState("owner"); // this user's role
+  useAccent(); // apply saved accent colour
 
   // Permission helpers — computed from userRole (defined after userRole state)
   const allowedTabs = ROLE_ACCESS[userRole] || ROLE_ACCESS.owner;
+  const enabledFeatures = event?.enabled_features || Object.keys(ROLE_ACCESS.owner[0]) || allowedTabs;
   const readOnlyTabs = ROLE_READONLY[userRole] || [];
   const canSee  = (tab) => allowedTabs.includes(tab);
   const canEdit = (tab) => !readOnlyTabs.includes(tab);
@@ -1015,7 +1020,7 @@ export default function Dashboard() {
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {NAV.filter(n => canSee(n.id) && (!n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing) || (n.ticketed && tiers.length > 0))).map(n => (
+          {NAV.filter(n => canSee(n.id) && (event?.enabled_features ? (n.id === "overview" || event.enabled_features.includes(n.id)) : true) && (!n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing) || (n.ticketed && tiers.length > 0))).map(n => (
             <button key={n.id} className={`nav-item${activeNav === n.id ? " active" : ""}`} onClick={() => setActiveNav(n.id)}>
               <span style={{ fontSize: 16, width: 20, textAlign: "center" }}>{n.icon}</span>
               {n.label}
@@ -2507,6 +2512,11 @@ export default function Dashboard() {
         {/* ── STAFF ── */}
         {activeNav === "staff" && (
           <StaffManager eventId={eventId} />
+        )}
+
+        {/* ── SETTINGS ── */}
+        {activeNav === "settings" && (
+          <EventSettings eventId={eventId} event={event} setEvent={setEvent} />
         )}
 
         {/* ── CHECKLIST ── */}

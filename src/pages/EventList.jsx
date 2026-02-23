@@ -1,496 +1,227 @@
 // ============================================================
-//  src/pages/EventList.jsx
-//  Home screen — shows all the user's events, create new, delete, sign out
+//  EventList.jsx  —  All events page
+//  Route: /events
 // ============================================================
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
-const EVENT_TYPE_META = {
-  gig:       { icon: "🎸", label: "Music Gig" },
-  ball:      { icon: "🥂", label: "Ball / Formal" },
-  party:     { icon: "🎉", label: "Party" },
-  wedding:   { icon: "💍", label: "Wedding" },
-  birthday:  { icon: "🎂", label: "Birthday" },
-  corporate: { icon: "🏢", label: "Corporate" },
-  festival:  { icon: "🎪", label: "Festival" },
-  other:     { icon: "✨", label: "Other" },
+const TYPE_ICONS = {
+  gig:"♫", ball:"◇", party:"◆", wedding:"◇", birthday:"◆",
+  corporate:"▣", festival:"◈", other:"◆",
 };
 
 function daysUntil(dateStr) {
   const diff = Math.ceil((new Date(dateStr) - new Date()) / 86400000);
-  if (diff < 0)  return { label: "Past",       color: "#3a3a52" };
-  if (diff === 0) return { label: "Today",     color: "#10b981" };
-  if (diff === 1) return { label: "Tomorrow",  color: "#f59e0b" };
-  return { label: `${diff}d away`, color: "#c9a84c" };
+  if (diff < 0)   return { label:"Past",      color:"#6b6a7a" };
+  if (diff === 0) return { label:"Today",     color:"#22c55e" };
+  if (diff === 1) return { label:"Tomorrow",  color:"#f59e0b" };
+  return { label:`${diff}d`,             color:"#6b6a7a" };
 }
 
 export default function EventList() {
   const navigate = useNavigate();
-  const [events,  setEvents]  = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [user,    setUser]    = useState(null);
-  const [deleting,     setDeleting]     = useState(null);
-  const [signingOut,   setSigningOut]   = useState(false);
-  const [collabEvents, setCollabEvents] = useState([]); // events user is collaborating on
-  const [pendingInvites, setPendingInvites] = useState([]); // pending collab invites
+  const [events,        setEvents]        = useState([]);
+  const [collabEvents,  setCollabEvents]  = useState([]);
+  const [pendingInvites,setPendingInvites] = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [user,          setUser]          = useState(null);
+  const [deleting,      setDeleting]      = useState(null);
+  const [filter,        setFilter]        = useState("all"); // all | upcoming | past
+  const [accent, setAccent] = useState("#4f46e5");
 
-  // ── Load user + events ──────────────────────────────────
   useEffect(() => {
+    const a = document.documentElement.style.getPropertyValue("--accent");
+    if (a) setAccent(a.trim());
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/"); return; }
       setUser(user);
 
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .eq("organiser_id", user.id)
-        .order("date", { ascending: true });
+      const [{ data }, { data: collabsById }, { data: collabsByEmail }, { data: pendingById }, { data: pendingByEmail }] = await Promise.all([
+        supabase.from("events").select("*").eq("organiser_id", user.id).order("date", { ascending: true }),
+        supabase.from("event_collaborators").select("*, events(*)").eq("user_id", user.id).eq("status","accepted"),
+        supabase.from("event_collaborators").select("*, events(*)").eq("email", user.email).eq("status","accepted"),
+        supabase.from("event_collaborators").select("*, events(*)").eq("user_id", user.id).eq("status","pending"),
+        supabase.from("event_collaborators").select("*, events(*)").eq("email", user.email).eq("status","pending"),
+      ]);
+      setEvents(data || []);
 
-      if (!error) setEvents(data || []);
+      const seen = new Set();
+      const merged = [...(collabsById||[]), ...(collabsByEmail||[])]
+        .filter(c => c.events && !seen.has(c.events.id) && seen.add(c.events.id))
+        .map(c => ({ ...c.events, _role: c.role }));
+      setCollabEvents(merged.filter(e => !(data||[]).find(o => o.id === e.id)));
 
-      // Load collaboration events & pending invites
-      if (user) {
-        // Events this user is a confirmed collaborator on
-        // Query by BOTH user_id and email to catch rows before user_id is stamped
-        const [{ data: collabsById }, { data: collabsByEmail }] = await Promise.all([
-          supabase.from("event_collaborators").select("*, events(*)").eq("user_id", user.id).eq("status", "accepted"),
-          supabase.from("event_collaborators").select("*, events(*)").eq("email", user.email).eq("status", "accepted"),
-        ]);
-        // Merge and deduplicate by event id
-        const allCollabs = [...(collabsById || []), ...(collabsByEmail || [])];
-        const seen = new Set();
-        const uniqueCollabs = allCollabs.filter(c => {
-          if (seen.has(c.event_id)) return false;
-          seen.add(c.event_id); return true;
-        });
-        // Stamp user_id on any rows that don't have it yet
-        for (const c of uniqueCollabs) {
-          if (!c.user_id) {
-            await supabase.from("event_collaborators").update({ user_id: user.id }).eq("id", c.id);
-          }
+      const pendingSeen = new Set();
+      const pendingMerged = [...(pendingById||[]), ...(pendingByEmail||[])]
+        .filter(c => c.events && !pendingSeen.has(c.id) && pendingSeen.add(c.id));
+      setPendingInvites(pendingMerged);
+
+      // Lazy stamp user_id on accepted rows
+      const unstamped = [...(collabsByEmail||[])].filter(c => !c.user_id);
+      if (unstamped.length > 0) {
+        for (const c of unstamped) {
+          await supabase.from("event_collaborators").update({ user_id: user.id }).eq("id", c.id);
         }
-        setCollabEvents(uniqueCollabs.map(c => ({ ...c.events, _collabRole: c.role, _collabId: c.id, _eventId: c.event_id })));
-
-        // Pending invites by email
-        const { data: invites } = await supabase
-          .from("event_collaborators")
-          .select("*, events(name,date)")
-          .eq("email", user.email)
-          .eq("status", "invited");
-        setPendingInvites(invites || []);
       }
-
       setLoading(false);
     };
     load();
   }, []);
 
-  // ── Delete event ────────────────────────────────────────
   const handleDelete = async (id) => {
+    if (!window.confirm("Delete this event? This cannot be undone.")) return;
+    setDeleting(id);
+    await supabase.from("events").delete().eq("id", id);
     setEvents(ev => ev.filter(e => e.id !== id));
     setDeleting(null);
-    await supabase.from("events").delete().eq("id", id);
   };
 
-  // ── Sign out ─────────────────────────────────────────────
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    await supabase.auth.signOut();
-    // App.jsx auth listener will redirect to /login automatically
+  const now = new Date();
+  const filtered = events.filter(e => {
+    if (filter === "upcoming") return new Date(e.date) >= now;
+    if (filter === "past")     return new Date(e.date) < now;
+    return true;
+  });
+
+  const S = {
+    page:  { minHeight:"100vh", background:"#0f0f11", color:"#f0eff4", fontFamily:"'Inter','Helvetica Neue',sans-serif", fontSize:14, padding:"40px 48px" },
+    card:  { background:"#16161a", border:"1px solid #222228", borderRadius:12 },
+    btn:   { background:accent, border:"none", color:"#fff", borderRadius:8, padding:"9px 18px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+    ghost: { background:"none", border:"1px solid #222228", color:"#9998a8", borderRadius:8, padding:"9px 18px", fontSize:13, cursor:"pointer", fontFamily:"inherit" },
   };
 
-  // ── Partition events ─────────────────────────────────────
-  const upcoming = events.filter(e => new Date(e.date) >= new Date());
-  const past     = events.filter(e => new Date(e.date) <  new Date());
+  if (loading) return (
+    <div style={{...S.page, display:"flex", alignItems:"center", justifyContent:"center"}}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+      <div style={{ color:"#6b6a7a" }}>Loading…</div>
+    </div>
+  );
 
-  // ── Render ───────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#080810", fontFamily: "'DM Sans', sans-serif", color: "#e2d9cc" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::selection { background: #c9a84c; color: #080810; }
-        ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 2px; }
+    <div style={S.page}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+      <style>{`input:focus, select:focus { outline: none; border-color: ${accent} !important; }`}</style>
 
-        .event-card {
-          background: #0f0f1a;
-          border: 1px solid #1e1e2e;
-          border-radius: 16px;
-          padding: 24px;
-          cursor: pointer;
-          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-        .event-card:hover {
-          border-color: rgba(201,168,76,0.3);
-          transform: translateY(-3px);
-          box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-        }
-        .event-card.past {
-          opacity: 0.55;
-        }
-        .event-card.past:hover {
-          opacity: 0.8;
-        }
-        .delete-btn {
-          position: absolute;
-          top: 14px; right: 14px;
-          background: transparent;
-          border: none;
-          color: #2e2e42;
-          font-size: 18px;
-          cursor: pointer;
-          width: 28px; height: 28px;
-          display: flex; align-items: center; justify-content: center;
-          border-radius: 6px;
-          transition: all 0.15s;
-          z-index: 2;
-        }
-        .event-card:hover .delete-btn { color: #4a4a60; }
-        .delete-btn:hover { background: rgba(239,68,68,0.12) !important; color: #ef4444 !important; }
+      <div style={{ maxWidth:800, margin:"0 auto" }}>
 
-        .btn-gold {
-          background: linear-gradient(135deg, #c9a84c, #a8872e);
-          color: #080810; border: none;
-          padding: 12px 24px; border-radius: 10px;
-          font-family: 'DM Sans'; font-size: 14px; font-weight: 500;
-          cursor: pointer; transition: all 0.2s;
-          display: flex; align-items: center; gap: 8px;
-        }
-        .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.3); }
-
-        .btn-ghost {
-          background: transparent; color: #5a5a72;
-          border: 1px solid #1e1e2e;
-          padding: 10px 18px; border-radius: 10px;
-          font-family: 'DM Sans'; font-size: 14px;
-          cursor: pointer; transition: all 0.2s;
-          display: flex; align-items: center; gap: 8px;
-        }
-        .btn-ghost:hover { color: #e2d9cc; border-color: #3a3a52; }
-        .btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .fade-up { animation: fadeUp 0.35s ease forwards; }
-        .stagger-1 { animation-delay: 0.05s; opacity: 0; }
-        .stagger-2 { animation-delay: 0.10s; opacity: 0; }
-        .stagger-3 { animation-delay: 0.15s; opacity: 0; }
-
-        .modal-overlay {
-          position: fixed; inset: 0;
-          background: rgba(0,0,0,0.7);
-          display: flex; align-items: center; justify-content: center;
-          z-index: 100; padding: 24px;
-          backdrop-filter: blur(4px);
-        }
-        .modal {
-          background: #0f0f1a; border: 1px solid #2a2a38;
-          border-radius: 16px; padding: 32px;
-          max-width: 400px; width: 100%;
-          animation: fadeUp 0.2s ease forwards;
-        }
-
-        .section-label {
-          font-size: 11px; color: #3a3a52;
-          letter-spacing: 0.08em; text-transform: uppercase;
-          margin-bottom: 16px; padding-bottom: 10px;
-          border-bottom: 1px solid #141420;
-        }
-
-        .empty-state {
-          border: 1px dashed #1e1e2e; border-radius: 16px;
-          padding: 56px 32px; text-align: center;
-          animation: fadeUp 0.4s ease forwards;
-        }
-      `}</style>
-
-      {/* ── Top nav ── */}
-      <header style={{ borderBottom: "1px solid #141420", padding: "20px 48px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 30, height: 30, background: "linear-gradient(135deg, #c9a84c, #a8872e)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>✦</div>
-          <span style={{ fontFamily: "'Playfair Display'", fontSize: 20 }}>EventFlow</span>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {user && (
-            <span style={{ fontSize: 13, color: "#3a3a52" }}>{user.email}</span>
-          )}
-          <button
-            className="btn-ghost"
-            onClick={handleSignOut}
-            disabled={signingOut}
-            style={{ padding: "8px 16px", fontSize: 13 }}
-          >
-            {signingOut ? "Signing out…" : "Sign out"}
-          </button>
-        </div>
-      </header>
-
-      {/* ── Body ── */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "52px 24px" }}>
-
-        {/* Page heading */}
-        <div className="fade-up" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 48 }}>
+        {/* Header */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:32 }}>
           <div>
-            <h1 style={{ fontFamily: "'Playfair Display'", fontSize: 36, fontWeight: 700, lineHeight: 1.15, marginBottom: 8 }}>
-              Your Events
-            </h1>
-            <p style={{ color: "#5a5a72", fontSize: 15, fontWeight: 300 }}>
-              {loading ? "Loading…" : events.length === 0 ? "Nothing planned yet — create your first event." : `${upcoming.length} upcoming · ${past.length} past`}
-            </p>
+            <button onClick={() => navigate("/home")} style={{ background:"none", border:"none", color:"#6b6a7a", fontSize:13, cursor:"pointer", fontFamily:"inherit", marginBottom:8, padding:0 }}>← Home</button>
+            <h1 style={{ fontSize:22, fontWeight:700, letterSpacing:"-0.03em", margin:0 }}>All Events</h1>
           </div>
-          <button className="btn-gold fade-up stagger-1" onClick={() => navigate("/create")}>
-            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> New Event
-          </button>
+          <button style={S.btn} onClick={() => navigate("/create")}>+ New Event</button>
         </div>
 
-        {/* Loading skeleton */}
-        {loading && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            {[1,2,3].map(i => (
-              <div key={i} style={{ background: "#0f0f1a", border: "1px solid #1e1e2e", borderRadius: 16, padding: 24, height: 180, opacity: 0.4 }} />
-            ))}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!loading && events.length === 0 && (
-          <div className="empty-state">
-            <div style={{ fontSize: 48, marginBottom: 16 }}>✦</div>
-            <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 22, marginBottom: 10 }}>Nothing here yet</h2>
-            <p style={{ color: "#5a5a72", fontSize: 14, marginBottom: 28, lineHeight: 1.7 }}>
-              Create your first event and start bringing people together.
-            </p>
-            <button className="btn-gold" onClick={() => navigate("/create")} style={{ margin: "0 auto" }}>
-              + Create your first event
-            </button>
-          </div>
-        )}
-
-        {/* Upcoming events */}
-        {!loading && upcoming.length > 0 && (
-          <div style={{ marginBottom: 48 }}>
-            <div className="section-label">Upcoming</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-              {upcoming.map((event, i) => {
-                const meta = EVENT_TYPE_META[event.type] || EVENT_TYPE_META.other;
-                const countdown = daysUntil(event.date);
-                return (
-                  <div
-                    key={event.id}
-                    className={`event-card fade-up`}
-                    style={{ animationDelay: `${i * 0.06}s`, opacity: 0 }}
-                    onClick={() => navigate(`/dashboard/${event.id}`)}
-                  >
-                    {/* Accent line */}
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, #c9a84c, #a8872e)" }} />
-
-                    {/* Delete button */}
-                    <button
-                      className="delete-btn"
-                      onClick={e => { e.stopPropagation(); setDeleting(event.id); }}
-                      title="Delete event"
-                    >×</button>
-
-                    {/* Icon + type */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 42, height: 42, background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                        {meta.icon}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "#c9a84c", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500 }}>{meta.label}</div>
-                        <div style={{ fontSize: 11, color: countdown.color, marginTop: 2, fontWeight: 500 }}>{countdown.label}</div>
-                      </div>
-                    </div>
-
-                    {/* Event name */}
-                    <div>
-                      <div style={{ fontFamily: "'Playfair Display'", fontSize: 19, fontWeight: 700, lineHeight: 1.25, marginBottom: 6, paddingRight: 24 }}>
-                        {event.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#5a5a72" }}>
-                        {new Date(event.date).toLocaleDateString("en-NZ", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-                        {event.time && ` · ${event.time.slice(0,5)}`}
-                      </div>
-                    </div>
-
-                    {/* Venue + capacity */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ fontSize: 12, color: "#3a3a52", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "65%" }}>
-                        {event.venue_name || "No venue set"}
-                      </div>
-                      {event.capacity && (
-                        <div style={{ fontSize: 11, color: "#3a3a52", background: "#13131f", border: "1px solid #1e1e2e", borderRadius: 20, padding: "3px 10px" }}>
-                          {event.capacity} cap
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Budget pill */}
-                    {event.total_budget > 0 && (
-                      <div style={{ fontSize: 12, color: "#5a5a72" }}>
-                        💰 <span style={{ color: "#c9a84c" }}>${Number(event.total_budget).toLocaleString()}</span> budget
-                      </div>
-                    )}
-
-                    {/* Open arrow */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: "auto" }}>
-                      <div style={{ fontSize: 12, color: "#3a3a52", display: "flex", alignItems: "center", gap: 4 }}>
-                        Open dashboard <span style={{ fontSize: 14 }}>→</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Create new tile */}
-              <div
-                onClick={() => navigate("/create")}
-                style={{
-                  border: "1px dashed #1e1e2e", borderRadius: 16, padding: 24,
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                  gap: 10, cursor: "pointer", minHeight: 200, transition: "all 0.2s",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)"; e.currentTarget.style.background = "rgba(201,168,76,0.03)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e1e2e"; e.currentTarget.style.background = "transparent"; }}
-              >
-                <div style={{ width: 40, height: 40, border: "1px dashed #2a2a38", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#3a3a52" }}>+</div>
-                <span style={{ fontSize: 13, color: "#3a3a52" }}>New event</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Pending collab invites */}
-        {!loading && pendingInvites.length > 0 && (
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 11, color: "#818cf8", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12, fontWeight: 600 }}>
-              Pending Invites · {pendingInvites.length}
-            </div>
+        {/* Pending invites */}
+        {pendingInvites.length > 0 && (
+          <div style={{ marginBottom:24 }}>
             {pendingInvites.map(inv => (
-              <div key={inv.id} style={{ background: "#0a0a14", border: "1px solid rgba(129,140,248,0.3)", borderRadius: 14, padding: "16px 20px", marginBottom: 10, display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ fontSize: 24 }}>🤝</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{inv.events?.name}</div>
-                  <div style={{ fontSize: 12, color: "#818cf8" }}>
-                    {inv.role.replace("_", " ")} · {inv.events?.date ? new Date(inv.events.date).toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" }) : ""}
-                  </div>
+              <div key={inv.id} style={{ ...S.card, padding:"14px 18px", marginBottom:8, display:"flex", alignItems:"center", gap:14, borderColor:`${accent}30` }}>
+                <div style={{ width:8, height:8, borderRadius:"50%", background:accent, flexShrink:0 }}/>
+                <div style={{ flex:1, fontSize:13 }}>
+                  You've been invited to collaborate on <strong>{inv.events?.name}</strong> as {inv.role?.replace("_"," ")}
                 </div>
-                <button onClick={() => navigate(`/collab/accept/${inv.invite_token}`)}
-                  style={{ background: "linear-gradient(135deg,#c9a84c,#a8872e)", border: "none", color: "#080810", borderRadius: 9, padding: "9px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>
-                  View Invite
-                </button>
+                <button onClick={() => navigate(`/collab/accept/${inv.token}`)}
+                  style={{ ...S.btn, padding:"7px 14px", fontSize:12 }}>View Invite</button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Collab events */}
-        {!loading && collabEvents.length > 0 && (
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 11, color: "#5a5a72", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 12 }}>
-              Collaborating On
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 14 }}>
-              {collabEvents.map(ev => {
-                const meta      = EVENT_TYPE_META[ev.type] || EVENT_TYPE_META.other;
-                const du        = daysUntil(ev.date);
-                const roleLabel = (ev._collabRole || "").replace("_"," ");
-                const roleColors = { admin: "#818cf8", ticketing: "#c9a84c", "check in": "#10b981", "view only": "#5a5a72" };
-                const roleColor  = roleColors[roleLabel] || "#818cf8";
-                return (
-                  <div key={ev._eventId || ev.id} onClick={() => navigate(`/dashboard/${ev._eventId || ev.id}`)}
-                    style={{ background: "#0a0a14", border: `1px solid ${roleColor}25`, borderRadius: 16, padding: "18px 20px", cursor: "pointer", transition: "border-color 0.15s", position: "relative", overflow: "hidden" }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor=`${roleColor}50`}
-                    onMouseLeave={e => e.currentTarget.style.borderColor=`${roleColor}25`}>
-                    {/* Collab stripe */}
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${roleColor}, transparent)` }} />
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-                      <span style={{ fontSize: 20 }}>{meta.icon}</span>
-                      <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, background: `${roleColor}18`, color: roleColor, border: `1px solid ${roleColor}35`, fontWeight: 600 }}>
-                        🤝 {roleLabel}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{ev.name}</div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ fontSize: 12, color: du.color }}>{du.label}</div>
-                      <div style={{ fontSize: 11, color: "#3a3a52" }}>collaborating</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Filter tabs */}
+        <div style={{ display:"flex", gap:4, marginBottom:20, background:"#131316", padding:4, borderRadius:10, width:"fit-content" }}>
+          {[["all","All"],["upcoming","Upcoming"],["past","Past"]].map(([id,label]) => (
+            <button key={id} onClick={() => setFilter(id)}
+              style={{ background:filter===id?"#1c1c22":"none", border:"none", color:filter===id?"#f0eff4":"#6b6a7a", borderRadius:7, padding:"6px 14px", fontSize:12, fontWeight:filter===id?600:400, cursor:"pointer", fontFamily:"inherit", transition:"all 0.1s" }}>
+              {label}
+            </button>
+          ))}
+        </div>
 
-        {/* Past events */}
-        {!loading && past.length > 0 && (
-          <div>
-            <div className="section-label">Past</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
-              {past.map((event, i) => {
-                const meta = EVENT_TYPE_META[event.type] || EVENT_TYPE_META.other;
-                return (
-                  <div
-                    key={event.id}
-                    className="event-card past"
-                    style={{ animationDelay: `${i * 0.06}s` }}
-                    onClick={() => navigate(`/dashboard/${event.id}`)}
-                  >
-                    <button className="delete-btn" onClick={e => { e.stopPropagation(); setDeleting(event.id); }} title="Delete event">×</button>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ width: 38, height: 38, background: "#13131f", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{meta.icon}</div>
-                      <div style={{ fontSize: 11, color: "#3a3a52", textTransform: "uppercase", letterSpacing: "0.05em" }}>{meta.label}</div>
-                    </div>
-                    <div style={{ fontFamily: "'Playfair Display'", fontSize: 18, fontWeight: 700, paddingRight: 24 }}>{event.name}</div>
-                    <div style={{ fontSize: 12, color: "#3a3a52" }}>
-                      {new Date(event.date).toLocaleDateString("en-NZ", { day: "numeric", month: "long", year: "numeric" })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* My events */}
+        {filtered.length === 0 && collabEvents.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"60px 0", color:"#6b6a7a" }}>
+            <div style={{ fontSize:32, marginBottom:12, color:`${accent}60` }}>◆</div>
+            <div style={{ fontSize:15, fontWeight:600, color:"#f0eff4", marginBottom:8 }}>No events {filter !== "all" ? `(${filter})` : "yet"}</div>
+            {filter === "all" && <button style={S.btn} onClick={() => navigate("/create")}>Create your first event</button>}
           </div>
+        ) : (
+          <>
+            {filtered.length > 0 && (
+              <div style={{ marginBottom:32 }}>
+                {collabEvents.length > 0 && <div style={{ fontSize:12, color:"#6b6a7a", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>My Events</div>}
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {filtered.map(ev => {
+                    const { label, color } = daysUntil(ev.date);
+                    const icon = TYPE_ICONS[ev.type] || "◆";
+                    const isPast = new Date(ev.date) < now;
+                    return (
+                      <div key={ev.id}
+                        style={{ ...S.card, padding:"16px 18px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", transition:"border-color 0.12s" }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = accent + "50"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "#222228"}
+                        onClick={() => navigate(`/dashboard/${ev.id}`)}>
+                        <div style={{ width:40, height:40, borderRadius:10, background:isPast?"#1c1c20":`${accent}12`, border:`1px solid ${isPast?"#222228":accent+"30"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, color:isPast?"#6b6a7a":accent, flexShrink:0 }}>
+                          {icon}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:14, fontWeight:600, marginBottom:3, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{ev.name}</div>
+                          <div style={{ fontSize:12, color:"#6b6a7a" }}>
+                            {new Date(ev.date).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"numeric"})}
+                            {ev.venue_name && <span> · {ev.venue_name}</span>}
+                            {ev.type && <span style={{ marginLeft:8, textTransform:"capitalize" }}>· {ev.type}</span>}
+                          </div>
+                        </div>
+                        <div style={{ color, fontSize:12, fontWeight:500, flexShrink:0 }}>{label}</div>
+                        <button onClick={e => { e.stopPropagation(); handleDelete(ev.id); }} disabled={deleting===ev.id}
+                          style={{ background:"none", border:"none", color:"#3a3a45", cursor:"pointer", fontSize:14, padding:"4px 8px", borderRadius:6, transition:"color 0.1s" }}
+                          onMouseEnter={e => e.currentTarget.style.color="#ef4444"}
+                          onMouseLeave={e => e.currentTarget.style.color="#3a3a45"}>
+                          {deleting===ev.id ? "…" : "✕"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Collab events */}
+            {collabEvents.length > 0 && (
+              <div>
+                <div style={{ fontSize:12, color:"#6b6a7a", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Collaborating</div>
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {collabEvents.map(ev => {
+                    const { label, color } = daysUntil(ev.date);
+                    return (
+                      <div key={ev.id}
+                        style={{ ...S.card, padding:"16px 18px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", transition:"border-color 0.12s", borderColor:`${accent}20` }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = accent + "50"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = `${accent}20`}
+                        onClick={() => navigate(`/dashboard/${ev.id}`)}>
+                        <div style={{ width:40, height:40, borderRadius:10, background:`${accent}10`, border:`1px solid ${accent}25`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, color:accent }}>
+                          {TYPE_ICONS[ev.type]||"◆"}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:14, fontWeight:600, marginBottom:3 }}>{ev.name}</div>
+                          <div style={{ fontSize:12, color:"#6b6a7a" }}>
+                            {new Date(ev.date).toLocaleDateString("en-NZ",{day:"numeric",month:"short",year:"numeric"})}
+                          </div>
+                        </div>
+                        <span style={{ fontSize:11, padding:"3px 8px", borderRadius:20, background:`${accent}12`, color:accent, border:`1px solid ${accent}25`, fontWeight:600 }}>{ev._role?.replace("_"," ")}</span>
+                        <div style={{ color, fontSize:12, fontWeight:500 }}>{label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
-
-      {/* ── Delete confirmation modal ── */}
-      {deleting && (
-        <div className="modal-overlay" onClick={() => setDeleting(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 32, marginBottom: 16 }}>🗑️</div>
-            <h2 style={{ fontFamily: "'Playfair Display'", fontSize: 20, marginBottom: 10 }}>Delete this event?</h2>
-            <p style={{ color: "#5a5a72", fontSize: 14, lineHeight: 1.7, marginBottom: 28 }}>
-              This will permanently delete the event and all its data — guests, budget, playlist, polls, and vendors. This can't be undone.
-            </p>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                className="btn-ghost"
-                onClick={() => setDeleting(null)}
-                style={{ flex: 1, justifyContent: "center" }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleting)}
-                style={{ flex: 1, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: "10px", fontFamily: "'DM Sans'", fontSize: 14, fontWeight: 500, cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.25)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
-              >
-                Delete event
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
