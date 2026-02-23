@@ -3127,7 +3127,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Mobile Bottom Nav ── */}}
+      {/* ── Mobile Bottom Nav ── */}
       {isMobile && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "var(--bg2)", borderTop: "1.5px solid var(--border)", display: "flex", zIndex: 50, padding: "4px 0 env(safe-area-inset-bottom,0)" }}>
           {(mobileMode === "ticketing"
