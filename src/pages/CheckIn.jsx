@@ -12,13 +12,14 @@ import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM } from "./theme";
 const page = { minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif", padding: 24 };
 const card = { background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "36px 32px", maxWidth: 400, width: "100%", textAlign: "center" };
 const field = { width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "11px 14px", color: "var(--text)", fontSize: 14, outline: "none", fontFamily: "'Plus Jakarta Sans',sans-serif", marginBottom: 10 };
-const btnGreen = { width: "100%", background: "rgba(5,150,105,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "var(--success,#059669)", borderRadius: 9, padding: 12, fontSize: 15, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 600 };
+const btnGreen = { width: "100%", background: "var(--success,#059669)", border: "none", color: "#fff", borderRadius: 9, padding: "12px", fontSize: 15, cursor: "pointer", fontFamily: "inherit", fontWeight: 700 };
 const btnGhost = { width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 9, padding: 11, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", marginTop: 8 };
 
 function Logo() {
   return (
     <div style={{ marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-      <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
       <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
     </div>
   );
@@ -55,12 +56,13 @@ export function GuestCheckIn() {
 
   return (
     <div style={page}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <div style={{ maxWidth: 380, width: "100%", textAlign: "center" }}>
         <Logo />
         <div style={card}>
           <div style={{ fontSize: 52, marginBottom: 20 }}>{cfg.icon}</div>
           {event && <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 8, letterSpacing: "0.06em", textTransform: "uppercase" }}>{event.name}</div>}
-          <h1 style={{ fontFamily: "inherit,Georgia,serif", fontSize: 26, fontWeight: 700, color: cfg.color, margin: "0 0 12px" }}>{cfg.title}</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em", color: cfg.color || "var(--text)", margin: "0 0 12px" }}>{cfg.title}</h1>
           {status === "success" && <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>You're on the list. Enjoy the event!</p>}
           {status === "already" && <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>Your ticket was already scanned earlier.</p>}
           {status === "error"   && <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>This QR code is invalid or the guest was not found.</p>}
@@ -116,7 +118,7 @@ export function EventCheckIn() {
           <div style={card}>
             <div style={{ fontSize: 52, marginBottom: 20 }}>{status === "success" ? "🎉" : "✓"}</div>
             {event && <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>{event.name}</div>}
-            <h1 style={{ fontFamily: "inherit,Georgia,serif", fontSize: 26, fontWeight: 700, color: status === "success" ? "var(--success,#059669)" : "var(--accent)", margin: "0 0 12px" }}>
+            <h1 style={{ fontFamily: "inherit", fontSize: 26, fontWeight: 700, color: status === "success" ? "var(--success,#059669)" : "var(--accent)", margin: "0 0 12px" }}>
               {status === "success" ? `Welcome, ${selected?.name?.split(" ")[0]}!` : "Already checked in"}
             </h1>
             <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, margin: 0 }}>
@@ -130,11 +132,12 @@ export function EventCheckIn() {
 
   return (
     <div style={page}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <div style={{ maxWidth: 400, width: "100%" }}>
         <Logo />
         <div style={card}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>👋</div>
-          {event && <h1 style={{ fontFamily: "inherit,Georgia,serif", fontSize: 22, fontWeight: 700, color: "#f0e8db", margin: "0 0 4px" }}>{event.name}</h1>}
+          {event && <h1 style={{ fontFamily: "inherit", fontSize: 22, fontWeight: 700, color: "var(--text)", margin: "0 0 4px" }}>{event.name}</h1>}
           <p style={{ fontSize: 14, color: "var(--text2)", margin: "0 0 24px" }}>Find your name to check in</p>
 
           {!selected ? (

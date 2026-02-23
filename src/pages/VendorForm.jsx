@@ -4,6 +4,7 @@
 // ============================================================
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM } from "./theme";
 import { supabase } from "../lib/supabase";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -92,9 +93,9 @@ export default function VendorForm() {
   const S = {
     page:    { minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)", padding: "40px 16px 60px" },
     card:    { maxWidth: 540, margin: "0 auto", background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, overflow: "hidden" },
-    field:   { width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "11px 14px", color: "var(--text)", fontSize: 14, outline: "none", fontFamily: "'Plus Jakarta Sans',sans-serif", transition: "border-color 0.2s" },
-    label:   { display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 },
-    btnGold: { width: "100%", background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 12, padding: 15, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" },
+    field:   { width: "100%", boxSizing: "border-box", background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 8, padding: "10px 14px", color: "var(--text)", fontSize: 14, outline: "none", fontFamily: "inherit", transition: "border-color 0.15s, box-shadow 0.15s" },
+    label:   { display: "block", fontSize: 12, fontWeight: 700, color: "var(--text2)", marginBottom: 7 },
+    btnGold: { width: "100%", background: "var(--accent)", color: "#fff", border: "none", borderRadius: 10, padding: "13px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.15s" },
   };
 
   if (loading) return <div style={{ ...S.page, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -102,25 +103,25 @@ export default function VendorForm() {
   </div>;
 
   if (step === "invalid") return <div style={{ ...S.page, textAlign: "center" }}>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <div style={{ fontSize: 48, marginBottom: 16 }}>⚠</div>
-    <h1 style={{ fontFamily: "inherit,serif", color: "#ef4444" }}>Invalid Link</h1>
+    <h1 style={{ fontFamily: "inherit", color: "#ef4444" }}>Invalid Link</h1>
     <p style={{ color: "var(--text2)" }}>This vendor application link is not valid.</p>
   </div>;
 
   if (step === "already") return <div style={{ ...S.page, textAlign: "center" }}>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-    <h1 style={{ fontFamily: "inherit,serif", color: "var(--success,#059669)" }}>Already Submitted</h1>
+    <h1 style={{ fontFamily: "inherit", color: "var(--success,#059669)" }}>Already Submitted</h1>
     <p style={{ color: "var(--text2)" }}>Your application for <strong style={{ color: "var(--accent)" }}>{ev?.name}</strong> has already been submitted.</p>
     <p style={{ color: "var(--text3)", fontSize: 13 }}>The organiser will be in touch soon.</p>
   </div>;
 
   if (step === "done") return <div style={{ ...S.page, textAlign: "center" }}>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <div style={{ maxWidth: 460, margin: "0 auto" }}>
       <div style={{ fontSize: 52, marginBottom: 20 }}>🎉</div>
-      <h1 style={{ fontFamily: "inherit,serif", fontSize: 28, color: "#f0e8db", marginBottom: 8 }}>Application Submitted!</h1>
+      <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text)", marginBottom: 8 }}>Application Submitted!</h1>
       <p style={{ color: "var(--accent)", fontSize: 16, marginBottom: 6 }}>{ev?.name}</p>
       {eventDate && <p style={{ color: "var(--text2)", fontSize: 14, marginBottom: 24 }}>{eventDate}</p>}
       <div style={{ background: "var(--bg2)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 14, padding: "20px 24px", textAlign: "left" }}>
@@ -134,23 +135,24 @@ export default function VendorForm() {
 
   return (
     <div style={S.page}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swapDM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 
       {/* Logo */}
       <div style={{ textAlign: "center", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-        <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+        <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
         <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
       </div>
 
       <div style={S.card}>
         {/* Header */}
-        <div style={{ background: "linear-gradient(135deg,rgba(201,168,76,0.06),transparent)", borderBottom: "1.5px solid var(--border)", padding: "28px 28px 24px" }}>
-          <div style={{ fontSize: 12, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Vendor Application</div>
-          <h1 style={{ fontFamily: "inherit,serif", fontSize: 24, color: "#f0e8db", margin: "0 0 4px" }}>{ev?.name}</h1>
+        <div style={{ background: "var(--bg3)", borderBottom: "1.5px solid var(--border)", padding: "28px 28px 24px" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Vendor Application</div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)", margin: "0 0 6px" }}>{ev?.name}</h1>
           {eventDate && <p style={{ fontSize: 13, color: "var(--accent)", margin: "0 0 2px" }}>{eventDate}</p>}
           {ev?.venue_name && <p style={{ fontSize: 13, color: "var(--text2)", margin: 0 }}>📍 {ev.venue_name}</p>}
           {vendor?.host_message && (
-            <div style={{ marginTop: 16, background: "var(--bg3)", borderLeft: "3px solid #c9a84c", borderRadius: "0 8px 8px 0", padding: "12px 14px", fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+            <div style={{ marginTop: 16, background: "var(--accentBg)", border: "1.5px solid var(--accentBorder)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
               {vendor.host_message}
             </div>
           )}

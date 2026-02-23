@@ -36,11 +36,11 @@ const css = `
   ::selection { background: var(--accent); color: #fff; }
   ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: var(--border); }
   .rf { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 13px 16px; color: var(--text); font-size: 15px; width: 100%; outline: none; font-family: 'Plus Jakarta Sans',sans-serif; transition: border-color 0.2s; }
-  .rf:focus { border-color: rgba(201,168,76,0.5); box-shadow: 0 0 0 3px rgba(201,168,76,0.07); }
+  .rf:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
   .rf::placeholder { color: rgba(255,255,255,0.15); }
   .rl { display: block; font-size: 12px; color: var(--text2); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; }
   .sbtn { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 12px; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; width: 100%; transition: all 0.2s; }
-  .sbtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(201,168,76,0.3); }
+  .sbtn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.88; }
   .sbtn:disabled { opacity: 0.5; cursor: not-allowed; }
   .cbtn { flex: 1; padding: 16px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg3); cursor: pointer; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 15px; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .cbtn.yes { color: #10b981; } .cbtn.yes:hover,.cbtn.yes.sel { border-color: #10b981; background: rgba(16,185,129,0.1); }
@@ -53,7 +53,7 @@ const css = `
   .vbtn:hover { opacity: 0.85; }
   .vbadge { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; color: #10b981; padding: 6px 14px; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 12px; }
   .poll-opt { width: 100%; padding: 13px 16px; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.07); border-radius: 10px; color: var(--text); font-family: 'Plus Jakarta Sans',sans-serif; font-size: 14px; cursor: pointer; text-align: left; transition: all 0.18s; margin-bottom: 8px; position: relative; overflow: hidden; }
-  .poll-opt:hover:not(:disabled) { border-color: rgba(201,168,76,0.3); }
+  .poll-opt:hover:not(:disabled) { border-color: var(--accentBorder); }
   .poll-opt.voted { border-color: var(--accent); background: var(--accentBg); cursor: default; }
   .poll-fill { position: absolute; top:0; left:0; bottom:0; background: var(--accentBg); transition: width 0.5s cubic-bezier(0.16,1,0.3,1); border-radius: 8px; }
   @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
@@ -66,6 +66,7 @@ const css = `
 function Field({ label, required, children }) {
   return (
     <div>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <label className="rl">{label}{required && <span style={{ color: "#ef4444", marginLeft: 3 }}>*</span>}</label>
       {children}
     </div>
@@ -403,7 +404,7 @@ export default function RSVP() {
   // ── Render helpers ─────────────────────────────────────
   const Logo = () => (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <div style={{ width: 24, height: 24, background: "var(--accent)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "var(--bg)" }}>✦</div>
+      <div style={{ width: 24, height: 24, background: "var(--accent)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff" }}>✦</div>
       <span style={{ fontSize: 13, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
     </div>
   );
@@ -411,12 +412,14 @@ export default function RSVP() {
   // ── Special screens ────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", fontFamily: "'Plus Jakarta Sans',sans-serif", fontSize: 14 }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <style>{css}</style>Loading event…
     </div>
   );
 
   if (notFound) return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans',sans-serif", flexDirection: "column", gap: 12, padding: 24, textAlign: "center" }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <style>{css}</style>
       <div style={{ fontSize: 48 }}>✦</div>
       <div style={{ fontSize: 20, color: "var(--text)" }}>Event not found</div>
@@ -426,12 +429,13 @@ export default function RSVP() {
 
   if (removed) return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans',sans-serif", padding: 24 }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <style>{css}</style>
       <div style={{ maxWidth: 460, width: "100%", textAlign: "center" }}>
         <div style={{ marginBottom: 32 }}><Logo /></div>
         <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "40px 32px" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🚫</div>
-          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, color: "#f0e8db", marginBottom: 10 }}>You've been removed</h2>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 600, color: "var(--text)", marginBottom: 10 }}>You've been removed</h2>
           <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.8, marginBottom: 20 }}>
             You are no longer on the guest list for <strong style={{ color: "var(--text)" }}>{event?.name}</strong>. This invite link is no longer valid.
           </p>
@@ -449,18 +453,19 @@ export default function RSVP() {
   // ── Main page ──────────────────────────────────────────
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)" }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <style>{css}</style>
 
       {/* Hero */}
       <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(160deg,#0e0c18,#0a0a10 50%,#0c100a)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ position: "absolute", top: -80, right: -80, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle,rgba(201,168,76,0.08),transparent 70%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: -80, right: -80, width: 320, height: 320, borderRadius: "50%", background: "radial-gradient(circle,var(--accentBg),transparent 70%)", pointerEvents: "none" }} />
         <div style={{ maxWidth: 580, margin: "0 auto", padding: "52px 24px 44px" }}>
           <div style={{ marginBottom: 40 }}><Logo /></div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <span style={{ fontSize: 36 }}>{meta}</span>
             <span style={{ fontSize: 12, color: "var(--accent)", letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 500 }}>{event.type}</span>
           </div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(32px,8vw,52px)", fontWeight: 600, lineHeight: 1.1, marginBottom: 20, color: "#f0e8db" }}>{event.name}</h1>
+          <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "clamp(32px,8vw,52px)", fontWeight: 600, lineHeight: 1.1, marginBottom: 20, color: "var(--text)" }}>{event.name}</h1>
           {event.description && <p style={{ fontSize: 15, color: "#7a7268", lineHeight: 1.75, marginBottom: 28, fontWeight: 300 }}>{event.description}</p>}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 20 }}>
             {[
@@ -517,7 +522,7 @@ export default function RSVP() {
                           display: "flex", alignItems: "center", justifyContent: "space-between",
                           opacity: isPending ? 1 : 0.45,
                         }}
-                        onMouseEnter={e => { if (isPending) { e.currentTarget.style.borderColor = "rgba(201,168,76,0.4)"; e.currentTarget.style.background = "rgba(201,168,76,0.05)"; }}}
+                        onMouseEnter={e => { if (isPending) { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "var(--accentBg)"; }}}
                         onMouseLeave={e => { if (isPending) { e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}}
                       >
                         <span>{g.name || <span style={{ color: "var(--text2)" }}>Guest</span>}</span>
@@ -543,7 +548,7 @@ export default function RSVP() {
               <div className="fu">
                 {/* Who they are banner */}
                 {selectedGuestId && selectedGuestId !== "new" && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 10, padding: "10px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, background: "var(--accentBg)", border: "1.5px solid var(--accentBorder)", borderRadius: 10, padding: "10px 16px" }}>
                     <span style={{ fontSize: 18 }}>👤</span>
                     <span style={{ fontSize: 14, color: "var(--accent)" }}>RSVPing as <strong>{fName || guestList.find(g => g.id === selectedGuestId)?.name || "Guest"}</strong></span>
                     {!isFromInviteLink && (
@@ -688,7 +693,7 @@ export default function RSVP() {
                     return (
                       <div key={track.id} className="sp-res">
                         {/* Art */}
-                        <div style={{ width: 38, height: 38, borderRadius: 6, overflow: "hidden", background: "#1a1a2e", flexShrink: 0 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 6, overflow: "hidden", background: "var(--border)", flexShrink: 0 }}>
                           {track.album?.images?.[2] && <img src={track.album.images[2].url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                         </div>
                         {/* Info */}

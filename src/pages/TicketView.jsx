@@ -50,14 +50,16 @@ export default function TicketView() {
     : null;
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Loading…</div>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>Loading…</div>
   );
 
   if (!ticket) return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans',sans-serif", textAlign: "center", padding: 24 }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <div>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⚠</div>
-        <h1 style={{ fontFamily: "inherit,serif", color: "#ef4444" }}>Invalid Ticket</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--danger,#dc2626)" }}>Invalid Ticket</h1>
         <p style={{ color: "var(--text2)" }}>This ticket could not be found.</p>
       </div>
     </div>
@@ -65,7 +67,8 @@ export default function TicketView() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "32px 16px 48px" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
         @media print {
           body { background: white !important; }
@@ -76,7 +79,7 @@ export default function TicketView() {
 
       {/* Logo */}
       <div className="no-print" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
-        <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+        <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
         <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
       </div>
 
@@ -93,7 +96,7 @@ export default function TicketView() {
         {/* Event info */}
         <div style={{ padding: "28px 28px 20px", borderBottom: "1px dashed #1e1e2e" }}>
           <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Your Ticket</div>
-          <h1 style={{ fontFamily: "inherit,serif", fontSize: 22, color: "#f0e8db", margin: "0 0 4px" }}>{ev?.name}</h1>
+          <h1 style={{ fontFamily: "inherit", fontSize: 22, color: "var(--text)", margin: "0 0 4px" }}>{ev?.name}</h1>
           {eventDate && <p style={{ fontSize: 13, color: "var(--accent)", margin: "0 0 4px" }}>{eventDate}</p>}
           {ev?.venue_name && <p style={{ fontSize: 12, color: "var(--text2)", margin: 0 }}>📍 {ev.venue_name}</p>}
         </div>

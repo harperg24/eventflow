@@ -92,35 +92,38 @@ export default function CollabAccept() {
 
   if (step === "accepted_redirect") return (
     <div style={{ ...S.page, textAlign: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div><div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-      <h1 style={{ fontFamily: "inherit,serif", fontSize: 24, marginBottom: 8 }}>You're in!</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 8 }}>You're in!</h1>
       <p style={{ color: "var(--text2)" }}>Taking you to the event dashboard…</p></div>
     </div>
   );
 
   if (step === "invalid") return (
     <div style={{ ...S.page, textAlign: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div><div style={{ fontSize: 48, marginBottom: 16 }}>⚠</div>
-      <h1 style={{ fontFamily: "inherit,serif", color: "#ef4444" }}>Invalid Link</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--danger,#dc2626)" }}>Invalid Link</h1>
       <p style={{ color: "var(--text2)" }}>This invitation link is not valid or has expired.</p></div>
     </div>
   );
 
   if (step === "done" || step === "declined") return (
     <div style={{ ...S.page, textAlign: "center" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div style={{ maxWidth: 400 }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>{step === "done" ? "✅" : "👋"}</div>
-        <h1 style={{ fontFamily: "inherit,serif", fontSize: 24, marginBottom: 8 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 8 }}>
           {step === "done" ? "You're already in!" : "Invitation Declined"}
         </h1>
         <p style={{ color: "var(--text2)", marginBottom: 24 }}>
           {step === "done" ? `You already have access to ${collab?.events?.name}.` : "You've declined this collaboration invite."}
         </p>
         {step === "done" && <button onClick={() => navigate(`/dashboard/${collab.event_id}`)}
-          style={{ background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 12, padding: "14px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+          style={{ background: "var(--accent)", border: "none", color: "#fff", borderRadius: 9, padding: "12px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", transition: "opacity 0.15s" }}>
           Open Dashboard →
         </button>}
       </div>
@@ -132,17 +135,18 @@ export default function CollabAccept() {
 
   return (
     <div style={S.page}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
       <div style={{ maxWidth: 440, width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+          <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
           <span style={{ fontSize: 14, color: "var(--text2)" }}>EventFlow</span>
         </div>
 
         <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>
-          <div style={{ background: "linear-gradient(135deg,rgba(201,168,76,0.06),transparent)", borderBottom: "1.5px solid var(--border)", padding: "28px", textAlign: "center" }}>
+          <div style={{ background: "var(--accentBg)", borderBottom: "1.5px solid var(--border)", padding: "28px", textAlign: "center" }}>
             <div style={{ fontSize: 36, marginBottom: 14 }}>🤝</div>
-            <h1 style={{ fontFamily: "inherit,serif", fontSize: 22, margin: "0 0 6px" }}>Collaboration Invite</h1>
+            <h1 style={{ fontFamily: "inherit", fontSize: 22, margin: "0 0 6px" }}>Collaboration Invite</h1>
             <p style={{ fontSize: 15, color: "var(--accent)", margin: 0 }}>{ev?.name}</p>
             {ev?.date && <p style={{ fontSize: 13, color: "var(--text2)", margin: "4px 0 0" }}>
               {new Date(ev.date).toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
@@ -166,7 +170,7 @@ export default function CollabAccept() {
                 Decline
               </button>
               <button onClick={handleAccept}
-                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 10, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                style={{ flex: 2, background: "var(--accent)", border: "none", color: "#fff", borderRadius: 10, padding: 13, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
                 Accept → Sign In
               </button>
             </div>

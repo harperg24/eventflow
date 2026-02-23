@@ -41,11 +41,12 @@ export default function TicketSuccess() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div style={{ maxWidth: 520, width: "100%" }}>
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+          <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
           <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
         </div>
 
@@ -58,12 +59,12 @@ export default function TicketSuccess() {
           <>
             <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "40px 32px", textAlign: "center", marginBottom: 20 }}>
               <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
-              <h1 style={{ fontFamily: "inherit,serif", fontSize: 28, color: "#f0e8db", margin: "0 0 8px" }}>You're in!</h1>
+              <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text)", margin: "0 0 8px" }}>You're in!</h1>
               <p style={{ fontSize: 15, color: "var(--accent)", margin: "0 0 4px", fontWeight: 500 }}>{order.events?.name}</p>
               <p style={{ fontSize: 13, color: "var(--text2)", margin: 0 }}>
                 {order.events?.date ? new Date(order.events.date).toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long" }) : ""}
               </p>
-              <div style={{ margin: "24px 0", height: 1, background: "#1a1a2e" }} />
+              <div style={{ margin: "24px 0", height: "1.5px", background: "var(--border)" }} />
               <p style={{ fontSize: 14, color: "var(--text2)", margin: 0 }}>
                 Your {order.quantity} ticket{order.quantity > 1 ? "s" : ""} have been emailed to <strong style={{ color: "var(--text)" }}>{order.buyer_email}</strong>
               </p>
@@ -72,13 +73,13 @@ export default function TicketSuccess() {
             {/* Ticket previews */}
             {tickets.map(t => (
               <div key={t.id} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "18px 22px", marginBottom: 10, display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ width: 48, height: 48, background: "var(--accentBg)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🎟</div>
+                <div style={{ width: 48, height: 48, background: "var(--accentBg)", border: "1.5px solid var(--accentBorder)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🎟</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{order.ticket_tiers?.name}</div>
                   <div style={{ fontSize: 12, color: "var(--text2)" }}>Ticket {t.ticket_number}</div>
                 </div>
                 <a href={"/ticket/" + t.qr_token}
-                  style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 7, padding: "5px 12px" }}>
+                  style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", border: "1.5px solid var(--accentBorder)", borderRadius: 7, padding: "5px 12px" }}>
                   View →
                 </a>
               </div>
@@ -91,7 +92,7 @@ export default function TicketSuccess() {
         ) : (
           <div style={{ textAlign: "center", padding: "60px", background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20 }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>✓</div>
-            <h1 style={{ fontFamily: "inherit,serif", color: "var(--text)" }}>Payment received!</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)" }}>Payment received!</h1>
             <p style={{ color: "var(--text2)", fontSize: 14 }}>Your tickets will be emailed to you shortly.</p>
           </div>
         )}

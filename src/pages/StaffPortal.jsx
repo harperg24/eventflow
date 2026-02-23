@@ -325,7 +325,7 @@ export default function StaffPortal() {
               {entries.slice(0, 6).length === 0
                 ? <div style={{ textAlign:"center", padding:"20px 0", color:"var(--text3)", fontSize:13 }}>No entries yet.</div>
                 : entries.slice(0, 6).map((e, i) => (
-                  <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:i < Math.min(entries.length, 6)-1 ? "1px solid #0d0d1a" : "none" }}>
+                  <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:i < Math.min(entries.length, 6)-1 ? "1px solid var(--border)" : "none" }}>
                     <div style={{ flex:1 }}>
                       <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                         <span style={{ fontSize:13, color:"var(--text2)" }}>{fmt(e.clock_in)}</span>
@@ -386,14 +386,14 @@ export default function StaffPortal() {
                 const dayHrs = dayEntries.filter(countableEntry).reduce((s, e) => s + hoursWorked(e), 0);
                 const isToday = sameDay(day, new Date());
                 return (
-                  <div key={di} style={{ display:"flex", gap:14, padding:"12px 0", borderBottom: di < 6 ? "1px solid #0d0d1a" : "none" }}>
+                  <div key={di} style={{ display:"flex", gap:14, padding:"12px 0", borderBottom: di < 6 ? "1px solid var(--border)" : "none" }}>
                     <div style={{ width:40, flexShrink:0, textAlign:"center" }}>
                       <div style={{ fontSize:11, color:"var(--text2)" }}>{DAYS[di]}</div>
                       <div style={{ fontSize:18, fontWeight:700, color:isToday?"var(--accent)":"var(--text)" }}>{new Date(day).toLocaleDateString("en-NZ",{timeZone:NZ_TZ,day:"numeric"})}</div>
                     </div>
                     <div style={{ flex:1 }}>
                       {dayEntries.length === 0
-                        ? <div style={{ fontSize:12, color:"#2a2a3a", paddingTop:6 }}>—</div>
+                        ? <div style={{ fontSize:12, color:"var(--text3)", paddingTop:6 }}>—</div>
                         : dayEntries.map((e, i) => (
                           <div key={e.id} style={{ fontSize:12, marginBottom: i < dayEntries.length-1 ? 5 : 0, display:"flex", alignItems:"center", gap:6 }}>
                             <span style={{ color:"var(--success,#059669)" }}>▶{fmtTime(e.clock_in)}</span>
@@ -444,7 +444,7 @@ export default function StaffPortal() {
                     const inMonth = nzDateStr(day).slice(0,7) === nzDateStr(calCursor).slice(0,7);
                     const isToday = sameDay(day, new Date());
                     return (
-                      <div key={i} style={{ minHeight:72, background:isToday?"rgba(201,168,76,0.04)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:8, padding:"5px 6px", opacity:inMonth?1:0.35 }}>
+                      <div key={i} style={{ minHeight:72, background:isToday?"var(--accentBg)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:8, padding:"5px 6px", opacity:inMonth?1:0.35 }}>
                         <div style={{ fontSize:11, color:isToday?"var(--accent)":"var(--text2)", fontWeight:isToday?700:400, marginBottom:3 }}>
                           {new Date(day).toLocaleDateString("en-NZ",{timeZone:NZ_TZ,day:"numeric"})}
                         </div>
@@ -464,7 +464,7 @@ export default function StaffPortal() {
                   const ds = shiftsOnDay(day);
                   const isToday = sameDay(day, new Date());
                   return (
-                    <div key={i} style={{ minHeight:120, background:isToday?"rgba(201,168,76,0.04)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:12, padding:"10px 8px", cursor:"pointer" }}
+                    <div key={i} style={{ minHeight:120, background:isToday?"var(--accentBg)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:12, padding:"10px 8px", cursor:"pointer" }}
                       onClick={() => { setCalCursor(day); setCalView("day"); }}>
                       <div style={{ marginBottom:8 }}>
                         <div style={{ fontSize:11, color:"var(--text2)" }}>{DAYS[i]}</div>
@@ -475,7 +475,7 @@ export default function StaffPortal() {
                           {fmtTime(s.start_time)}–{fmtTime(s.end_time)}
                         </div>
                       ))}
-                      {ds.length === 0 && <div style={{ fontSize:10, color:"#2a2a3a", textAlign:"center", marginTop:8 }}>—</div>}
+                      {ds.length === 0 && <div style={{ fontSize:10, color:"var(--text3)", textAlign:"center", marginTop:8 }}>—</div>}
                     </div>
                   );
                 })}
@@ -487,7 +487,7 @@ export default function StaffPortal() {
                   : shiftsOnDay(calCursor).map((s, i) => {
                       const dur = ((new Date(s.end_time) - new Date(s.start_time)) / 3600000).toFixed(1);
                       return (
-                        <div key={s.id} style={{ padding:"14px 0", borderBottom: i < shiftsOnDay(calCursor).length-1 ? "1px solid #0d0d1a" : "none" }}>
+                        <div key={s.id} style={{ padding:"14px 0", borderBottom: i < shiftsOnDay(calCursor).length-1 ? "1px solid var(--border)" : "none" }}>
                           <div style={{ fontSize:15, fontWeight:600, color:"#818cf8", marginBottom:4 }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)}</div>
                           <div style={{ fontSize:13, color:"var(--text2)" }}>{dur}h{s.role ? ` · ${s.role}` : ""}{s.notes ? ` · ${s.notes}` : ""}</div>
                         </div>

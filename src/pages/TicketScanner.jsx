@@ -5,6 +5,7 @@
 // ============================================================
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM } from "./theme";
 import { supabase } from "../lib/supabase";
 import jsQR from "jsqr";
 
@@ -165,7 +166,8 @@ export default function TicketScanner() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
       {/* Header */}
       <div style={{ background: "var(--bg2)", borderBottom: "1.5px solid var(--border)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
@@ -182,8 +184,8 @@ export default function TicketScanner() {
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: 3, background: "#1a1a2e" }}>
-        <div style={{ height: "100%", width: stats.total ? `${(stats.scanned/stats.total)*100}%` : "0%", background: "linear-gradient(90deg,#10b981,#059669)", transition: "width 0.4s" }} />
+      <div style={{ height: 4, background: "var(--bg3)", borderRadius: 99 }}>
+        <div style={{ height: "100%", width: stats.total ? `${(stats.scanned/stats.total)*100}%` : "0%", background: "var(--success,#059669)", transition: "width 0.4s" }} />
       </div>
 
       <div style={{ maxWidth: 480, margin: "0 auto", padding: "20px 16px" }}>
@@ -205,7 +207,7 @@ export default function TicketScanner() {
                   const right  = i % 2 === 1 ? 0 : "auto";
                   const br     = i === 0 ? "0 0 8px 0" : i === 1 ? "0 0 0 8px" : i === 2 ? "0 8px 0 0" : "8px 0 0 0";
                   return (
-                    <div key={i} style={{ position: "absolute", top, bottom, left, right, width: 28, height: 28, border: "3px solid #c9a84c", borderRadius: br, borderTop: i >= 2 ? "none" : undefined, borderBottom: i < 2 ? "none" : undefined, borderLeft: i % 2 === 1 ? "none" : undefined, borderRight: i % 2 === 0 ? "none" : undefined }} />
+                    <div key={i} style={{ position: "absolute", top, bottom, left, right, width: 28, height: 28, border: "3px solid var(--accent)", borderRadius: br, borderTop: i >= 2 ? "none" : undefined, borderBottom: i < 2 ? "none" : undefined, borderLeft: i % 2 === 1 ? "none" : undefined, borderRight: i % 2 === 0 ? "none" : undefined }} />
                   );
                 })}
                 {/* Scan line */}
@@ -222,7 +224,7 @@ export default function TicketScanner() {
                 {camError || "Tap Start Scanner to begin"}
               </p>
               <button onClick={startCamera}
-                style={{ background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 10, padding: "12px 28px", fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
                 Start Scanner
               </button>
             </div>
@@ -237,7 +239,7 @@ export default function TicketScanner() {
                   {c.icon}
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: "inherit,serif", marginBottom: 4 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 4 }}>
                     {result.status === "valid" ? "Valid Ticket" : result.status === "duplicate" ? "Already Scanned" : "Invalid Ticket"}
                   </div>
                   {result.name && <div style={{ fontSize: 16, color: "var(--text)", marginBottom: 2 }}>{result.name}</div>}
@@ -276,7 +278,7 @@ export default function TicketScanner() {
               const match = val.match(/\/ticket\/([a-f0-9]+)/) || val.match(/^([a-f0-9]{32})$/);
               if (match) { handleScan(match[1]); document.getElementById("manual-token").value = ""; }
             }}
-              style={{ background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+              style={{ background: "var(--accent)", color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
               Check
             </button>
           </div>

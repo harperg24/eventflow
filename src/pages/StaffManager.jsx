@@ -280,7 +280,7 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
                     <div style={{ fontSize:18, fontWeight:700, color:isToday?"var(--accent)":"var(--text)" }}>{day.getDate()}</div>
                   </div>
                   {dayShifts.map(s=><ShiftChip key={s.id} s={s}/>)}
-                  {dayShifts.length===0 && <div style={{ fontSize:10, color:"#2a2a3a", marginTop:8, textAlign:"center" }}>+</div>}
+                  {dayShifts.length===0 && <div style={{ fontSize:10, color:"var(--bg3)", marginTop:8, textAlign:"center" }}>+</div>}
                 </div>
               );
             })}
@@ -360,13 +360,13 @@ function EmployeeTimesheet({ emp, entries, onClose }) {
           <button onClick={()=>setWeekCursor(addDays(weekCursor,-7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>←</button>
           <div style={{ flex:1, textAlign:"center", fontSize:14, fontWeight:600 }}>{fmt(ws2)} – {fmt(addDays(ws2,6))}</div>
           <button onClick={()=>setWeekCursor(addDays(weekCursor,7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>→</button>
-          <button onClick={exportCSV} style={{ background:"none", border:"1px solid rgba(201,168,76,0.3)", color:"var(--accent)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>⬇ Export CSV</button>
+          <button onClick={exportCSV} style={{ background:"none", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontFamily:"inherit", fontWeight:600 }}>⬇ Export CSV</button>
         </div>
 
         {/* Pay summary cards */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, padding:"20px 28px", borderBottom:"1.5px solid var(--border)" }}>
           {[["Hours Worked", `${totalHours.toFixed(2)}h`, "#818cf8"],["Gross Pay", `$${gross.toFixed(2)}`, "var(--accent)"],["Tax", `-$${taxAmt.toFixed(2)}`, "#ef4444"],["Net Pay", `$${net.toFixed(2)}`, "#10b981"]].map(([l,v,c])=>(
-            <div key={l} style={{ background:"#0d0d1a", border:`1px solid ${c}25`, borderRadius:12, padding:"14px 16px" }}>
+            <div key={l} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
               <div style={{ fontSize:11, color:"var(--text2)", marginBottom:6 }}>{l}</div>
               <div style={{ fontSize:18, fontWeight:700, color:c }}>{v}</div>
             </div>
@@ -380,14 +380,14 @@ function EmployeeTimesheet({ emp, entries, onClose }) {
             const dayEntries = weekEntries.filter(e=>sameDay(e.clock_in,day));
             const dayHrs = dayEntries.reduce((s,e)=>s+hoursWorked(e),0);
             return (
-              <div key={di} style={{ display:"flex", alignItems:"flex-start", gap:16, padding:"10px 0", borderBottom:di<6?"1px solid #0d0d1a":"none" }}>
+              <div key={di} style={{ display:"flex", alignItems:"flex-start", gap:16, padding:"10px 0", borderBottom:di<6?"1px solid var(--border)":"none" }}>
                 <div style={{ width:44, flexShrink:0 }}>
                   <div style={{ fontSize:11, color:"var(--text2)" }}>{DAYS[di]}</div>
                   <div style={{ fontSize:16, fontWeight:600, color:sameDay(day,new Date())?"var(--accent)":"var(--text)" }}>{day.getDate()}</div>
                 </div>
                 <div style={{ flex:1 }}>
                   {dayEntries.length===0
-                    ? <div style={{ fontSize:12, color:"#2a2a3a", paddingTop:4 }}>No entries</div>
+                    ? <div style={{ fontSize:12, color:"var(--text3)", paddingTop:4 }}>No entries</div>
                     : dayEntries.map((e,i)=>(
                       <div key={e.id} style={{ display:"flex", gap:12, alignItems:"center", fontSize:12, color:"var(--text2)", marginBottom:i<dayEntries.length-1?6:0 }}>
                         <span style={{ color:"#10b981" }}>▶ {fmtTime(e.clock_in)}</span>
@@ -407,7 +407,7 @@ function EmployeeTimesheet({ emp, entries, onClose }) {
 
         {/* Pay details */}
         {emp.deductions>0 && (
-          <div style={{ margin:"0 28px 20px", background:"#0d0d1a", borderRadius:12, padding:"14px 16px" }}>
+          <div style={{ margin:"0 28px 20px", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
             <div style={{ fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10 }}>Pay Calculation</div>
             <div style={{ display:"flex", flexDirection:"column", gap:6, fontSize:13 }}>
               <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--text2)" }}>Gross ({totalHours.toFixed(2)}h × ${(emp.hourly_rate||0).toFixed(2)})</span><span>${gross.toFixed(2)}</span></div>
@@ -532,9 +532,9 @@ export default function StaffManager({ eventId }) {
   return (
     <div className="fade-up">
       <style>{`
-        .staff-tab { background:none; border:none; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; color:#5a5a72; border-bottom:2px solid transparent; transition:all 0.15s; }
-        .staff-tab.active { color:#e2d9cc; border-bottom-color:var(--accent); }
-        .staff-tab:hover:not(.active) { color:#8a8278; }
+        .staff-tab { background:none; border:none; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text2); border-bottom:2px solid transparent; transition:all 0.15s; }
+        .staff-tab.active { color:var(--text); border-bottom-color:var(--accent); }
+        .staff-tab:hover:not(.active) { color:var(--text2); }
       `}</style>
 
       {/* Header */}
@@ -588,7 +588,7 @@ export default function StaffManager({ eventId }) {
                           <div style={{ fontSize:15, fontWeight:700, color:"var(--text)", marginBottom:2 }}>{emp.name}</div>
                           <div style={{ fontSize:12, color:"var(--text2)" }}>{emp.role||"Staff"}</div>
                         </div>
-                        {clocked && <span style={{ fontSize:11, padding:"2px 8px", borderRadius:20, background:"rgba(16,185,129,0.12)", color:"#10b981", border:"1px solid rgba(16,185,129,0.25)" }}>● Clocked In</span>}
+                        {clocked && <span style={{ fontSize:11, padding:"2px 10px", borderRadius:20, background:"rgba(5,150,105,0.1)", color:"var(--success,#059669)", border:"1.5px solid rgba(5,150,105,0.2)", fontWeight:600 }}>● Clocked In</span>}
                       </div>
                       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
                         {[["Rate", `$${(emp.hourly_rate||0).toFixed(2)}/hr`],["Tax", `${emp.tax_rate||0}%`],["This Week", `${wkHrs.toFixed(1)}h`]].map(([l,v])=>(
@@ -655,11 +655,11 @@ export default function StaffManager({ eventId }) {
                         </div>
                       </div>
                       <button onClick={() => handleApproveException(e.id, false)}
-                        style={{ background:"none", border:"1px solid rgba(239,68,68,0.3)", color:"#ef4444", borderRadius:8, padding:"6px 12px", fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                        style={{ background:"none", border:"1.5px solid rgba(220,38,38,0.3)", color:"var(--danger,#dc2626)", borderRadius:8, padding:"6px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
                         ✗ Reject
                       </button>
                       <button onClick={() => handleApproveException(e.id, true)}
-                        style={{ background:"rgba(16,185,129,0.08)", border:"1px solid rgba(16,185,129,0.3)", color:"#10b981", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                        style={{ background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.25)", color:"var(--success,#059669)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
                         ✓ Approve
                       </button>
                     </div>
@@ -705,7 +705,7 @@ export default function StaffManager({ eventId }) {
               const totD = all.reduce((s,emp)=>s+(emp.deductions||0),0);
               const totN = all.reduce((s,emp)=>s+calcPay(tsEntries.filter(e=>e.employee_id===emp.id),emp).net,0);
               return (
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 80px 90px 80px 80px 90px 36px", gap:0, padding:"12px 20px", background:"#0d0d1a", fontSize:12, fontWeight:700 }}>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 80px 90px 80px 80px 90px 36px", gap:0, padding:"12px 20px", background:"var(--bg3)", borderTop:"1.5px solid var(--border)", fontSize:12, fontWeight:700, borderRadius:"0 0 10px 10px" }}>
                   <div style={{ color:"var(--text2)", fontSize:11, textTransform:"uppercase", letterSpacing:"0.06em" }}>Totals</div>
                   <div style={{ textAlign:"right", color:"#818cf8" }}>{totH.toFixed(2)}h</div>
                   <div style={{ textAlign:"right", color:"var(--accent)" }}>${totG.toFixed(2)}</div>

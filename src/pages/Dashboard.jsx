@@ -1284,9 +1284,8 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("budget") && <ReadOnlyBanner role={userRole} />}
             <style>{`
-              .ef-field { background: #13131f; border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
-              .ef-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
-              .ef-field::placeholder { color: #2e2e42; }
+              .ef-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+              .ef-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .ef-field::placeholder { color: var(--text3); }
               .ef-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--font,'Plus Jakarta Sans',sans-serif); }
               .bm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; backdrop-filter: blur(6px); }
               .bm-modal { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 18px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.6); animation: modalIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
@@ -1294,8 +1293,8 @@ export default function Dashboard() {
               @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
               .bm-swatch { width: 28px; height: 28px; border-radius: 7px; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; }
               .bm-swatch:hover { transform: scale(1.15); }
-              .bm-swatch.sel { border-color: #e2d9cc; transform: scale(1.1); }
-              .bm-icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent; background: #13131f; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+              .bm-swatch.sel { border-color: var(--text); transform: scale(1.1); }
+              .bm-icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
               .bm-icon-btn:hover { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.05); }
               .bm-icon-btn.sel { border-color: var(--accent); background: var(--accentBg); }
             `}</style>
@@ -1325,7 +1324,7 @@ export default function Dashboard() {
                   return (
                     <svg width={128} height={128} style={{ transform: "rotate(-90deg)" }}>
                       {/* Track */}
-                      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#1a1a2e" strokeWidth={stroke} />
+                      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
                       {slices.length === 0 && (
                         <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
                       )}
@@ -1406,7 +1405,7 @@ export default function Dashboard() {
 
                   {/* Expense line items */}
                   {catExpenses.length > 0 && (
-                    <div style={{ borderTop: "1px solid #0d0d1a" }}>
+                    <div style={{ borderTop: "1px solid var(--bg3)" }}>
                       {catExpenses.map((e, i) => (
                         <div key={e.id} style={{
                           display: "flex", alignItems: "center", gap: 10,
@@ -1572,9 +1571,9 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("playlist") && <ReadOnlyBanner role={userRole} />}
             <style>{`
-              .sp-field { background: #13131f; border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .sp-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: var(--text); font-size: 14px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .sp-field:focus { border-color: #1db954; box-shadow: 0 0 0 3px rgba(29,185,84,0.1); }
-              .sp-field::placeholder { color: #2e2e42; }
+              .sp-field::placeholder { color: var(--text3); }
               .sp-result { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 9px; transition: background 0.15s; }
               .sp-result:hover { background: rgba(255,255,255,0.03); }
               .sp-play { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(29,185,84,0.15); color: #1db954; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
@@ -1847,9 +1846,8 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("vendors") && <ReadOnlyBanner role={userRole} />}
             <style>{`
-              .vd-field { background: #13131f; border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 13px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
-              .vd-field:focus { border-color: var(--accent); }
-              .vd-field::placeholder { color: #2e2e42; }
+              .vd-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+              .vd-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .vd-field::placeholder { color: var(--text3); }
               .vd-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
               .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; }
               .status-submitted { background: rgba(129,140,248,0.12); color: #818cf8; border: 1px solid rgba(129,140,248,0.25); }
@@ -2004,11 +2002,11 @@ export default function Dashboard() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }}
             onClick={() => setShowVendorModal(false)}>
             <style>{`
-              .vm-field { background: #13131f; border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
-              .vm-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
-              .vm-field::placeholder { color: #2e2e42; }
+              .vm-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+              .vm-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .vm-field::placeholder { color: var(--text3); }
+              .vm-field::placeholder { color: var(--text3); }
               .vm-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--font,'Plus Jakarta Sans',sans-serif); }
-              .vm-icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent; background: #13131f; font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+              .vm-icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
               .vm-icon-btn:hover { border-color: rgba(201,168,76,0.3); }
               .vm-icon-btn.sel { border-color: var(--accent); background: var(--accentBg); }
             `}</style>
@@ -2120,14 +2118,13 @@ export default function Dashboard() {
           <div className="fade-up">
             <style>{`
               .tier-card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 14px; padding: 20px 22px; transition: border-color 0.15s; }
-              .tier-card:hover { border-color: #2e2e42; }
-              .tf { background: #13131f; border: 1.5px solid var(--border); border-radius: 9px; padding: 10px 13px; color: #e2d9cc; font-size: 13px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
-              .tf:focus { border-color: var(--accent); }
-              .tf::placeholder { color: #2e2e42; }
+              .tier-card:hover { border-color: var(--accent); }
+              .tf { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 9px; padding: 10px 13px; color: var(--text); font-size: 13px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .tf:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .tf::placeholder { color: var(--text3); }
               .hub-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); transition: all 0.15s; }
               .hub-tab.active { background: var(--accentBg); color: var(--accent); }
               .hub-tab:not(.active) { background: none; color: #5a5a72; }
-              .hub-tab:not(.active):hover { color: #e2d9cc; }
+              .hub-tab:not(.active):hover { color: var(--text); }
             `}</style>
 
             {/* Header */}
@@ -2229,7 +2226,7 @@ export default function Dashboard() {
                           </div>
                           {tier.capacity && (
                             <div style={{ width: 60 }}>
-                              <div style={{ height: 4, background: "#1a1a2e", borderRadius: 99, overflow: "hidden" }}>
+                              <div style={{ height: 4, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
                                 <div style={{ height: "100%", width: `${Math.min(100,(tier.sold/tier.capacity)*100)}%`, background: tier.sold >= tier.capacity ? "#ef4444" : "#10b981", borderRadius: 99 }} />
                               </div>
                             </div>
@@ -2327,7 +2324,7 @@ export default function Dashboard() {
         {activeNav === "collab" && (
           <div className="fade-up">
             <style>{`
-              .role-select { background: #13131f; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 10px; color: #e2d9cc; font-size: 12px; outline: none; cursor: pointer; font-family: var(--font,'Plus Jakarta Sans',sans-serif); }
+              .role-select { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 13px; font-weight: 500; outline: none; cursor: pointer; font-family: inherit; transition: border-color 0.15s; } .role-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
             `}</style>
 
             {/* My-role banner for non-owners */}
@@ -2529,9 +2526,8 @@ export default function Dashboard() {
               .task-row:hover { background: rgba(255,255,255,0.02); }
               .task-row:hover .task-actions { opacity: 1; }
               .task-actions { opacity: 0; display: flex; gap: 6px; transition: opacity 0.15s; }
-              .cl-field { background: #13131f; border: 1.5px solid var(--border); border-radius: 9px; padding: 10px 14px; color: #e2d9cc; font-size: 14px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); transition: border-color 0.2s; }
-              .cl-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
-              .cl-field::placeholder { color: #2e2e42; }
+              .cl-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
+              .cl-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .cl-field::placeholder { color: var(--text3); }
             `}</style>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
@@ -2686,7 +2682,7 @@ export default function Dashboard() {
                 </button>
               ) : (
                 <button onClick={() => handleCheckIn(g.id)}
-                  style={{ background: "transparent", border: "1.5px solid #2e2e42", borderRadius: 8, padding: "7px 14px", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
+                  style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius: 8, padding: "7px 14px", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor="var(--text3)"; e.currentTarget.style.color="var(--text2)"; }}>
                   Check in
@@ -2993,7 +2989,7 @@ export default function Dashboard() {
             {showPublishModal === "publish" ? (
               <>
                 <div style={{ fontSize: 40, textAlign: "center", marginBottom: 16 }}>🚀</div>
-                <h2 style={{ fontFamily: "inherit", fontSize: 22, textAlign: "center", marginBottom: 8, color: "#f0e8db" }}>Go Live?</h2>
+                <h2 style={{ fontFamily: "inherit", fontSize: 22, textAlign: "center", marginBottom: 8, color: "var(--text)" }}>Go Live?</h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", textAlign: "center", marginBottom: 24, lineHeight: 1.7 }}>
                   This will make your ticket page publicly accessible. Anyone with the link can purchase tickets.
                 </p>
@@ -3028,7 +3024,7 @@ export default function Dashboard() {
             ) : (
               <>
                 <div style={{ fontSize: 40, textAlign: "center", marginBottom: 16 }}>⏸</div>
-                <h2 style={{ fontFamily: "inherit", fontSize: 22, textAlign: "center", marginBottom: 8, color: "#f0e8db" }}>Take Offline?</h2>
+                <h2 style={{ fontFamily: "inherit", fontSize: 22, textAlign: "center", marginBottom: 8, color: "var(--text)" }}>Take Offline?</h2>
                 <p style={{ fontSize: 14, color: "var(--text2)", textAlign: "center", marginBottom: 24, lineHeight: 1.7 }}>
                   The ticket page will no longer be accessible. Existing orders are unaffected.
                 </p>

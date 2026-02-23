@@ -77,15 +77,17 @@ export default function TicketPage() {
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <div style={{ color: "var(--text3)", fontSize: 14, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Loading…</div>
     </div>
   );
 
   if (notFound) return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>🎟</div>
-        <h1 style={{ fontFamily: "inherit,serif", color: "var(--text)", marginBottom: 8 }}>Event not found</h1>
+        <h1 style={{ fontFamily: "inherit", color: "var(--text)", marginBottom: 8 }}>Event not found</h1>
         <p style={{ color: "var(--text2)", fontSize: 14 }}>This event may not exist or tickets are not available.</p>
       </div>
     </div>
@@ -97,22 +99,23 @@ export default function TicketPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "'Plus Jakarta Sans',sans-serif", color: "var(--text)" }}>
-      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{(() => { const p = loadThemePrefs(); applyThemeToDOM(p); return globalCSS(getTheme(p)); })()}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
       {/* Hero */}
-      <div style={{ background: "linear-gradient(180deg,#0d0d1f 0%, var(--bg) 100%)", borderBottom: "1px solid #1a1a2e", padding: "60px 24px 48px" }}>
+      <div style={{ background: "linear-gradient(180deg, var(--accentBg) 0%, var(--bg) 100%)", borderBottom: "1.5px solid var(--border)", padding: "60px 24px 48px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 32 }}>
-            <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "var(--bg)" }}>✦</div>
+            <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
             <span style={{ fontSize: 13, color: "var(--text2)", letterSpacing: "0.06em" }}>EventFlow</span>
           </div>
-          <h1 style={{ fontFamily: "inherit,serif", fontSize: "clamp(28px,5vw,44px)", fontWeight: 700, color: "#f0e8db", margin: "0 0 12px", lineHeight: 1.2 }}>
+          <h1 style={{ fontSize: "clamp(24px,5vw,40px)", fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text)", margin: "0 0 12px", lineHeight: 1.15 }}>
             {event.name}
           </h1>
           {eventDate && <p style={{ fontSize: 16, color: "var(--accent)", marginBottom: 8, fontWeight: 500 }}>{eventDate}</p>}
           {event.venue && <p style={{ fontSize: 14, color: "var(--text2)", marginBottom: 0 }}>📍 {event.venue}</p>}
           {event.ticket_message && (
-            <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, marginTop: 20, maxWidth: 480, margin: "20px auto 0", padding: "16px 20px", background: "var(--bg3)", borderRadius: 10, border: "1px solid #1a1a2e" }}>
+            <p style={{ fontSize: 14, color: "var(--text2)", lineHeight: 1.7, marginTop: 20, maxWidth: 480, margin: "20px auto 0", padding: "16px 20px", background: "var(--bg3)", borderRadius: 10, border: "1.5px solid var(--border)" }}>
               {event.ticket_message}
             </p>
           )}
@@ -123,7 +126,7 @@ export default function TicketPage() {
 
         {step === "browse" && (
           <>
-            <h2 style={{ fontFamily: "inherit,serif", fontSize: 22, marginBottom: 20 }}>Select Tickets</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)", marginBottom: 20 }}>Select Tickets</h2>
             {tiers.length === 0 && (
               <div style={{ textAlign: "center", padding: "48px", color: "var(--text3)", fontSize: 14 }}>No ticket tiers available yet.</div>
             )}
@@ -135,20 +138,20 @@ export default function TicketPage() {
                 return (
                   <div key={tier.id}
                     onClick={() => !isSoldOut && setSelectedTier(tier)}
-                    style={{ background: isSelected ? "rgba(201,168,76,0.07)" : "var(--bg2)", border: `1.5px solid ${isSelected ? "rgba(201,168,76,0.4)" : "var(--border)"}`, borderRadius: 14, padding: "20px 22px", cursor: isSoldOut ? "not-allowed" : "pointer", opacity: isSoldOut ? 0.5 : 1, transition: "all 0.15s" }}>
+                    style={{ background: isSelected ? "var(--accentBg)" : "var(--bg2)", border: `1.5px solid ${isSelected ? "var(--accent)" : "var(--border)"}`, boxShadow: isSelected ? "0 0 0 3px var(--accentBg)" : "none", borderRadius: 14, padding: "20px 22px", cursor: isSoldOut ? "not-allowed" : "pointer", opacity: isSoldOut ? 0.5 : 1, transition: "all 0.15s" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
                           <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSelected ? "var(--accent)" : "var(--text3)"}`, background: isSelected ? "var(--accent)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
                             {isSelected && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--bg)" }} />}
                           </div>
-                          <span style={{ fontSize: 16, fontWeight: 600, color: "#f0e8db" }}>{tier.name}</span>
+                          <span style={{ fontSize: 16, fontWeight: 600, color: "var(--text)" }}>{tier.name}</span>
                           {isSoldOut && <span style={{ fontSize: 11, background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 5, padding: "2px 8px" }}>Sold Out</span>}
                         </div>
                         {tier.description && <p style={{ fontSize: 13, color: "var(--text2)", margin: "0 0 0 28px", lineHeight: 1.5 }}>{tier.description}</p>}
                       </div>
                       <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 16 }}>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--accent)", fontFamily: "inherit,serif" }}>{fmt(tier.price)}</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "var(--accent)" }}>{fmt(tier.price)}</div>
                         {tier.capacity !== null && (
                           <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 2 }}>
                             {isSoldOut ? "Sold out" : `${avail} left`}
@@ -180,7 +183,7 @@ export default function TicketPage() {
 
             {selectedTier && (
               <button onClick={() => setStep("details")}
-                style={{ width: "100%", marginTop: 20, background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 12, padding: "15px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", letterSpacing: "0.02em" }}>
+                style={{ width: "100%", marginTop: 20, background: "var(--accent)", color: "#fff", border: "none", borderRadius: 12, padding: "15px", fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", letterSpacing: "0.02em" }}>
                 Continue → {quantity} × {selectedTier.name} · {fmt(selectedTier.price * quantity)}
               </button>
             )}
@@ -190,7 +193,7 @@ export default function TicketPage() {
         {step === "details" && (
           <div style={{ maxWidth: 440, margin: "0 auto" }}>
             <button onClick={() => setStep("browse")} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif", marginBottom: 20, padding: 0 }}>← Back</button>
-            <h2 style={{ fontFamily: "inherit,serif", fontSize: 22, marginBottom: 24 }}>Your Details</h2>
+            <h2 style={{ fontFamily: "inherit", fontSize: 22, marginBottom: 24 }}>Your Details</h2>
 
             {/* Order summary */}
             <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 12, padding: "16px 20px", marginBottom: 24 }}>
@@ -219,7 +222,7 @@ export default function TicketPage() {
             {error && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#ef4444", marginBottom: 16 }}>{error}</div>}
 
             <button onClick={handlePurchase}
-              style={{ width: "100%", background: "var(--accent)", color: "var(--bg)", border: "none", borderRadius: 12, padding: 15, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+              style={{ width: "100%", background: "var(--accent)", color: "#fff", border: "none", borderRadius: 12, padding: 15, fontSize: 16, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
               Pay {fmt(selectedTier.price * quantity)} with Stripe →
             </button>
             <p style={{ fontSize: 11, color: "var(--text3)", textAlign: "center", marginTop: 12 }}>
