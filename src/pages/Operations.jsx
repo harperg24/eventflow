@@ -256,16 +256,13 @@ function RidersTab({ eventId }) {
       shopping_list: form.shopping_list || [],
       file_urls: form.file_urls || [],
     };
-    try {
-      if (form.id) {
-        await supabase.from("riders").update(row).eq("id", form.id);
-      } else {
-        await supabase.from("riders").insert(row);
-      }
-      const { data } = await supabase.from("riders").select("*").eq("event_id", eventId).order("name");
-      setRiders(data || []);
-      setEditing(null);
-    } catch(e) { alert("Save failed: " + e.message); }
+    const { error } = form.id
+      ? await supabase.from("riders").update(row).eq("id", form.id)
+      : await supabase.from("riders").insert(row);
+    if (error) { alert("Save failed: " + error.message); return; }
+    const { data } = await supabase.from("riders").select("*").eq("event_id", eventId).order("name");
+    setRiders(data || []);
+    setEditing(null);
   };
 
   const del = async (id) => {
@@ -539,16 +536,13 @@ function InventoryTab({ eventId }) {
       serial: form.serial || null,
       notes: form.notes || null,
     };
-    try {
-      if (form.id) {
-        await supabase.from("inventory_items").update(row).eq("id", form.id);
-      } else {
-        await supabase.from("inventory_items").insert(row);
-      }
-      const { data } = await supabase.from("inventory_items").select("*").eq("event_id", eventId).order("name");
-      setItems(data || []);
-      setEditing(null);
-    } catch(e) { alert("Save failed: " + e.message); }
+    const { error } = form.id
+      ? await supabase.from("inventory_items").update(row).eq("id", form.id)
+      : await supabase.from("inventory_items").insert(row);
+    if (error) { alert("Save failed: " + error.message); return; }
+    const { data } = await supabase.from("inventory_items").select("*").eq("event_id", eventId).order("name");
+    setItems(data || []);
+    setEditing(null);
   };
 
   const del = async (id) => {
@@ -738,16 +732,13 @@ function IncidentsTab({ eventId, event }) {
       follow_up_notes: form.follow_up_notes || null,
       file_urls: form.file_urls || [],
     };
-    try {
-      if (form.id) {
-        await supabase.from("incident_reports").update(row).eq("id", form.id);
-      } else {
-        await supabase.from("incident_reports").insert(row);
-      }
-      const { data } = await supabase.from("incident_reports").select("*").eq("event_id", eventId).order("occurred_at", { ascending: false });
-      setIncidents(data || []);
-      setEditing(null);
-    } catch(e) { alert("Save failed: " + e.message); }
+    const { error } = form.id
+      ? await supabase.from("incident_reports").update(row).eq("id", form.id)
+      : await supabase.from("incident_reports").insert(row);
+    if (error) { alert("Save failed: " + error.message); return; }
+    const { data } = await supabase.from("incident_reports").select("*").eq("event_id", eventId).order("occurred_at", { ascending: false });
+    setIncidents(data || []);
+    setEditing(null);
   };
 
   const del = async (id) => {
@@ -975,16 +966,13 @@ function HSTab({ eventId, event }) {
       communication_plan: form.communication_plan || null,
       special_requirements: form.special_requirements || null,
     };
-    try {
-      if (form.id) {
-        await supabase.from("hs_plans").update(row).eq("id", form.id);
-      } else {
-        await supabase.from("hs_plans").insert(row);
-      }
-      const { data } = await supabase.from("hs_plans").select("*").eq("event_id", eventId).order("created_at", { ascending: false });
-      setPlans(data || []);
-      setEditingPlan(null);
-    } catch(e) { alert("Save failed: " + e.message); }
+    const { error } = form.id
+      ? await supabase.from("hs_plans").update(row).eq("id", form.id)
+      : await supabase.from("hs_plans").insert(row);
+    if (error) { alert("Save failed: " + error.message); return; }
+    const { data } = await supabase.from("hs_plans").select("*").eq("event_id", eventId).order("created_at", { ascending: false });
+    setPlans(data || []);
+    setEditingPlan(null);
   };
 
   const saveInduction = async (form) => {
@@ -998,12 +986,11 @@ function HSTab({ eventId, event }) {
       signature: form.signature || null,
       completed_at: new Date().toISOString(),
     };
-    try {
-      await supabase.from("hs_inductions").insert(row);
-      const { data } = await supabase.from("hs_inductions").select("*").eq("event_id", eventId).order("completed_at", { ascending: false });
-      setInductions(data || []);
-      setInductionTab(false);
-    } catch(e) { alert("Save failed: " + e.message); }
+    const { error } = await supabase.from("hs_inductions").insert(row);
+    if (error) { alert("Save failed: " + error.message); return; }
+    const { data } = await supabase.from("hs_inductions").select("*").eq("event_id", eventId).order("completed_at", { ascending: false });
+    setInductions(data || []);
+    setInductionTab(false);
   };
 
   const delPlan = async (id) => {
