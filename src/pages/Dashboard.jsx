@@ -8,6 +8,7 @@ import EditEventModal from "../components/EditEventModal";
 import StaffManager from "./StaffManager";
 import QueueManager from "./QueueManager";
 import EventSettings from "./EventSettings";
+import EventNotifications from "./EventNotifications";
 import { useAppTheme } from "./Home";
 import { globalCSS, loadThemePrefs, getTheme } from "./theme";
 import {
@@ -38,8 +39,8 @@ function ReadOnlyBanner({ role }) {
 
 // Role-based access control
 const ROLE_ACCESS = {
-  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin","staff","settings"],
-  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin","staff","settings"],
+  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","notifications","tickets","checkin","staff","settings"],
+  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","notifications","tickets","checkin","staff","settings"],
   ticketing: ["overview","tickets","checkin","collab"],
   check_in:  ["overview","checkin","guests","tickets"],
   view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin"],
@@ -60,7 +61,8 @@ const NAV = [
   { id: "vendors",   label: "Vendors",     icon: "◇" },
   { id: "collab",    label: "Collaborate", icon: "◈" },
   { id: "checklist", label: "Checklist",   icon: "☑" },
-  { id: "queue",     label: "Queue",       icon: "↕" },
+  { id: "queue",        label: "Queue",         icon: "↕" },
+  { id: "notifications", label: "Notifications",  icon: "🔔" },
   { id: "tickets",   label: "Ticket Hub",  icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",    icon: "✓" },
   { id: "staff",     label: "Staff",       icon: "⏱" },
@@ -143,237 +145,485 @@ function AttendeeTab({ eventId, supabase, orders, navigate }) {
 }
 
 
-// ── Queue form modal (rendered outside <main> to escape overflow clipping) ──
-// ── Queue create / edit modal ─────────────────────────────────
+
+// ── Notification modal constants ─────────────────────────────
+const NOTIF_RECIPIENT_OPTIONS = [
+  { value: "all_guests",       label: "All guests",       desc: "Everyone on the guest list" },
+  { value: "attending_guests", label: "Attending guests", desc: "Only those who RSVP'd yes" },
+  { value: "ticketholders",    label: "Ticket holders",   desc: "Anyone who bought a ticket" },
+  { value: "all",              label: "Everyone",         desc: "Guests + ticket holders" },
+];
+const NOTIF_REMINDER_PRESETS = [
+  { hours:1,   label:"1 hour before" },
+  { hours:2,   label:"2 hours before" },
+  { hours:6,   label:"6 hours before" },
+  { hours:12,  label:"12 hours before" },
+  { hours:24,  label:"24 hours before" },
+  { hours:48,  label:"2 days before" },
+  { hours:72,  label:"3 days before" },
+  { hours:168, label:"1 week before" },
+];
+const NOTIF_EMOJI_PRESETS = ["📣","⏰","🎉","🎟","📍","⭐","🔔","💌","🚀","✨"];
+
+
+// ── Notification create/edit modal ───────────────────────────
+// ── Create/Edit modal ─────────────────────────────────────────
+function NotifModal({ notif, event, onSave, onClose }) {
+  const isEdit = !!notif?.id;
+  const [type, setType] = useState(notif?.notification_type || "event_reminder");
+  const [recipientType, setRecipientType] = useState(notif?.recipient_type || "all_guests");
+  const [hoursPreset, setHoursPreset] = useState(notif?.hours_before || 24);
+  const [customHours, setCustomHours] = useState("");
+  const [isCustomHours, setIsCustomHours] = useState(false);
+  const [subject, setSubject] = useState(notif?.subject || "");
+  const [message, setMessage] = useState(notif?.message || "");
+  const [emoji, setEmoji] = useState(notif?.emoji || "📣");
+  const [ctaLabel, setCtaLabel] = useState(notif?.cta_label || "");
+  const [ctaUrl, setCtaUrl] = useState(notif?.cta_url || "");
+  const [customDate, setCustomDate] = useState(
+    notif?.send_at && notif?.notification_type === "custom"
+      ? new Date(notif.send_at).toISOString().slice(0,16)
+      : ""
+  );
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  const inp = {
+    width:"100%", boxSizing:"border-box", background:"var(--bg3)",
+    border:"1.5px solid var(--border)", borderRadius:8, padding:"9px 12px",
+    color:"var(--text)", fontSize:14, outline:"none", fontFamily:"inherit"
+  };
+
+  const handleSave = async () => {
+    setErr("");
+    if (type === "custom" && !subject.trim()) { setErr("Subject is required."); return; }
+    if (type === "custom" && !message.trim()) { setErr("Message is required."); return; }
+    if (type === "custom" && !customDate)     { setErr("Send date/time is required."); return; }
+    if (!event?.date && type === "event_reminder") { setErr("This event has no date set — add a date in Settings first."); return; }
+
+    setSaving(true);
+
+    let send_at: string;
+    if (type === "event_reminder") {
+      const hours = isCustomHours ? (parseInt(customHours) || 24) : hoursPreset;
+      // Combine event.date + event.time to get event timestamp
+      const eventDt = new Date(`${event.date}T${event.time || "12:00"}`);
+      send_at = new Date(eventDt.getTime() - hours * 3600 * 1000).toISOString();
+    } else {
+      send_at = new Date(customDate).toISOString();
+    }
+
+    const row = {
+      event_id:          event.id,
+      notification_type: type,
+      recipient_type:    recipientType,
+      hours_before:      type === "event_reminder" ? (isCustomHours ? parseInt(customHours)||24 : hoursPreset) : null,
+      subject:           type === "custom" ? subject.trim() : null,
+      message:           type === "custom" ? message.trim() : null,
+      emoji:             type === "custom" ? emoji : null,
+      cta_label:         ctaLabel.trim() || null,
+      cta_url:           ctaUrl.trim() || null,
+      send_at,
+    };
+
+    if (isEdit) {
+      await supabase.from("event_notifications").update(row).eq("id", notif.id);
+    } else {
+      await supabase.from("event_notifications").insert(row);
+    }
+
+    setSaving(false);
+    onSave();
+  };
+
+  const hours = isCustomHours ? (parseInt(customHours)||0) : hoursPreset;
+
+  const S = {
+    label: { fontSize:12, fontWeight:700, color:"var(--text2)", display:"block", marginBottom:6,
+      textTransform:"uppercase", letterSpacing:"0.05em" },
+    section: { fontSize:11, fontWeight:800, color:"var(--text3)", textTransform:"uppercase",
+      letterSpacing:"0.08em", marginBottom:12 },
+  };
+
+  return (
+    <div onMouseDown={e => e.target === e.currentTarget && onClose()}
+      style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.5)",
+        backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:"var(--bg2)", borderRadius:20, width:"100%", maxWidth:520,
+        border:"1.5px solid var(--border)", boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
+        display:"flex", flexDirection:"column", maxHeight:"min(720px,calc(100vh - 40px))" }}>
+
+        {/* Header */}
+        <div style={{ padding:"20px 24px 16px", flexShrink:0, borderBottom:"1.5px solid var(--border)",
+          display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div>
+            <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.03em" }}>
+              {isEdit ? "Edit Notification" : "New Notification"}
+            </div>
+            <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>
+              Email your guests automatically at the right time
+            </div>
+          </div>
+          <button onMouseDown={onClose} style={{ width:32, height:32, borderRadius:"50%",
+            border:"1.5px solid var(--border)", background:"var(--bg3)", color:"var(--text2)",
+            cursor:"pointer", fontSize:16, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
+        </div>
+
+        {/* Body */}
+        <div style={{ overflowY:"auto", flex:1, padding:"20px 24px", display:"flex", flexDirection:"column", gap:20 }}>
+
+          {/* Type selector */}
+          <div>
+            <div style={S.section}>Notification type</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+              {[
+                { v:"event_reminder", icon:"⏰", title:"Event Reminder", desc:"Auto-sent X hours/days before the event" },
+                { v:"custom",         icon:"📣", title:"Custom Message",  desc:"Any message, sent at a date you choose" },
+              ].map(opt => (
+                <div key={opt.v} onMouseDown={() => setType(opt.v)}
+                  style={{ background: type===opt.v ? "var(--accentBg)" : "var(--bg3)",
+                    border:`1.5px solid ${type===opt.v ? "var(--accent)" : "var(--border)"}`,
+                    borderRadius:12, padding:"14px 16px", cursor:"pointer", transition:"all 0.12s" }}>
+                  <div style={{ fontSize:22, marginBottom:6 }}>{opt.icon}</div>
+                  <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:3 }}>{opt.title}</div>
+                  <div style={{ fontSize:12, color:"var(--text3)", lineHeight:1.4 }}>{opt.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ height:1, background:"var(--border)" }}/>
+
+          {/* Recipients */}
+          <div>
+            <label style={S.label}>Send to</label>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+              {NOTIF_RECIPIENT_OPTIONS.map(opt => (
+                <button key={opt.value} type="button" onMouseDown={() => setRecipientType(opt.value)}
+                  style={{ background:recipientType===opt.value?"var(--accent)":"var(--bg3)",
+                    border:`1.5px solid ${recipientType===opt.value?"var(--accent)":"var(--border)"}`,
+                    color:recipientType===opt.value?"#fff":"var(--text)",
+                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
+                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize:11, color:"var(--text3)", marginTop:6 }}>
+              {NOTIF_RECIPIENT_OPTIONS.find(o=>o.value===recipientType)?.desc}
+            </div>
+          </div>
+
+          {/* Reminder settings */}
+          {type === "event_reminder" && (
+            <div>
+              <div style={{ height:1, background:"var(--border)", marginBottom:20 }}/>
+              <label style={S.label}>Send reminder</label>
+              <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                {NOTIF_REMINDER_PRESETS.map(p => (
+                  <button key={p.hours} type="button"
+                    onMouseDown={() => { setHoursPreset(p.hours); setIsCustomHours(false); }}
+                    style={{ background:(!isCustomHours&&hoursPreset===p.hours)?"var(--accent)":"var(--bg3)",
+                      border:`1.5px solid ${(!isCustomHours&&hoursPreset===p.hours)?"var(--accent)":"var(--border)"}`,
+                      color:(!isCustomHours&&hoursPreset===p.hours)?"#fff":"var(--text)",
+                      borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
+                      cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
+                    {p.label}
+                  </button>
+                ))}
+                <button type="button" onMouseDown={() => setIsCustomHours(true)}
+                  style={{ background:isCustomHours?"var(--accent)":"var(--bg3)",
+                    border:`1.5px solid ${isCustomHours?"var(--accent)":"var(--border)"}`,
+                    color:isCustomHours?"#fff":"var(--text)",
+                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
+                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
+                  Custom…
+                </button>
+              </div>
+              {isCustomHours && (
+                <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
+                  <input type="number" min={1} max={8760} placeholder="e.g. 36"
+                    value={customHours}
+                    onChange={e => setCustomHours(e.target.value)}
+                    style={{ ...inp, width:90, textAlign:"center" }} autoFocus />
+                  <span style={{ fontSize:13, color:"var(--text3)" }}>hours before event</span>
+                </div>
+              )}
+              {event?.date && (
+                <div style={{ marginTop:10, fontSize:12, color:"var(--text3)", background:"var(--bg3)",
+                  borderRadius:8, padding:"8px 12px" }}>
+                  Will send: <strong style={{ color:"var(--text)" }}>{
+                    (() => {
+                      const h = isCustomHours ? (parseInt(customHours)||0) : hoursPreset;
+                      if (!h) return "—";
+                      const eventDt = new Date(`${event.date}T${event.time||"12:00"}`);
+                      const sendDt = new Date(eventDt.getTime() - h * 3600000);
+                      return sendDt.toLocaleString("en-NZ", { weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+                    })()
+                  }</strong>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Custom message settings */}
+          {type === "custom" && (
+            <>
+              <div style={{ height:1, background:"var(--border)" }}/>
+
+              {/* Emoji + Subject */}
+              <div>
+                <label style={S.label}>Emoji & Subject</label>
+                <div style={{ display:"flex", gap:10 }}>
+                  <div style={{ position:"relative" }}>
+                    <select value={emoji} onChange={e=>setEmoji(e.target.value)}
+                      style={{ ...inp, width:62, textAlign:"center", fontSize:20, paddingLeft:8, paddingRight:4, cursor:"pointer" }}>
+                      {NOTIF_EMOJI_PRESETS.map(em => <option key={em} value={em}>{em}</option>)}
+                    </select>
+                  </div>
+                  <input value={subject} onChange={e=>setSubject(e.target.value)}
+                    style={{ ...inp, flex:1 }} placeholder="e.g. Important update about the event" />
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label style={S.label}>Message</label>
+                <textarea value={message} onChange={e=>setMessage(e.target.value)}
+                  rows={4} style={{ ...inp, resize:"vertical" }}
+                  placeholder="Write your message here. You can use HTML for formatting." />
+                <div style={{ fontSize:11, color:"var(--text3)", marginTop:4 }}>
+                  Tip: use &lt;strong&gt;bold&lt;/strong&gt; and &lt;br&gt; for line breaks.
+                </div>
+              </div>
+
+              {/* Optional CTA */}
+              <div>
+                <label style={S.label}>Button (optional)</label>
+                <div style={{ display:"flex", gap:10 }}>
+                  <input value={ctaLabel} onChange={e=>setCtaLabel(e.target.value)}
+                    style={{ ...inp, flex:"0 0 160px" }} placeholder="Button label" />
+                  <input value={ctaUrl} onChange={e=>setCtaUrl(e.target.value)}
+                    style={{ ...inp, flex:1 }} placeholder="https://..." />
+                </div>
+              </div>
+
+              {/* Send date */}
+              <div>
+                <label style={S.label}>Send at</label>
+                <input type="datetime-local" value={customDate} onChange={e=>setCustomDate(e.target.value)}
+                  style={inp} />
+              </div>
+            </>
+          )}
+
+          {err && (
+            <div style={{ background:"rgba(220,38,38,0.08)", border:"1.5px solid rgba(220,38,38,0.25)",
+              borderRadius:8, padding:"10px 14px", fontSize:13, color:"#dc2626" }}>
+              {err}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding:"16px 24px", borderTop:"1.5px solid var(--border)",
+          display:"flex", gap:10, flexShrink:0 }}>
+          <button onMouseDown={onClose}
+            style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
+              borderRadius:10, padding:"11px", fontSize:14, color:"var(--text2)",
+              cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
+            Cancel
+          </button>
+          <button onMouseDown={handleSave} disabled={saving}
+            style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:10,
+              padding:"11px", fontSize:14, fontWeight:700, color:"#fff",
+              cursor:saving?"not-allowed":"pointer", fontFamily:"inherit", opacity:saving?0.6:1 }}>
+            {saving ? "Saving…" : isEdit ? "Save Changes" : "Schedule Notification"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+// ── Queue create / edit modal (rendered at Dashboard root, outside <main>) ──
 function QueueFormModal({ queue, onSave, onClose }) {
   const [form, setForm] = useState(queue || {
     name:"", description:"", max_per_person:1, auto_caller:1, max_joins_per_device:1
   });
-  const [customCaller, setCustomCaller] = useState(false);
-  const [customDevice, setCustomDevice] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const PRESET_CALLERS = [0, 1, 2, 5, 10, 20];
   const PRESET_DEVICES = [1, 2, 3, 5, 99];
 
+  // callerMode: "preset" | "custom" — only a preset chip click exits custom mode.
+  // customCallerStr / customDeviceStr: the raw string in the number input so that
+  // typing "2" in custom mode doesn't snap back to the "2" preset chip.
+  const [callerMode, setCallerMode] = useState(
+    PRESET_CALLERS.includes(queue?.auto_caller ?? 1) ? "preset" : "custom"
+  );
+  const [deviceMode, setDeviceMode] = useState(
+    PRESET_DEVICES.includes(queue?.max_joins_per_device ?? 1) ? "preset" : "custom"
+  );
+  const [customCallerStr, setCustomCallerStr] = useState(
+    !PRESET_CALLERS.includes(queue?.auto_caller ?? 1) ? String(queue?.auto_caller ?? "") : ""
+  );
+  const [customDeviceStr, setCustomDeviceStr] = useState(
+    !PRESET_DEVICES.includes(queue?.max_joins_per_device ?? 1) ? String(queue?.max_joins_per_device ?? "") : ""
+  );
+
   const autoCallerN = form.auto_caller ?? 1;
   const maxJoinsN   = form.max_joins_per_device ?? 1;
-  const isCustomCaller = !PRESET_CALLERS.includes(autoCallerN);
-  const isCustomDevice = !PRESET_DEVICES.includes(maxJoinsN);
 
   const inp = { width:"100%", boxSizing:"border-box", background:"var(--bg3)",
     border:"1.5px solid var(--border)", borderRadius:8, padding:"9px 12px",
     color:"var(--text)", fontSize:14, outline:"none", fontFamily:"inherit" };
 
-  // Close on Escape
   useEffect(() => {
-    const handler = (e) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
   }, [onClose]);
 
-  const ChipRow = ({ values, current, onChange, labelFn }) => (
-    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-      {values.map(v => {
-        const active = current === v && !(v === "custom");
-        const lbl = labelFn ? labelFn(v) : v === 99 ? "∞ Unlimited" : v === 0 ? "Off" : v;
-        return (
-          <button key={v} type="button" onClick={() => onChange(v)}
-            style={{ background: active ? "var(--accent)" : "var(--bg3)",
-              border:`1.5px solid ${active ? "var(--accent)" : "var(--border)"}`,
-              color: active ? "#fff" : "var(--text)",
-              borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-              cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-            {lbl}
-          </button>
-        );
-      })}
-      {/* Custom button */}
-      <button type="button" onClick={() => onChange("custom")}
-        style={{ background: (current === "custom" || (labelFn ? isCustomCaller : isCustomDevice)) ? "var(--accent)" : "var(--bg3)",
-          border:`1.5px solid ${(current === "custom" || (labelFn ? isCustomCaller : isCustomDevice)) ? "var(--accent)" : "var(--border)"}`,
-          color: (current === "custom" || (labelFn ? isCustomCaller : isCustomDevice)) ? "#fff" : "var(--text)",
-          borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-          cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-        Custom…
-      </button>
-    </div>
+  const chip = (label, active, onClick) => (
+    <button type="button" onClick={onClick}
+      style={{ background:active?"var(--accent)":"var(--bg3)",
+        border:`1.5px solid ${active?"var(--accent)":"var(--border)"}`,
+        color:active?"#fff":"var(--text)", borderRadius:8, padding:"7px 14px",
+        fontSize:13, fontWeight:600, cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
+      {label}
+    </button>
   );
 
-  const modal = (
-    <div
-      style={{ position:"fixed", inset:0, zIndex:9999,
-        background:"rgba(0,0,0,0.5)", backdropFilter:"blur(4px)",
-        display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
-      onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+  const lbl = { fontSize:12, fontWeight:700, color:"var(--text2)", display:"block",
+    marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" };
 
+  const modal = (
+    <div onMouseDown={e => e.target===e.currentTarget && onClose()}
+      style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.5)",
+        backdropFilter:"blur(4px)", display:"flex", alignItems:"center",
+        justifyContent:"center", padding:20 }}>
       <div style={{ background:"var(--bg2)", borderRadius:20, width:"100%", maxWidth:480,
         border:"1.5px solid var(--border)", boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
         display:"flex", flexDirection:"column",
-        maxHeight:"min(680px, calc(100vh - 40px))" }}>
+        maxHeight:"min(680px,calc(100vh - 40px))" }}>
 
         {/* Header */}
-        <div style={{ padding:"20px 24px 16px", flexShrink:0,
-          borderBottom:"1.5px solid var(--border)",
+        <div style={{ padding:"20px 24px 16px", flexShrink:0, borderBottom:"1.5px solid var(--border)",
           display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
-            <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.03em" }}>
+            <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.03em" }}>
               {form.id ? "Edit Queue" : "New Queue"}
             </div>
             <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>
-              Configure this station's queue settings
+              Configure this station's settings
             </div>
           </div>
-          <button onMouseDown={onClose}
-            style={{ width:32, height:32, borderRadius:"50%", border:"1.5px solid var(--border)",
-              background:"var(--bg3)", color:"var(--text2)", cursor:"pointer",
-              fontSize:16, display:"flex", alignItems:"center", justifyContent:"center",
-              fontFamily:"inherit", flexShrink:0 }}>✕</button>
+          <button onMouseDown={onClose} style={{ width:32, height:32, borderRadius:"50%",
+            border:"1.5px solid var(--border)", background:"var(--bg3)", color:"var(--text2)",
+            cursor:"pointer", fontSize:15, display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
         </div>
 
         {/* Scrollable body */}
-        <div style={{ overflowY:"auto", flex:1, padding:"20px 24px",
-          display:"flex", flexDirection:"column", gap:20 }}>
+        <div style={{ overflowY:"auto", flex:1, padding:"20px 24px", display:"flex", flexDirection:"column", gap:20 }}>
 
-          {/* Name + description */}
-          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            <div>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--text2)",
-                display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                Queue Name *
-              </label>
-              <input value={form.name} onChange={e=>set("name",e.target.value)}
-                style={inp} placeholder="e.g. Gelato Station, Photo Booth, Bar"
-                autoFocus />
-            </div>
-            <div>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--text2)",
-                display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                Description <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0 }}>(shown to guests, optional)</span>
-              </label>
-              <textarea value={form.description||""} onChange={e=>set("description",e.target.value)}
-                rows={2} style={{ ...inp, resize:"vertical" }}
-                placeholder="e.g. 1 complimentary scoop per person" />
-            </div>
+          {/* Name */}
+          <div>
+            <label style={lbl}>Queue name *</label>
+            <input value={form.name} onChange={e=>set("name",e.target.value)}
+              style={inp} placeholder="e.g. Gelato Station, Photo Booth, Bar" autoFocus />
           </div>
 
-          <div style={{ height:"1px", background:"var(--border)" }}/>
+          {/* Description */}
+          <div>
+            <label style={lbl}>Description <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0 }}>(shown to guests, optional)</span></label>
+            <textarea value={form.description||""} onChange={e=>set("description",e.target.value)}
+              rows={2} style={{ ...inp, resize:"vertical" }}
+              placeholder="e.g. 1 complimentary scoop per person" />
+          </div>
 
           {/* Party size */}
           <div>
-            <label style={{ fontSize:12, fontWeight:700, color:"var(--text2)",
-              display:"block", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-              Max party size per join
-            </label>
+            <label style={lbl}>Max party size per join</label>
             <div style={{ display:"flex", gap:6 }}>
-              {[1,2,3,4,5,6,8,10].map(n => (
-                <button key={n} type="button" onClick={() => set("max_per_person", n)}
-                  style={{ background:(form.max_per_person||1)===n?"var(--accent)":"var(--bg3)",
-                    border:`1.5px solid ${(form.max_per_person||1)===n?"var(--accent)":"var(--border)"}`,
-                    color:(form.max_per_person||1)===n?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 0", width:44, fontSize:13, fontWeight:600,
-                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                  {n}
-                </button>
-              ))}
+              {[1,2,3,4,5,6,8,10].map(n => chip(n, (form.max_per_person||1)===n, ()=>set("max_per_person",n)))}
             </div>
           </div>
 
-          <div style={{ height:"1px", background:"var(--border)" }}/>
+          <div style={{ height:1, background:"var(--border)" }}/>
 
           {/* Auto-caller */}
           <div>
-            <div style={{ marginBottom:10 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:2 }}>
-                📣 Auto-caller slots
-              </div>
-              <div style={{ fontSize:12, color:"var(--text3)" }}>
-                Keep this many people called simultaneously. <strong style={{ color:"var(--text2)" }}>0 = manual only.</strong>
-              </div>
+            <label style={lbl}>📣 Auto-caller slots</label>
+            <div style={{ fontSize:12, color:"var(--text3)", marginBottom:8 }}>
+              Keep this many people called simultaneously. <strong style={{ color:"var(--text2)" }}>0 = manual only.</strong>
             </div>
             <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              {PRESET_CALLERS.map(n => (
-                <button key={n} type="button"
-                  onClick={() => { set("auto_caller", n); setCustomCaller(false); }}
-                  style={{ background:(!isCustomCaller && autoCallerN===n)?"var(--accent)":"var(--bg3)",
-                    border:`1.5px solid ${(!isCustomCaller && autoCallerN===n)?"var(--accent)":"var(--border)"}`,
-                    color:(!isCustomCaller && autoCallerN===n)?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                  {n === 0 ? "Off" : n}
-                </button>
+              {PRESET_CALLERS.map(n => chip(
+                n===0?"Off":n,
+                callerMode==="preset" && autoCallerN===n,
+                () => { set("auto_caller", n); setCallerMode("preset"); }
               ))}
-              <button type="button" onClick={() => setCustomCaller(c => !c)}
-                style={{ background:isCustomCaller?"var(--accent)":"var(--bg3)",
-                  border:`1.5px solid ${isCustomCaller?"var(--accent)":"var(--border)"}`,
-                  color:isCustomCaller?"#fff":"var(--text)",
-                  borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                  cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                Custom…
-              </button>
+              {chip("Custom…", callerMode==="custom", () => {
+                setCallerMode("custom");
+                setCustomCallerStr(String(autoCallerN));
+              })}
             </div>
-            {(isCustomCaller || customCaller) && (
+            {callerMode === "custom" && (
               <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
                 <input type="number" min={0} max={500} placeholder="e.g. 25"
-                  value={isCustomCaller ? autoCallerN : ""}
-                  onChange={e => { const v = Math.max(0, parseInt(e.target.value)||0); set("auto_caller", v); }}
+                  value={customCallerStr}
+                  onChange={e => {
+                    setCustomCallerStr(e.target.value);
+                    const v = parseInt(e.target.value);
+                    set("auto_caller", isNaN(v) ? 0 : Math.max(0, v));
+                  }}
                   style={{ ...inp, width:90, textAlign:"center" }} autoFocus />
                 <span style={{ fontSize:13, color:"var(--text3)" }}>simultaneous slots</span>
               </div>
             )}
-            {autoCallerN > 0 && (
-              <div style={{ marginTop:8, fontSize:12, color:"var(--text3)", lineHeight:1.5,
-                background:"var(--bg3)", borderRadius:8, padding:"8px 12px" }}>
-                Hitting <strong>✓ Served</strong> auto-calls the next person, keeping <strong>{autoCallerN}</strong> people called at once.
-                {autoCallerN >= 10 && " Great for large events — staff can serve a whole batch."}
-              </div>
-            )}
-            {autoCallerN === 0 && (
-              <div style={{ marginTop:8, fontSize:12, color:"var(--text3)", lineHeight:1.5,
-                background:"var(--bg3)", borderRadius:8, padding:"8px 12px" }}>
-                Manual mode — use the <strong>📣 Call</strong> button to call people one at a time.
-              </div>
-            )}
+            <div style={{ marginTop:8, fontSize:12, color:"var(--text3)", lineHeight:1.5,
+              background:"var(--bg3)", borderRadius:8, padding:"8px 12px" }}>
+              {autoCallerN===0
+                ? <>Manual mode — use the <strong>📣 Call</strong> button to call people one at a time.</>
+                : <>Hitting <strong>✓ Served</strong> auto-calls the next person, keeping <strong>{autoCallerN}</strong> {autoCallerN===1?"person":"people"} called at once.{autoCallerN>=10?" Great for large events — staff can serve a whole batch.":""}</>
+              }
+            </div>
           </div>
 
-          <div style={{ height:"1px", background:"var(--border)" }}/>
+          <div style={{ height:1, background:"var(--border)" }}/>
 
           {/* Device limit */}
           <div>
-            <div style={{ marginBottom:10 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:2 }}>
-                📱 Max served visits per device
-              </div>
-              <div style={{ fontSize:12, color:"var(--text3)" }}>
-                Leaving the queue never counts — only being served does.
-              </div>
+            <label style={lbl}>📱 Max served visits per device</label>
+            <div style={{ fontSize:12, color:"var(--text3)", marginBottom:8 }}>
+              Leaving the queue freely never counts — only completing a visit does.
             </div>
             <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              {PRESET_DEVICES.map(n => (
-                <button key={n} type="button"
-                  onClick={() => { set("max_joins_per_device", n); setCustomDevice(false); }}
-                  style={{ background:(!isCustomDevice && maxJoinsN===n)?"var(--accent)":"var(--bg3)",
-                    border:`1.5px solid ${(!isCustomDevice && maxJoinsN===n)?"var(--accent)":"var(--border)"}`,
-                    color:(!isCustomDevice && maxJoinsN===n)?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                  {n === 99 ? "∞" : n}
-                </button>
+              {PRESET_DEVICES.map(n => chip(
+                n===99?"∞ Unlimited":n,
+                deviceMode==="preset" && maxJoinsN===n,
+                () => { set("max_joins_per_device", n); setDeviceMode("preset"); }
               ))}
-              <button type="button" onClick={() => setCustomDevice(c => !c)}
-                style={{ background:isCustomDevice?"var(--accent)":"var(--bg3)",
-                  border:`1.5px solid ${isCustomDevice?"var(--accent)":"var(--border)"}`,
-                  color:isCustomDevice?"#fff":"var(--text)",
-                  borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                  cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                Custom…
-              </button>
+              {chip("Custom…", deviceMode==="custom", () => {
+                setDeviceMode("custom");
+                setCustomDeviceStr(String(maxJoinsN));
+              })}
             </div>
-            {(isCustomDevice || customDevice) && (
+            {deviceMode === "custom" && (
               <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
                 <input type="number" min={1} max={100} placeholder="e.g. 4"
-                  value={isCustomDevice ? maxJoinsN : ""}
-                  onChange={e => { const v = Math.max(1, parseInt(e.target.value)||1); set("max_joins_per_device", v); }}
+                  value={customDeviceStr}
+                  onChange={e => {
+                    setCustomDeviceStr(e.target.value);
+                    const v = parseInt(e.target.value);
+                    set("max_joins_per_device", isNaN(v) ? 1 : Math.max(1, v));
+                  }}
                   style={{ ...inp, width:90, textAlign:"center" }} />
                 <span style={{ fontSize:13, color:"var(--text3)" }}>visits per device</span>
               </div>
@@ -382,7 +632,7 @@ function QueueFormModal({ queue, onSave, onClose }) {
 
         </div>
 
-        {/* Footer — never scrolls */}
+        {/* Footer */}
         <div style={{ padding:"16px 24px", borderTop:"1.5px solid var(--border)",
           display:"flex", gap:10, flexShrink:0 }}>
           <button onMouseDown={onClose}
@@ -392,15 +642,13 @@ function QueueFormModal({ queue, onSave, onClose }) {
             Cancel
           </button>
           <button onMouseDown={() => form.name?.trim() && onSave(form)}
-            style={{ flex:2, background: form.name?.trim() ? "var(--accent)" : "var(--bg3)",
+            style={{ flex:2, background: form.name?.trim()?"var(--accent)":"var(--bg3)",
               border:"none", borderRadius:10, padding:"11px", fontSize:14,
-              fontWeight:700, color: form.name?.trim() ? "#fff" : "var(--text3)",
-              cursor: form.name?.trim() ? "pointer" : "not-allowed", fontFamily:"inherit",
-              transition:"all 0.15s" }}>
+              fontWeight:700, color: form.name?.trim()?"#fff":"var(--text3)",
+              cursor: form.name?.trim()?"pointer":"not-allowed", fontFamily:"inherit" }}>
             {form.id ? "Save Changes" : "Create Queue"}
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -417,6 +665,7 @@ export default function Dashboard() {
   const [activeNav, setActiveNav] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [queueModal, setQueueModal] = useState(null); // null=closed, "new"=create, obj=edit
+  const [notifModal, setNotifModal] = useState(null);   // null=closed, obj=notif or {} for new
 
 
   // ── State ─────────────────────────────────────────────────
@@ -2789,6 +3038,15 @@ export default function Dashboard() {
           <StaffManager eventId={eventId} />
         )}
 
+        {/* ── NOTIFICATIONS ── */}
+        {activeNav === "notifications" && (
+          <EventNotifications
+            eventId={eventId}
+            event={event}
+            onOpenModal={(n) => setNotifModal(n || {})}
+          />
+        )}
+
         {/* ── SETTINGS ── */}
         {activeNav === "settings" && (
           <EventSettings eventId={eventId} event={event} setEvent={setEvent} />
@@ -3481,6 +3739,16 @@ export default function Dashboard() {
           queue={queueModal?.queue || null}
           onSave={async (form) => { await queueModal.save(form); setQueueModal(null); }}
           onClose={() => setQueueModal(null)}
+        />
+      )}
+
+      {/* Notification Modal — rendered outside <main> to escape overflow clipping */}
+      {notifModal !== null && (
+        <NotifModal
+          notif={notifModal?.id ? notifModal : null}
+          event={event}
+          onSave={() => setNotifModal(null)}
+          onClose={() => setNotifModal(null)}
         />
       )}
       {/* Edit Event Modal */}

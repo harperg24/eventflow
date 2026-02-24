@@ -88,7 +88,7 @@ function inviteTemplate(guestName: string, eventName: string, eventDate: string,
         <td align="center" style="padding-bottom:32px;">
           <table cellpadding="0" cellspacing="0">
             <tr>
-              <td style="background:#c9a84c;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#1a0e00;font-weight:700;">✦</td>
+              <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
               <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
             </tr>
           </table>
@@ -96,7 +96,7 @@ function inviteTemplate(guestName: string, eventName: string, eventDate: string,
       </tr>
       <tr>
         <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
-          <div style="height:4px;background:#c9a84c;border-radius:4px 4px 0 0;"></div>
+          <div style="height:4px;background:#5b5bd6;border-radius:4px 4px 0 0;"></div>
           <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
             <tr><td align="center" style="padding-bottom:16px;font-size:40px;">🎉</td></tr>
             <tr><td align="center" style="padding-bottom:20px;">
@@ -112,15 +112,15 @@ function inviteTemplate(guestName: string, eventName: string, eventDate: string,
               ${eventDate ? `<div style="font-size:14px;color:#6e6e73;margin-top:4px;">${eventDate}</div>` : ""}
             </td></tr>
             <tr><td align="center" style="padding:8px 0 20px;">
-              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${rsvpUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#c9a84c"><w:anchorlock/><center style="color:#1a0e00;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">RSVP Now</center></v:roundrect><![endif]-->
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${rsvpUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#5b5bd6"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">RSVP Now</center></v:roundrect><![endif]-->
               <!--[if !mso]><!-->
-              <a href="${rsvpUrl}" style="display:inline-block;background:#c9a84c;color:#1a0e00;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">RSVP Now &rarr;</a>
+              <a href="${rsvpUrl}" style="display:inline-block;background:#5b5bd6;color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">RSVP Now &rarr;</a>
               <!--<![endif]-->
             </td></tr>
             <tr><td align="center" style="padding-top:4px;">
               <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
                 Or copy this link:<br>
-                <a href="${rsvpUrl}" style="color:#7a5c1e;word-break:break-all;">${rsvpUrl}</a>
+                <a href="${rsvpUrl}" style="color:#5b5bd6;word-break:break-all;">${rsvpUrl}</a>
               </p>
             </td></tr>
           </table>
@@ -129,7 +129,7 @@ function inviteTemplate(guestName: string, eventName: string, eventDate: string,
       <tr>
         <td align="center" style="padding-top:24px;">
           <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#7a5c1e;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You received this because you were added to the guest list.
+            Powered by <span style="color:#5b5bd6;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You received this because you were added to the guest list.
           </p>
         </td>
       </tr>

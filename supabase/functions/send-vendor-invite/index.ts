@@ -63,7 +63,7 @@ function inviteEmailHtml(vendorName: string, eventName: string, eventDate: strin
         <td align="center" style="padding-bottom:32px;">
           <table cellpadding="0" cellspacing="0">
             <tr>
-              <td style="background:#c9a84c;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#1a0e00;font-weight:700;">✦</td>
+              <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
               <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
             </tr>
           </table>
@@ -71,29 +71,29 @@ function inviteEmailHtml(vendorName: string, eventName: string, eventDate: strin
       </tr>
       <tr>
         <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
-          <div style="height:4px;background:#c9a84c;border-radius:4px 4px 0 0;"></div>
+          <div style="height:4px;background:#5b5bd6;border-radius:4px 4px 0 0;"></div>
           <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
             <tr><td align="center" style="padding-bottom:16px;font-size:36px;">📋</td></tr>
             <tr><td align="center" style="padding-bottom:20px;">
               <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:800;color:#1d1d1f;margin:0 0 8px;letter-spacing:-0.03em;">Vendor Application</h1>
-              <div style="font-size:16px;font-weight:700;color:#9b6e1a;letter-spacing:-0.01em;">${eventName}${eventDate ? ` · ${eventDate}` : ""}</div>
+              <div style="font-size:16px;font-weight:700;color:#5b5bd6;letter-spacing:-0.01em;">${eventName}${eventDate ? ` · ${eventDate}` : ""}</div>
             </td></tr>
-            ${hostNote ? `<tr><td style="padding:0 0 20px;"><div style="background:#fffbf0;border:1.5px solid #f0d070;border-radius:12px;padding:14px 16px;font-size:14px;color:#6e6e73;line-height:1.6;">${hostNote}</div></td></tr>` : ""}
+            ${hostNote ? `<tr><td style="padding:0 0 20px;"><div style="background:#f0f0ff;border:1.5px solid #c7c7f0;border-radius:12px;padding:14px 16px;font-size:14px;color:#6e6e73;line-height:1.6;">${hostNote}</div></td></tr>` : ""}
             <tr><td style="padding:0 0 24px;">
               <p style="font-size:14px;color:#6e6e73;line-height:1.7;margin:0;">
                 Hi${vendorName ? ` ${vendorName}` : ""}! You've been invited to apply as a vendor. Click below to complete your application.
               </p>
             </td></tr>
             <tr><td align="center" style="padding:8px 0 20px;">
-              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${formUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#c9a84c"><w:anchorlock/><center style="color:#1a0e00;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Complete Application</center></v:roundrect><![endif]-->
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${formUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#5b5bd6"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Complete Application</center></v:roundrect><![endif]-->
               <!--[if !mso]><!-->
-              <a href="${formUrl}" style="display:inline-block;background:#c9a84c;color:#1a0e00;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">Complete Application &rarr;</a>
+              <a href="${formUrl}" style="display:inline-block;background:#5b5bd6;color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">Complete Application &rarr;</a>
               <!--<![endif]-->
             </td></tr>
             <tr><td align="center" style="padding-top:4px;">
               <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
                 Or copy this link:<br>
-                <a href="${formUrl}" style="color:#7a5c1e;word-break:break-all;">${formUrl}</a>
+                <a href="${formUrl}" style="color:#5b5bd6;word-break:break-all;">${formUrl}</a>
               </p>
             </td></tr>
           </table>
@@ -102,7 +102,7 @@ function inviteEmailHtml(vendorName: string, eventName: string, eventDate: strin
       <tr>
         <td align="center" style="padding-top:24px;">
           <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#7a5c1e;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You received this vendor invitation from an EventFlow event organiser.
+            Powered by <span style="color:#5b5bd6;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You received this vendor invitation from an EventFlow event organiser.
           </p>
         </td>
       </tr>
