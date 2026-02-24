@@ -112,7 +112,9 @@ export default function EventSettings({ eventId, event, setEvent }) {
         <div style={S.card}>
           <EditableRow label="Event Name"   fieldKey="name"          value={event?.name} />
           <EditableRow label="Date"         fieldKey="date"          value={event?.date} type="date" />
-          <EditableRow label="Time"         fieldKey="time"          value={event?.time} type="time" />
+          <EditableRow label="End Date"     fieldKey="end_date"      value={event?.end_date} type="date" />
+          <EditableRow label="Start Time"   fieldKey="time"          value={event?.time} type="time" />
+          <EditableRow label="End Time"     fieldKey="end_time"      value={event?.end_time} type="time" />
           <EditableRow label="Venue"        fieldKey="venue_name"    value={event?.venue_name} />
           <EditableRow label="Address"      fieldKey="venue_address" value={event?.venue_address} />
           <EditableRow label="Capacity"     fieldKey="capacity"      value={event?.capacity} type="number" />

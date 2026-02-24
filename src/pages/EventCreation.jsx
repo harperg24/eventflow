@@ -53,7 +53,7 @@ export default function EventCreation() {
   const [features,   setFeatures]   = useState([]);
   const [ticketTiers,setTicketTiers]= useState([{ name:"General Admission", description:"", price:"", capacity:"" }]);
   const [event, setEvent] = useState({
-    name:"", type:"", date:"", time:"", description:"",
+    name:"", type:"", date:"", end_date:"", time:"", end_time:"", date_range_mode:false, description:"",
     venue:"", address:"", capacity:"",
     guests:[], guestInput:"",
     totalBudget:"",
@@ -71,10 +71,17 @@ export default function EventCreation() {
   const steps = ["Event Type","Features","Details","Venue",...(hasGuests?["Guests"]:[]),(hasTickets?["Tickets"]:[]),...(hasBudget?["Budget"]:[]),"Review"].flat();
   const pct = Math.round(((step+1)/steps.length)*100);
 
+  // Date/time validation for step 2
+  const dateError = step===2 && event.date && !/^\d{4}-\d{2}-\d{2}$/.test(event.date) ? "Enter a valid date" : null;
+  const endDateError = step===2 && event.date_range_mode && event.end_date && event.end_date < event.date ? "End date must be after start date" : null;
+  const timeError = step===2 && event.time && !/^\d{2}:\d{2}$/.test(event.time) ? "Enter a valid time (HH:MM)" : null;
+  const endTimeError = step===2 && event.end_time && !/^\d{2}:\d{2}$/.test(event.end_time) ? "Enter a valid time (HH:MM)" : null;
+  const hasStep2Error = !!(dateError || endDateError || timeError || endTimeError);
+
   const canNext = () => {
     if (step===0) return !!eventType;
     if (step===1) return features.length>0;
-    if (step===2) return !!event.name && !!event.date;
+    if (step===2) return !!event.name && !!event.date && !hasStep2Error;
     return true;
   };
 
@@ -84,7 +91,11 @@ export default function EventCreation() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Sign in required.");
       const cat = hasTickets ? (hasGuests?"hybrid":"ticketed") : "private";
-      const newEvent = await createEvent({ ...event, ticketing:cat }, user.id, user.email);
+      const eventPayload = { ...event, ticketing:cat };
+      if (!eventPayload.time) eventPayload.time = null;
+      if (!eventPayload.end_time) eventPayload.end_time = null;
+      if (!eventPayload.end_date || !eventPayload.date_range_mode) eventPayload.end_date = null;
+      const newEvent = await createEvent(eventPayload, user.id, user.email);
       await supabase.from("events").update({ enabled_features:["overview",...features] }).eq("id",newEvent.id);
       if (hasTickets) {
         const rows = ticketTiers.filter(t=>t.name).map((t,i)=>({ event_id:newEvent.id, name:t.name, description:t.description||null, price:parseFloat(t.price)||0, capacity:parseInt(t.capacity)||null, sort_order:i }));
@@ -189,24 +200,89 @@ export default function EventCreation() {
         {/* STEP 2 — details */}
         {step===2 && (
           <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
-            <p style={{ color:t.text2, fontSize:15, marginBottom:28 }}>Tell us about your event.</p>
+            <p style={{ color:t.text2, fontSize:15, marginBottom:24 }}>Tell us about your event.</p>
+
+            {/* Event name */}
             <div className="ef-form-row">
               <label className="ef-label">Event Name *</label>
-              <input className="ef-input" value={event.name} onChange={e=>update("name",e.target.value)} placeholder="e.g. Summer Festival 2025" style={{ fontSize:16, padding:"12px 14px" }}/>
+              <input className="ef-input" value={event.name} onChange={e=>update("name",e.target.value)}
+                placeholder="e.g. Summer Festival 2025" style={{ fontSize:16, padding:"12px 14px" }}/>
             </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-              <div className="ef-form-row">
-                <label className="ef-label">Date *</label>
-                <input type="date" className="ef-input" value={event.date} onChange={e=>update("date",e.target.value)}/>
+
+            {/* Single day / date range toggle */}
+            <div className="ef-form-row">
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                <label className="ef-label" style={{ margin:0 }}>When *</label>
+                <div style={{ display:"flex", background:t.bg3, borderRadius:8, padding:3, gap:2 }}>
+                  {[["Single day",false],["Date range",true]].map(([label,val])=>(
+                    <button key={label} type="button"
+                      onClick={()=>{ update("date_range_mode",val); if(!val) update("end_date",""); }}
+                      style={{ background:event.date_range_mode===val?"var(--bg2)":"none",
+                        border:event.date_range_mode===val?"1.5px solid var(--border)":"1.5px solid transparent",
+                        borderRadius:6, padding:"4px 12px", fontSize:12, fontWeight:600,
+                        color:event.date_range_mode===val?"var(--text)":"var(--text3)",
+                        cursor:"pointer", fontFamily:"inherit", transition:"all 0.12s" }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="ef-form-row">
-                <label className="ef-label">Start Time</label>
-                <input type="time" className="ef-input" value={event.time} onChange={e=>update("time",e.target.value)}/>
+
+              {/* Date row */}
+              <div style={{ display:"grid", gridTemplateColumns:event.date_range_mode?"1fr 1fr":"1fr 1fr", gap:12, marginBottom:dateError||endDateError?4:12 }}>
+                <div>
+                  <label style={{ fontSize:11, color:t.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:5 }}>
+                    {event.date_range_mode?"Start Date":"Date"}
+                  </label>
+                  <input type="date" className="ef-input" value={event.date}
+                    onChange={e=>update("date",e.target.value)}
+                    style={{ borderColor: dateError ? "#dc2626" : undefined,
+                      boxShadow: dateError ? "0 0 0 3px rgba(220,38,38,0.12)" : undefined }}/>
+                  {dateError && <div style={{ fontSize:11, color:"#dc2626", marginTop:4 }}>{dateError}</div>}
+                </div>
+                {event.date_range_mode && (
+                  <div>
+                    <label style={{ fontSize:11, color:t.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:5 }}>End Date</label>
+                    <input type="date" className="ef-input" value={event.end_date||""}
+                      onChange={e=>update("end_date",e.target.value)}
+                      min={event.date||undefined}
+                      style={{ borderColor: endDateError ? "#dc2626" : undefined,
+                        boxShadow: endDateError ? "0 0 0 3px rgba(220,38,38,0.12)" : undefined }}/>
+                    {endDateError && <div style={{ fontSize:11, color:"#dc2626", marginTop:4 }}>{endDateError}</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Time row */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <div>
+                  <label style={{ fontSize:11, color:t.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:5 }}>
+                    Start Time <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0, color:t.text3, fontSize:10 }}>(optional)</span>
+                  </label>
+                  <input type="time" className="ef-input" value={event.time||""}
+                    onChange={e=>update("time",e.target.value)}
+                    style={{ borderColor: timeError ? "#dc2626" : undefined,
+                      boxShadow: timeError ? "0 0 0 3px rgba(220,38,38,0.12)" : undefined }}/>
+                  {timeError && <div style={{ fontSize:11, color:"#dc2626", marginTop:4 }}>{timeError}</div>}
+                </div>
+                <div>
+                  <label style={{ fontSize:11, color:t.text3, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:5 }}>
+                    End Time <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0, color:t.text3, fontSize:10 }}>(optional)</span>
+                  </label>
+                  <input type="time" className="ef-input" value={event.end_time||""}
+                    onChange={e=>update("end_time",e.target.value)}
+                    style={{ borderColor: endTimeError ? "#dc2626" : undefined,
+                      boxShadow: endTimeError ? "0 0 0 3px rgba(220,38,38,0.12)" : undefined }}/>
+                  {endTimeError && <div style={{ fontSize:11, color:"#dc2626", marginTop:4 }}>{endTimeError}</div>}
+                </div>
               </div>
             </div>
+
+            {/* Description */}
             <div className="ef-form-row">
               <label className="ef-label">Description</label>
-              <textarea className="ef-input" value={event.description} onChange={e=>update("description",e.target.value)} rows={3} placeholder="A short description of your event…" style={{ resize:"vertical" }}/>
+              <textarea className="ef-input" value={event.description} onChange={e=>update("description",e.target.value)}
+                rows={3} placeholder="A short description of your event…" style={{ resize:"vertical" }}/>
             </div>
           </div>
         )}
@@ -285,7 +361,9 @@ export default function EventCreation() {
               <div style={{ fontSize:14, color:t.text2 }}>
                 {TYPE_PRESETS[eventType]?.label}
                 {event.date && ` · ${new Date(event.date).toLocaleDateString("en-NZ",{day:"numeric",month:"long",year:"numeric"})}`}
-                {event.time && ` at ${event.time}`}
+                {event.date_range_mode && event.end_date && ` – ${new Date(event.end_date).toLocaleDateString("en-NZ",{day:"numeric",month:"long",year:"numeric"})}`}
+                {event.time && ` · ${event.time}`}
+                {event.end_time && ` – ${event.end_time}`}
               </div>
               {(event.venue||event.address) && <div style={{ fontSize:14, color:t.text3, marginTop:4 }}>{[event.venue,event.address].filter(Boolean).join(", ")}</div>}
             </div>
