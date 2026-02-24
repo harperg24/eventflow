@@ -15,6 +15,7 @@ const ALL_FEATURES = [
   { id:"checklist", label:"Checklist",        desc:"Task management with due dates.",         icon:"☑", color:"#34d399" },
   { id:"queue",         label:"Virtual Queue",    desc:"Online queue for stations & activities.", icon:"↕",  color:"#8b5cf6" },
   { id:"operations",   label:"Operations",       desc:"Riders, inventory, incidents, H&S.",      icon:"⚙️", color:"#0ea5e9" },
+  { id:"sitemap",     label:"Site Map",         desc:"Visual event layout with drag-and-drop.",  icon:"🗺️", color:"#8b5cf6" },
   { id:"notifications", label:"Notifications",   desc:"Automated reminders & custom guest messages.", icon:"🔔", color:"#5b50d6" },
   { id:"tickets",   label:"Ticket Hub",       desc:"Online ticketing with Stripe.",           icon:"▣", color:"#fb923c" },
   { id:"checkin",   label:"Check-in",         desc:"QR code scanning at the door.",           icon:"✓", color:"#4ade80" },

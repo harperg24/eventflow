@@ -17,6 +17,7 @@ const ALL_FEATURES = [
   { id:"checklist", label:"Checklist",            desc:"Tasks and to-dos with due dates.",      icon:"☑", color:"#10b981" },
   { id:"queue",         label:"Virtual Queue",       desc:"Online queue for stations & activities.", icon:"↕", color:"#8b5cf6" },
   { id:"operations",   label:"Operations",          desc:"Riders, inventory, incidents, H&S.",       icon:"⚙️", color:"#0ea5e9" },
+  { id:"sitemap",     label:"Site Map",          desc:"Visual event layout with drag-and-drop.",  icon:"🗺️", color:"#8b5cf6" },
   { id:"notifications", label:"Notifications",       desc:"Automated reminders & custom messages.",  icon:"🔔", color:"#5b5bd6" },
   { id:"tickets",       label:"Ticket Hub",          desc:"Sell tickets via Stripe.",                icon:"▣", color:"#f97316" },
   { id:"checkin",   label:"Check-in",             desc:"QR code scanning at the door.",         icon:"✓", color:"#4ade80" },
@@ -24,7 +25,7 @@ const ALL_FEATURES = [
 ];
 
 const TYPE_PRESETS = {
-  gig:       { label:"Music Gig",      icon:"♫", suggested:["guests","budget","playlist","vendors","checklist","operations","notifications","tickets","checkin","staff"] },
+  gig:       { label:"Music Gig",      icon:"♫", suggested:["guests","budget","playlist","vendors","checklist","operations","sitemap","notifications","tickets","checkin","staff"] },
   ball:      { label:"Ball / Formal",  icon:"◇", suggested:["guests","budget","playlist","vendors","collab","checklist","notifications","queue","checkin"] },
   party:     { label:"Party",          icon:"◆", suggested:["guests","budget","playlist","polls","checklist"] },
   wedding:   { label:"Wedding",        icon:"◇", suggested:["guests","budget","playlist","polls","vendors","collab","checklist"] },

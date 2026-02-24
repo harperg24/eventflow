@@ -10,6 +10,7 @@ import QueueManager from "./QueueManager";
 import EventSettings from "./EventSettings";
 import EventNotifications from "./EventNotifications";
 import Operations from "./Operations";
+import SiteMap from "./SiteMap";
 import { useAppTheme } from "./Home";
 import { globalCSS, loadThemePrefs, getTheme } from "./theme";
 import {
@@ -40,8 +41,8 @@ function ReadOnlyBanner({ role }) {
 
 // Role-based access control
 const ROLE_ACCESS = {
-  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","operations","notifications","tickets","checkin","staff","settings"],
-  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","operations","notifications","tickets","checkin","staff","settings"],
+  owner:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","operations","sitemap","notifications","tickets","checkin","staff","settings"],
+  admin:     ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","operations","sitemap","notifications","tickets","checkin","staff","settings"],
   ticketing: ["overview","tickets","checkin","collab"],
   check_in:  ["overview","checkin","guests","tickets"],
   view_only: ["overview","guests","budget","playlist","polls","vendors","collab","checklist","queue","tickets","checkin"],
@@ -64,6 +65,7 @@ const NAV = [
   { id: "checklist", label: "Checklist",   icon: "☑" },
   { id: "queue",        label: "Queue",         icon: "↕" },
   { id: "operations",   label: "Operations",    icon: "⚙️" },
+  { id: "sitemap",      label: "Site Map",      icon: "🗺️" },
   { id: "notifications", label: "Notifications",  icon: "🔔" },
   { id: "tickets",   label: "Ticket Hub",  icon: "🎟", ticketed: true },
   { id: "checkin",   label: "Check-in",    icon: "✓" },
@@ -3096,6 +3098,10 @@ export default function Dashboard() {
 
         {activeNav === "operations" && (
           <Operations eventId={eventId} event={event} />
+        )}
+
+        {activeNav === "sitemap" && (
+          <SiteMap eventId={eventId} event={event} />
         )}
 
         {/* ── SETTINGS ── */}
