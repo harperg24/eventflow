@@ -209,7 +209,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
 
     setSaving(true);
 
-    let send_at: string;
+    let send_at;
     if (type === "event_reminder") {
       const hours = isCustomHours ? (parseInt(customHours) || 24) : hoursPreset;
       // Combine event.date + event.time to get event timestamp
