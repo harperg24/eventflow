@@ -66,6 +66,109 @@ function Empty({ icon, title, desc, action, onAction }) {
   );
 }
 
+
+// ── File uploader ──────────────────────────────────────────────
+function FileUploader({ eventId, folder, files, onChange }) {
+  const [uploading, setUploading] = React.useState(false);
+  const inputRef = React.useRef();
+
+  const upload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const ext  = file.name.split(".").pop();
+      const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("operations-files").upload(path, file);
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from("operations-files").getPublicUrl(path);
+      onChange([...(files || []), { name: file.name, url: publicUrl, path, type: file.type, size: file.size }]);
+    } catch (err) {
+      alert("Upload failed: " + err.message);
+    }
+    setUploading(false);
+    e.target.value = "";
+  };
+
+  const remove = async (idx) => {
+    const file = files[idx];
+    if (!window.confirm(`Remove "${file.name}"?`)) return;
+    try { await supabase.storage.from("operations-files").remove([file.path]); } catch(_) {}
+    onChange(files.filter((_, i) => i !== idx));
+  };
+
+  const fmt = (bytes) => bytes < 1024*1024 ? `${(bytes/1024).toFixed(0)} KB` : `${(bytes/1024/1024).toFixed(1)} MB`;
+  const isImage = (t) => t?.startsWith("image/");
+  const isPdf   = (t) => t === "application/pdf";
+
+  return (
+    <div>
+      <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:(files||[]).length ? 10 : 0 }}>
+        {(files || []).map((f, i) => (
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--bg3)",
+            border:"1.5px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+            <span style={{ fontSize:20, flexShrink:0 }}>
+              {isImage(f.type) ? "🖼" : isPdf(f.type) ? "📄" : "📎"}
+            </span>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:"var(--text)",
+                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.name}</div>
+              {f.size && <div style={{ fontSize:11, color:"var(--text3)" }}>{fmt(f.size)}</div>}
+            </div>
+            <a href={f.url} target="_blank" rel="noreferrer"
+              style={{ ...S.ghost, fontSize:12, padding:"4px 10px", textDecoration:"none",
+                display:"inline-block", color:"var(--accent)", borderColor:"var(--accentBg)" }}>
+              {isImage(f.type) ? "Preview" : "Open"}
+            </a>
+            <a href={f.url} download={f.name}
+              style={{ ...S.ghost, fontSize:12, padding:"4px 10px", textDecoration:"none", display:"inline-block" }}>
+              ↓
+            </a>
+            <button onClick={() => remove(i)}
+              style={{ ...S.ghost, padding:"4px 8px", color:"#dc2626", borderColor:"rgba(220,38,38,0.2)" }}>✕</button>
+          </div>
+        ))}
+      </div>
+      <input ref={inputRef} type="file" style={{ display:"none" }} onChange={upload}
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp,.txt,.csv" />
+      <button onClick={() => inputRef.current.click()} disabled={uploading}
+        style={{ ...S.ghost, fontSize:13, opacity:uploading?0.6:1 }}>
+        {uploading ? "Uploading…" : "📎 Attach file"}
+      </button>
+    </div>
+  );
+}
+
+// ── File list (read-only view) ─────────────────────────────────
+function FileList({ files }) {
+  if (!files?.length) return null;
+  const isImage = (t) => t?.startsWith("image/");
+  const isPdf   = (t) => t === "application/pdf";
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+      {files.map((f, i) => (
+        <div key={i} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--bg3)",
+          border:"1.5px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+          <span style={{ fontSize:18, flexShrink:0 }}>
+            {isImage(f.type) ? "🖼" : isPdf(f.type) ? "📄" : "📎"}
+          </span>
+          <div style={{ flex:1, fontSize:13, fontWeight:600, color:"var(--text)",
+            overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{f.name}</div>
+          <a href={f.url} target="_blank" rel="noreferrer"
+            style={{ ...S.ghost, fontSize:12, padding:"4px 10px", textDecoration:"none",
+              display:"inline-block", color:"var(--accent)", borderColor:"var(--accentBg)" }}>
+            {isImage(f.type) ? "Preview" : "Open"}
+          </a>
+          <a href={f.url} download={f.name}
+            style={{ ...S.ghost, fontSize:12, padding:"4px 10px", textDecoration:"none", display:"inline-block" }}>
+            ↓
+          </a>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ============================================================
 //  TAB 1: RIDERS
 // ============================================================
@@ -151,15 +254,18 @@ function RidersTab({ eventId }) {
       role: form.role || null, contact: form.contact || null,
       notes: form.notes || null, requirements: form.requirements || {},
       shopping_list: form.shopping_list || [],
+      file_urls: form.file_urls || [],
     };
-    if (form.id) {
-      const { data } = await supabase.from("riders").update(row).eq("id", form.id).select().single();
-      setRiders(r => r.map(x => x.id === form.id ? data : x));
-    } else {
-      const { data } = await supabase.from("riders").insert(row).select().single();
-      setRiders(r => [...r, data]);
-    }
-    setEditing(null);
+    try {
+      if (form.id) {
+        await supabase.from("riders").update(row).eq("id", form.id);
+      } else {
+        await supabase.from("riders").insert(row);
+      }
+      const { data } = await supabase.from("riders").select("*").eq("event_id", eventId).order("name");
+      setRiders(data || []);
+      setEditing(null);
+    } catch(e) { alert("Save failed: " + e.message); }
   };
 
   const del = async (id) => {
@@ -264,6 +370,14 @@ function RidersTab({ eventId }) {
                     </div>
                   )}
 
+                  {/* Attached files */}
+                  {(r.file_urls || []).length > 0 && (
+                    <div>
+                      <div style={S.label}>Attached Files</div>
+                      <FileList files={r.file_urls} />
+                    </div>
+                  )}
+
                   {/* Shopping list */}
                   {(r.shopping_list || []).length > 0 && (
                     <div>
@@ -307,7 +421,7 @@ function RiderForm({ rider, onSave, onCancel }) {
   const [tab, setTab] = useState("details");
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const tabs = ["details", "requirements", "shopping"];
+  const tabs = ["details", "requirements", "shopping", "files"];
 
   return (
     <div>
@@ -331,7 +445,7 @@ function RiderForm({ rider, onSave, onCancel }) {
               borderRadius: 8, padding: "6px 16px", fontSize: 13, fontWeight: 600,
               color: tab === t ? "var(--text)" : "var(--text3)", cursor: "pointer",
               fontFamily: "inherit", textTransform: "capitalize" }}>
-            {t === "shopping" ? "Shopping List" : t.charAt(0).toUpperCase() + t.slice(1)}
+            {t === "shopping" ? "Shopping List" : t === "files" ? "Files" : t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
       </div>
@@ -372,6 +486,20 @@ function RiderForm({ rider, onSave, onCancel }) {
         {tab === "shopping" && (
           <ShoppingListEditor items={form.shopping_list} onChange={v => set("shopping_list", v)} />
         )}
+
+        {tab === "files" && (
+          <div>
+            <div style={{ fontSize:13, color:"var(--text2)", marginBottom:14, lineHeight:1.6 }}>
+              Attach the artist's rider PDF, technical specs, stage plot, or any other documents.
+            </div>
+            <FileUploader
+              eventId={eventId}
+              folder={`riders/${eventId}`}
+              files={form.file_urls || []}
+              onChange={v => set("file_urls", v)}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -411,14 +539,16 @@ function InventoryTab({ eventId }) {
       serial: form.serial || null,
       notes: form.notes || null,
     };
-    if (form.id) {
-      const { data } = await supabase.from("inventory_items").update(row).eq("id", form.id).select().single();
-      setItems(r => r.map(x => x.id === form.id ? data : x));
-    } else {
-      const { data } = await supabase.from("inventory_items").insert(row).select().single();
-      setItems(r => [...r, data]);
-    }
-    setEditing(null);
+    try {
+      if (form.id) {
+        await supabase.from("inventory_items").update(row).eq("id", form.id);
+      } else {
+        await supabase.from("inventory_items").insert(row);
+      }
+      const { data } = await supabase.from("inventory_items").select("*").eq("event_id", eventId).order("name");
+      setItems(data || []);
+      setEditing(null);
+    } catch(e) { alert("Save failed: " + e.message); }
   };
 
   const del = async (id) => {
@@ -606,15 +736,18 @@ function IncidentsTab({ eventId, event }) {
       occurred_at: form.occurred_at || new Date().toISOString(),
       follow_up_required: form.follow_up_required || false,
       follow_up_notes: form.follow_up_notes || null,
+      file_urls: form.file_urls || [],
     };
-    if (form.id) {
-      const { data } = await supabase.from("incident_reports").update(row).eq("id", form.id).select().single();
-      setIncidents(r => r.map(x => x.id === form.id ? data : x));
-    } else {
-      const { data } = await supabase.from("incident_reports").insert(row).select().single();
-      setIncidents(r => [data, ...r]);
-    }
-    setEditing(null);
+    try {
+      if (form.id) {
+        await supabase.from("incident_reports").update(row).eq("id", form.id);
+      } else {
+        await supabase.from("incident_reports").insert(row);
+      }
+      const { data } = await supabase.from("incident_reports").select("*").eq("event_id", eventId).order("occurred_at", { ascending: false });
+      setIncidents(data || []);
+      setEditing(null);
+    } catch(e) { alert("Save failed: " + e.message); }
   };
 
   const del = async (id) => {
@@ -672,7 +805,13 @@ function IncidentsTab({ eventId, event }) {
               {isOpen && (
                 <div style={{ borderTop: "1.5px solid var(--border)", padding: "16px 18px",
                   display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                  {[
+                  {(inc.file_urls || []).length > 0 && (
+                <div style={{ gridColumn:"span 2", marginBottom:4 }}>
+                  <div style={S.label}>Attached Evidence</div>
+                  <FileList files={inc.file_urls} />
+                </div>
+              )}
+              {[
                     ["People Involved", inc.people_involved],
                     ["Action Taken", inc.action_taken],
                     ["Follow-up Notes", inc.follow_up_notes],
@@ -770,6 +909,18 @@ function IncidentForm({ incident, event, onSave, onCancel }) {
           </div>
         </div>
 
+        {/* Attached evidence */}
+        <div>
+          <label style={S.label}>Attached Evidence / Photos</label>
+          <div style={{ fontSize:12, color:"var(--text3)", marginBottom:8 }}>Photos, witness statements, medical forms, or any supporting documents.</div>
+          <FileUploader
+            eventId={eventId}
+            folder={`incidents/${eventId}`}
+            files={form.file_urls || []}
+            onChange={v => setForm(f => ({ ...f, file_urls: v }))}
+          />
+        </div>
+
         {/* Follow up */}
         <div>
           <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", marginBottom: form.follow_up_required ? 10 : 0 }}>
@@ -824,14 +975,16 @@ function HSTab({ eventId, event }) {
       communication_plan: form.communication_plan || null,
       special_requirements: form.special_requirements || null,
     };
-    if (form.id) {
-      const { data } = await supabase.from("hs_plans").update(row).eq("id", form.id).select().single();
-      setPlans(r => r.map(x => x.id === form.id ? data : x));
-    } else {
-      const { data } = await supabase.from("hs_plans").insert(row).select().single();
-      setPlans(r => [data, ...r]);
-    }
-    setEditingPlan(null);
+    try {
+      if (form.id) {
+        await supabase.from("hs_plans").update(row).eq("id", form.id);
+      } else {
+        await supabase.from("hs_plans").insert(row);
+      }
+      const { data } = await supabase.from("hs_plans").select("*").eq("event_id", eventId).order("created_at", { ascending: false });
+      setPlans(data || []);
+      setEditingPlan(null);
+    } catch(e) { alert("Save failed: " + e.message); }
   };
 
   const saveInduction = async (form) => {
@@ -845,9 +998,12 @@ function HSTab({ eventId, event }) {
       signature: form.signature || null,
       completed_at: new Date().toISOString(),
     };
-    const { data } = await supabase.from("hs_inductions").insert(row).select().single();
-    setInductions(r => [data, ...r]);
-    setInductionTab(false);
+    try {
+      await supabase.from("hs_inductions").insert(row);
+      const { data } = await supabase.from("hs_inductions").select("*").eq("event_id", eventId).order("completed_at", { ascending: false });
+      setInductions(data || []);
+      setInductionTab(false);
+    } catch(e) { alert("Save failed: " + e.message); }
   };
 
   const delPlan = async (id) => {
@@ -1008,6 +1164,16 @@ function HSPlanForm({ plan, event, onSave, onCancel }) {
               <div><label style={S.label}>First Aid Location</label><textarea value={form.first_aid_location} onChange={e => set("first_aid_location", e.target.value)} rows={3} style={{ ...S.inp, resize: "vertical" }} placeholder="Where first aid kits and AED are located" /></div>
             </div>
             <div><label style={S.label}>Special Requirements / Conditions</label><textarea value={form.special_requirements} onChange={e => set("special_requirements", e.target.value)} rows={3} style={{ ...S.inp, resize: "vertical" }} placeholder="Any other specific H&S conditions for this event" /></div>
+            <div>
+              <label style={S.label}>Attached Documents</label>
+              <div style={{ fontSize:12, color:"var(--text3)", marginBottom:8 }}>Upload your H&S policy, venue safety certificate, or any supporting documents.</div>
+              <FileUploader
+                eventId={eventId}
+                folder={`hs-plans/${eventId}`}
+                files={form.file_urls || []}
+                onChange={v => set("file_urls", v)}
+              />
+            </div>
           </>
         )}
 
@@ -1178,10 +1344,17 @@ function HSPlanView({ plan, onBack, onEdit }) {
         )}
 
         {plan.special_requirements && (
-          <div>
+          <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>📋 Special Requirements</div>
             <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px", fontSize: 13,
               lineHeight: 1.7, whiteSpace: "pre-wrap", color: "var(--text)" }}>{plan.special_requirements}</div>
+          </div>
+        )}
+
+        {(plan.file_urls || []).length > 0 && (
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>📎 Attached Documents</div>
+            <FileList files={plan.file_urls} />
           </div>
         )}
       </div>
