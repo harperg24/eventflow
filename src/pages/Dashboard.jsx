@@ -240,9 +240,11 @@ function NotifModal({ notif, event, onSave, onClose }) {
 
     let savedId = notif?.id;
     if (isEdit) {
-      await supabase.from("event_notifications").update(row).eq("id", notif.id);
+      const { error } = await supabase.from("event_notifications").update(row).eq("id", notif.id);
+      if (error) { setErr("Save failed: " + error.message); setSaving(false); return; }
     } else {
-      const { data } = await supabase.from("event_notifications").insert(row).select("id").single();
+      const { data, error } = await supabase.from("event_notifications").insert(row).select("id").single();
+      if (error) { setErr("Save failed: " + error.message); setSaving(false); return; }
       savedId = data?.id;
     }
 

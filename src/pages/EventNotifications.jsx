@@ -186,19 +186,21 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
     if (!event?.date) return;
     const eventDt = new Date(`${event.date}T${event.time || "12:00"}`);
     const send_at = new Date(eventDt.getTime() - hours * 3600000).toISOString();
-    await supabase.from("event_notifications").insert({
+    const { error } = await supabase.from("event_notifications").insert({
       event_id:          eventId,
       notification_type: "event_reminder",
       recipient_type:    "all_guests",
       hours_before:      hours,
       send_at,
     });
+    if (error) { alert("Failed to add reminder: " + error.message); return; }
     await load();
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this notification?")) return;
-    await supabase.from("event_notifications").delete().eq("id", id);
+    const { error } = await supabase.from("event_notifications").delete().eq("id", id);
+    if (error) { alert("Delete failed: " + error.message); return; }
     setNotifs(n => n.filter(x => x.id !== id));
   };
 
@@ -207,9 +209,10 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
       ? "Event Reminder" : (notif.subject || "Custom message");
     if (!window.confirm(`Send "${lbl}" now to ${recipientLabel(notif.recipient_type)}?`)) return;
     setSending(notif.id);
-    await supabase.from("event_notifications")
+    const { error } = await supabase.from("event_notifications")
       .update({ send_at: new Date().toISOString(), sent: false })
       .eq("id", notif.id);
+    if (error) { alert("Failed: " + error.message); setSending(null); return; }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notifications`, {
