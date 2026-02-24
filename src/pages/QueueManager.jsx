@@ -1,8 +1,7 @@
 // ============================================================
 //  QueueManager.jsx  —  Manager-facing queue control panel
 // ============================================================
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 
 const COLOR_STATUS = {
@@ -39,276 +38,11 @@ function ElapsedTimer({ since }) {
   );
 }
 
-// ── Queue create / edit modal ─────────────────────────────────
-function QueueFormModal({ queue, onSave, onClose }) {
-  const [form, setForm] = useState(queue || {
-    name:"", description:"", max_per_person:1, auto_caller:1, max_joins_per_device:1
-  });
-  const [customCaller, setCustomCaller] = useState(false);
-  const [customDevice, setCustomDevice] = useState(false);
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  const PRESET_CALLERS = [0, 1, 2, 5, 10, 20];
-  const PRESET_DEVICES = [1, 2, 3, 5, 99];
-
-  const autoCallerN = form.auto_caller ?? 1;
-  const maxJoinsN   = form.max_joins_per_device ?? 1;
-  const isCustomCaller = !PRESET_CALLERS.includes(autoCallerN);
-  const isCustomDevice = !PRESET_DEVICES.includes(maxJoinsN);
-
-  const inp = { width:"100%", boxSizing:"border-box", background:"var(--bg3)",
-    border:"1.5px solid var(--border)", borderRadius:8, padding:"9px 12px",
-    color:"var(--text)", fontSize:14, outline:"none", fontFamily:"inherit" };
-
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
-
-  const ChipRow = ({ values, current, onChange, labelFn }) => (
-    <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-      {values.map(v => {
-        const active = current === v && !(v === "custom");
-        const lbl = labelFn ? labelFn(v) : v === 99 ? "∞ Unlimited" : v === 0 ? "Off" : v;
-        return (
-          <button key={v} type="button" onClick={() => onChange(v)}
-            style={{ background: active ? "var(--accent)" : "var(--bg3)",
-              border:`1.5px solid ${active ? "var(--accent)" : "var(--border)"}`,
-              color: active ? "#fff" : "var(--text)",
-              borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-              cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-            {lbl}
-          </button>
-        );
-      })}
-      {/* Custom button */}
-      <button type="button" onClick={() => onChange("custom")}
-        style={{ background: (current === "custom" || (labelFn ? isCustomCaller : isCustomDevice)) ? "var(--accent)" : "var(--bg3)",
-          border:`1.5px solid ${(current === "custom" || (labelFn ? isCustomCaller : isCustomDevice)) ? "var(--accent)" : "var(--border)"}`,
-          color: (current === "custom" || (labelFn ? isCustomCaller : isCustomDevice)) ? "#fff" : "var(--text)",
-          borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-          cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-        Custom…
-      </button>
-    </div>
-  );
-
-  const modal = (
-    <div
-      style={{ position:"fixed", inset:0, zIndex:9999,
-        background:"rgba(0,0,0,0.5)", backdropFilter:"blur(4px)",
-        display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
-      onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-
-      <div style={{ background:"var(--bg2)", borderRadius:20, width:"100%", maxWidth:480,
-        border:"1.5px solid var(--border)", boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
-        display:"flex", flexDirection:"column",
-        maxHeight:"min(680px, calc(100vh - 40px))" }}>
-
-        {/* Header */}
-        <div style={{ padding:"20px 24px 16px", flexShrink:0,
-          borderBottom:"1.5px solid var(--border)",
-          display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div>
-            <div style={{ fontSize:18, fontWeight:800, letterSpacing:"-0.03em" }}>
-              {form.id ? "Edit Queue" : "New Queue"}
-            </div>
-            <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>
-              Configure this station's queue settings
-            </div>
-          </div>
-          <button onMouseDown={onClose}
-            style={{ width:32, height:32, borderRadius:"50%", border:"1.5px solid var(--border)",
-              background:"var(--bg3)", color:"var(--text2)", cursor:"pointer",
-              fontSize:16, display:"flex", alignItems:"center", justifyContent:"center",
-              fontFamily:"inherit", flexShrink:0 }}>✕</button>
-        </div>
-
-        {/* Scrollable body */}
-        <div style={{ overflowY:"auto", flex:1, padding:"20px 24px",
-          display:"flex", flexDirection:"column", gap:20 }}>
-
-          {/* Name + description */}
-          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            <div>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--text2)",
-                display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                Queue Name *
-              </label>
-              <input value={form.name} onChange={e=>set("name",e.target.value)}
-                style={inp} placeholder="e.g. Gelato Station, Photo Booth, Bar"
-                autoFocus />
-            </div>
-            <div>
-              <label style={{ fontSize:12, fontWeight:700, color:"var(--text2)",
-                display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                Description <span style={{ fontWeight:400, textTransform:"none", letterSpacing:0 }}>(shown to guests, optional)</span>
-              </label>
-              <textarea value={form.description||""} onChange={e=>set("description",e.target.value)}
-                rows={2} style={{ ...inp, resize:"vertical" }}
-                placeholder="e.g. 1 complimentary scoop per person" />
-            </div>
-          </div>
-
-          <div style={{ height:"1px", background:"var(--border)" }}/>
-
-          {/* Party size */}
-          <div>
-            <label style={{ fontSize:12, fontWeight:700, color:"var(--text2)",
-              display:"block", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.05em" }}>
-              Max party size per join
-            </label>
-            <div style={{ display:"flex", gap:6 }}>
-              {[1,2,3,4,5,6,8,10].map(n => (
-                <button key={n} type="button" onClick={() => set("max_per_person", n)}
-                  style={{ background:(form.max_per_person||1)===n?"var(--accent)":"var(--bg3)",
-                    border:`1.5px solid ${(form.max_per_person||1)===n?"var(--accent)":"var(--border)"}`,
-                    color:(form.max_per_person||1)===n?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 0", width:44, fontSize:13, fontWeight:600,
-                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ height:"1px", background:"var(--border)" }}/>
-
-          {/* Auto-caller */}
-          <div>
-            <div style={{ marginBottom:10 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:2 }}>
-                📣 Auto-caller slots
-              </div>
-              <div style={{ fontSize:12, color:"var(--text3)" }}>
-                Keep this many people called simultaneously. <strong style={{ color:"var(--text2)" }}>0 = manual only.</strong>
-              </div>
-            </div>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              {PRESET_CALLERS.map(n => (
-                <button key={n} type="button"
-                  onClick={() => { set("auto_caller", n); setCustomCaller(false); }}
-                  style={{ background:(!isCustomCaller && autoCallerN===n)?"var(--accent)":"var(--bg3)",
-                    border:`1.5px solid ${(!isCustomCaller && autoCallerN===n)?"var(--accent)":"var(--border)"}`,
-                    color:(!isCustomCaller && autoCallerN===n)?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                  {n === 0 ? "Off" : n}
-                </button>
-              ))}
-              <button type="button" onClick={() => setCustomCaller(c => !c)}
-                style={{ background:isCustomCaller?"var(--accent)":"var(--bg3)",
-                  border:`1.5px solid ${isCustomCaller?"var(--accent)":"var(--border)"}`,
-                  color:isCustomCaller?"#fff":"var(--text)",
-                  borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                  cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                Custom…
-              </button>
-            </div>
-            {(isCustomCaller || customCaller) && (
-              <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
-                <input type="number" min={0} max={500} placeholder="e.g. 25"
-                  value={isCustomCaller ? autoCallerN : ""}
-                  onChange={e => { const v = Math.max(0, parseInt(e.target.value)||0); set("auto_caller", v); }}
-                  style={{ ...inp, width:90, textAlign:"center" }} autoFocus />
-                <span style={{ fontSize:13, color:"var(--text3)" }}>simultaneous slots</span>
-              </div>
-            )}
-            {autoCallerN > 0 && (
-              <div style={{ marginTop:8, fontSize:12, color:"var(--text3)", lineHeight:1.5,
-                background:"var(--bg3)", borderRadius:8, padding:"8px 12px" }}>
-                Hitting <strong>✓ Served</strong> auto-calls the next person, keeping <strong>{autoCallerN}</strong> people called at once.
-                {autoCallerN >= 10 && " Great for large events — staff can serve a whole batch."}
-              </div>
-            )}
-            {autoCallerN === 0 && (
-              <div style={{ marginTop:8, fontSize:12, color:"var(--text3)", lineHeight:1.5,
-                background:"var(--bg3)", borderRadius:8, padding:"8px 12px" }}>
-                Manual mode — use the <strong>📣 Call</strong> button to call people one at a time.
-              </div>
-            )}
-          </div>
-
-          <div style={{ height:"1px", background:"var(--border)" }}/>
-
-          {/* Device limit */}
-          <div>
-            <div style={{ marginBottom:10 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:2 }}>
-                📱 Max served visits per device
-              </div>
-              <div style={{ fontSize:12, color:"var(--text3)" }}>
-                Leaving the queue never counts — only being served does.
-              </div>
-            </div>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              {PRESET_DEVICES.map(n => (
-                <button key={n} type="button"
-                  onClick={() => { set("max_joins_per_device", n); setCustomDevice(false); }}
-                  style={{ background:(!isCustomDevice && maxJoinsN===n)?"var(--accent)":"var(--bg3)",
-                    border:`1.5px solid ${(!isCustomDevice && maxJoinsN===n)?"var(--accent)":"var(--border)"}`,
-                    color:(!isCustomDevice && maxJoinsN===n)?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                    cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                  {n === 99 ? "∞" : n}
-                </button>
-              ))}
-              <button type="button" onClick={() => setCustomDevice(c => !c)}
-                style={{ background:isCustomDevice?"var(--accent)":"var(--bg3)",
-                  border:`1.5px solid ${isCustomDevice?"var(--accent)":"var(--border)"}`,
-                  color:isCustomDevice?"#fff":"var(--text)",
-                  borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
-                  cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
-                Custom…
-              </button>
-            </div>
-            {(isCustomDevice || customDevice) && (
-              <div style={{ marginTop:10, display:"flex", alignItems:"center", gap:10 }}>
-                <input type="number" min={1} max={100} placeholder="e.g. 4"
-                  value={isCustomDevice ? maxJoinsN : ""}
-                  onChange={e => { const v = Math.max(1, parseInt(e.target.value)||1); set("max_joins_per_device", v); }}
-                  style={{ ...inp, width:90, textAlign:"center" }} />
-                <span style={{ fontSize:13, color:"var(--text3)" }}>visits per device</span>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {/* Footer — never scrolls */}
-        <div style={{ padding:"16px 24px", borderTop:"1.5px solid var(--border)",
-          display:"flex", gap:10, flexShrink:0 }}>
-          <button onMouseDown={onClose}
-            style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
-              borderRadius:10, padding:"11px", fontSize:14, color:"var(--text2)",
-              cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
-            Cancel
-          </button>
-          <button onMouseDown={() => form.name?.trim() && onSave(form)}
-            style={{ flex:2, background: form.name?.trim() ? "var(--accent)" : "var(--bg3)",
-              border:"none", borderRadius:10, padding:"11px", fontSize:14,
-              fontWeight:700, color: form.name?.trim() ? "#fff" : "var(--text3)",
-              cursor: form.name?.trim() ? "pointer" : "not-allowed", fontFamily:"inherit",
-              transition:"all 0.15s" }}>
-            {form.id ? "Save Changes" : "Create Queue"}
-          </button>
-        </div>
-
-      </div>
-    </div>
-  );
-
-  return createPortal(modal, document.body);
-}
-
 // ── Main component ────────────────────────────────────────────
-export default function QueueManager({ eventId }) {
+export default function QueueManager({ eventId, onOpenModal }) {
   const [queues,  setQueues]  = useState([]);
   const [entries, setEntries] = useState({}); // queueId → entries[]
   const [loading, setLoading] = useState(true);
-  const [modal,   setModal]   = useState(null);
   const [active,  setActive]  = useState(null);
   const [busy,    setBusy]    = useState(false);
 
@@ -369,7 +103,6 @@ export default function QueueManager({ eventId }) {
       setEntries(prev => ({ ...prev, [data.id]: [] }));
       setActive(data.id);
     }
-    setModal(null);
   };
 
   const deleteQueue = async (id) => {
@@ -500,7 +233,7 @@ export default function QueueManager({ eventId }) {
             {queues.length} queue{queues.length!==1?"s":""}{"  ·  "}virtual line system
           </p>
         </div>
-        {btn("+ New Queue", () => setModal({}))}
+        {btn("+ New Queue", () => onOpenModal({ queue: null, save: saveQueue }))}
       </div>
 
       {queues.length === 0 ? (
@@ -511,7 +244,7 @@ export default function QueueManager({ eventId }) {
           <p style={{ color:"var(--text2)", fontSize:14, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
             Create a virtual queue for gelato, photo booths, bars — anything with a line.
           </p>
-          {btn("+ Create First Queue", () => setModal({}))}
+          {btn("+ Create First Queue", () => onOpenModal({ queue: null, save: saveQueue }))}
         </div>
       ) : (
         <div style={{ display:"grid", gridTemplateColumns:"256px 1fr", gap:20, alignItems:"start" }}>
@@ -573,7 +306,7 @@ export default function QueueManager({ eventId }) {
                         ))}
                       </div>
                       {ghost("🔗 Share", () => copyLink(activeQueue))}
-                      {ghost("✎ Edit", () => setModal({...activeQueue}))}
+                      {ghost("✎ Edit", () => onOpenModal({ queue: activeQueue, save: saveQueue }))}
                       {ghost("✕", () => deleteQueue(activeQueue.id),
                         { color:"var(--danger,#dc2626)", extra:{ borderColor:"rgba(220,38,38,0.2)" }})}
                     </div>
@@ -792,9 +525,6 @@ export default function QueueManager({ eventId }) {
         </div>
       )}
 
-      {modal !== null && (
-        <QueueFormModal queue={modal.id?modal:null} onSave={saveQueue} onClose={()=>setModal(null)} />
-      )}
     </div>
   );
 }
