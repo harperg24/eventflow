@@ -2,7 +2,7 @@
 //  Operations.jsx — Riders, Inventory, Incidents, H&S
 //  Sub-tabs within the Dashboard "Operations" nav item
 // ============================================================
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 
 // ── Shared style tokens ───────────────────────────────────────
@@ -69,8 +69,8 @@ function Empty({ icon, title, desc, action, onAction }) {
 
 // ── File uploader ──────────────────────────────────────────────
 function FileUploader({ eventId, folder, files, onChange }) {
-  const [uploading, setUploading] = React.useState(false);
-  const inputRef = React.useRef();
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef();
 
   const upload = async (e) => {
     const file = e.target.files[0];
@@ -276,7 +276,7 @@ function RidersTab({ eventId }) {
 
   if (loading) return <div style={{ padding: 40, color: "var(--text3)", fontSize: 14, textAlign: "center" }}>Loading…</div>;
 
-  if (editing !== null) return <RiderForm rider={editing.id ? editing : null} onSave={save} onCancel={() => setEditing(null)} />;
+  if (editing !== null) return <RiderForm eventId={eventId} rider={editing.id ? editing : null} onSave={save} onCancel={() => setEditing(null)} />;
 
   return (
     <div>
@@ -413,7 +413,7 @@ function RidersTab({ eventId }) {
   );
 }
 
-function RiderForm({ rider, onSave, onCancel }) {
+function RiderForm({ eventId, rider, onSave, onCancel }) {
   const [form, setForm] = useState(rider || {
     name: "", role: "", contact: "", notes: "",
     requirements: {}, shopping_list: [],
@@ -757,7 +757,7 @@ function IncidentsTab({ eventId, event }) {
   };
 
   if (loading) return <div style={{ padding: 40, color: "var(--text3)", fontSize: 14, textAlign: "center" }}>Loading…</div>;
-  if (editing !== null) return <IncidentForm incident={editing.id ? editing : null} event={event} onSave={save} onCancel={() => setEditing(null)} />;
+  if (editing !== null) return <IncidentForm eventId={eventId} incident={editing.id ? editing : null} event={event} onSave={save} onCancel={() => setEditing(null)} />;
 
   return (
     <div>
@@ -831,7 +831,7 @@ function IncidentsTab({ eventId, event }) {
   );
 }
 
-function IncidentForm({ incident, event, onSave, onCancel }) {
+function IncidentForm({ eventId, incident, event, onSave, onCancel }) {
   const [form, setForm] = useState(incident || {
     type: "other", severity: "low", description: "", location: event?.venue_name || "",
     people_involved: "", action_taken: "", reported_by: "", follow_up_required: false,
@@ -1018,7 +1018,7 @@ function HSTab({ eventId, event }) {
   };
 
   if (loading) return <div style={{ padding: 40, color: "var(--text3)", fontSize: 14, textAlign: "center" }}>Loading…</div>;
-  if (editingPlan !== null) return <HSPlanForm plan={editingPlan.id ? editingPlan : null} event={event} onSave={savePlan} onCancel={() => setEditingPlan(null)} />;
+  if (editingPlan !== null) return <HSPlanForm eventId={eventId} plan={editingPlan.id ? editingPlan : null} event={event} onSave={savePlan} onCancel={() => setEditingPlan(null)} />;
   if (viewingPlan !== null) return <HSPlanView plan={viewingPlan} onBack={() => setViewingPlan(null)} onEdit={() => { setEditingPlan(viewingPlan); setViewingPlan(null); }} />;
   if (inductionTab) return <InductionForm event={event} onSave={saveInduction} onCancel={() => setInductionTab(false)} />;
 
@@ -1104,7 +1104,7 @@ function HSTab({ eventId, event }) {
   );
 }
 
-function HSPlanForm({ plan, event, onSave, onCancel }) {
+function HSPlanForm({ eventId, plan, event, onSave, onCancel }) {
   const [form, setForm] = useState(plan || {
     title: event?.name ? `${event.name} — H&S Plan` : "",
     venue: event?.venue_name || "", organiser: "", date: event?.date || "",
