@@ -185,6 +185,11 @@ function NotifModal({ notif, event, onSave, onClose }) {
       ? new Date(notif.send_at).toISOString().slice(0,16)
       : ""
   );
+  const [sendMode, setSendMode] = useState(
+    notif?.notification_type === "custom" && notif?.send_at
+      ? (new Date(notif.send_at) > new Date() ? "schedule" : "now")
+      : "now"
+  );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -204,7 +209,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
     setErr("");
     if (type === "custom" && !subject.trim()) { setErr("Subject is required."); return; }
     if (type === "custom" && !message.trim()) { setErr("Message is required."); return; }
-    if (type === "custom" && !customDate)     { setErr("Send date/time is required."); return; }
+    if (type === "custom" && sendMode === "schedule" && !customDate) { setErr("Pick a send date/time."); return; }
     if (!event?.date && type === "event_reminder") { setErr("This event has no date set — add a date in Settings first."); return; }
 
     setSaving(true);
@@ -212,11 +217,10 @@ function NotifModal({ notif, event, onSave, onClose }) {
     let send_at;
     if (type === "event_reminder") {
       const hours = isCustomHours ? (parseInt(customHours) || 24) : hoursPreset;
-      // Combine event.date + event.time to get event timestamp
       const eventDt = new Date(`${event.date}T${event.time || "12:00"}`);
       send_at = new Date(eventDt.getTime() - hours * 3600 * 1000).toISOString();
     } else {
-      send_at = new Date(customDate).toISOString();
+      send_at = sendMode === "now" ? new Date().toISOString() : new Date(customDate).toISOString();
     }
 
     const row = {
@@ -232,10 +236,24 @@ function NotifModal({ notif, event, onSave, onClose }) {
       send_at,
     };
 
+    let savedId = notif?.id;
     if (isEdit) {
       await supabase.from("event_notifications").update(row).eq("id", notif.id);
     } else {
-      await supabase.from("event_notifications").insert(row);
+      const { data } = await supabase.from("event_notifications").insert(row).select("id").single();
+      savedId = data?.id;
+    }
+
+    // If custom + send now → fire edge function immediately
+    if (type === "custom" && sendMode === "now" && savedId) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-notifications`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+          body: JSON.stringify({ notificationId: savedId }),
+        });
+      } catch (_) {}
     }
 
     setSaving(false);
@@ -414,11 +432,34 @@ function NotifModal({ notif, event, onSave, onClose }) {
                 </div>
               </div>
 
-              {/* Send date */}
+              {/* Send Now vs Schedule Later */}
               <div>
-                <label style={S.label}>Send at</label>
-                <input type="datetime-local" value={customDate} onChange={e=>setCustomDate(e.target.value)}
-                  style={inp} />
+                <label style={S.label}>When to send</label>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:10 }}>
+                  {[
+                    { v:"now",      icon:"⚡", title:"Send Now",        desc:"Fires immediately when you click send" },
+                    { v:"schedule", icon:"📅", title:"Schedule Later",  desc:"Pick a date and time to send" },
+                  ].map(opt => (
+                    <div key={opt.v} onMouseDown={() => setSendMode(opt.v)}
+                      style={{ background: sendMode===opt.v ? "var(--accentBg)" : "var(--bg3)",
+                        border:`1.5px solid ${sendMode===opt.v ? "var(--accent)" : "var(--border)"}`,
+                        borderRadius:10, padding:"12px 14px", cursor:"pointer", transition:"all 0.12s" }}>
+                      <div style={{ fontSize:18, marginBottom:4 }}>{opt.icon}</div>
+                      <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:2 }}>{opt.title}</div>
+                      <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.4 }}>{opt.desc}</div>
+                    </div>
+                  ))}
+                </div>
+                {sendMode === "schedule" && (
+                  <input type="datetime-local" value={customDate} onChange={e=>setCustomDate(e.target.value)}
+                    style={inp} />
+                )}
+                {sendMode === "now" && (
+                  <div style={{ fontSize:12, color:"var(--text3)", background:"var(--bg3)",
+                    borderRadius:8, padding:"8px 12px" }}>
+                    The email will be sent to recipients as soon as you click <strong>Send Now</strong>.
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -444,7 +485,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
             style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:10,
               padding:"11px", fontSize:14, fontWeight:700, color:"#fff",
               cursor:saving?"not-allowed":"pointer", fontFamily:"inherit", opacity:saving?0.6:1 }}>
-            {saving ? "Saving…" : isEdit ? "Save Changes" : "Schedule Notification"}
+            {saving ? "Sending…" : isEdit ? "Save Changes" : type === "custom" && sendMode === "now" ? "Send Now ⚡" : "Schedule Notification"}
           </button>
         </div>
       </div>
@@ -666,6 +707,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [queueModal, setQueueModal] = useState(null); // null=closed, "new"=create, obj=edit
   const [notifModal, setNotifModal] = useState(null);   // null=closed, obj=notif or {} for new
+  const [notifRefresh, setNotifRefresh] = useState(0);  // increment to trigger reload in EventNotifications
 
 
   // ── State ─────────────────────────────────────────────────
@@ -3043,6 +3085,7 @@ export default function Dashboard() {
           <EventNotifications
             eventId={eventId}
             event={event}
+            refreshKey={notifRefresh}
             onOpenModal={(n) => setNotifModal(n || {})}
           />
         )}
@@ -3747,7 +3790,7 @@ export default function Dashboard() {
         <NotifModal
           notif={notifModal?.id ? notifModal : null}
           event={event}
-          onSave={() => setNotifModal(null)}
+          onSave={() => { setNotifModal(null); setNotifRefresh(r => r + 1); }}
           onClose={() => setNotifModal(null)}
         />
       )}

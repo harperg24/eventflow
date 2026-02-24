@@ -156,7 +156,7 @@ function QuickReminderStrip({ event, existingHours, onAdd }) {
   );
 }
 
-export default function EventNotifications({ eventId, event, onOpenModal }) {
+export default function EventNotifications({ eventId, event, onOpenModal, refreshKey }) {
   const [notifs,  setNotifs]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(null);
@@ -172,7 +172,7 @@ export default function EventNotifications({ eventId, event, onOpenModal }) {
     setLoading(false);
   }, [eventId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, [load, refreshKey]);
 
   const quickAdd = async (hours) => {
     if (!event?.date) return;
