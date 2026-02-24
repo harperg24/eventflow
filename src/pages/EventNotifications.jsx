@@ -2,7 +2,7 @@
 //  EventNotifications.jsx
 //  Notifications tab — automated reminders + custom messages
 // ============================================================
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 
 const RECIPIENT_OPTIONS = [
@@ -162,7 +162,7 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
   const [sending, setSending] = useState(null);
   const [showSent, setShowSent] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = async () => {
     const { data } = await supabase
       .from("event_notifications")
       .select("*")
@@ -170,9 +170,17 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
       .order("send_at");
     setNotifs(data || []);
     setLoading(false);
-  }, [eventId]);
+  };
 
-  useEffect(() => { load(); }, [load, refreshKey]);
+  // refreshKey increments when modal saves, triggering a reload
+  useEffect(() => { load(); }, [eventId, refreshKey]); // eslint-disable-line
+
+  // Auto-expand sent history when there's nothing scheduled (so sent items are visible)
+  useEffect(() => {
+    const scheduled = notifs.filter(n => !n.sent);
+    const sent      = notifs.filter(n => n.sent);
+    if (sent.length > 0 && scheduled.length === 0) setShowSent(true);
+  }, [notifs]);
 
   const quickAdd = async (hours) => {
     if (!event?.date) return;
