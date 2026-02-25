@@ -104,32 +104,6 @@ export function getTheme(prefs = {}) {
   };
 }
 
-// ── Logo renderer (use in any component) ────────────────────
-// Returns a React element — import and use as <BrandLogo size={22}/>
-export function BrandLogo({ size = 20, color = "currentColor", style = {} }) {
-  const { logoType, logoSrc, logoSvg, logoAccentRange, name } = BRAND;
-  const s = { fontFamily: F.display, fontSize: size, letterSpacing: "0.04em", lineHeight: 1, ...style };
-
-  if (logoType === "image" && logoSrc)
-    return <img src={logoSrc} alt={name} style={{ height: size, ...style }} />;
-
-  if (logoType === "svg" && logoSvg)
-    return <span style={style} dangerouslySetInnerHTML={{ __html: logoSvg }} />;
-
-  // Text logo with optional accent split
-  if (logoAccentRange) {
-    const [s1, e1] = logoAccentRange;
-    return (
-      <span style={s}>
-        {name.slice(0, s1)}
-        <span style={{ color: C.primary }}>{name.slice(s1, e1)}</span>
-        {name.slice(e1)}
-      </span>
-    );
-  }
-  return <span style={{ ...s, color }}>{name}</span>;
-}
-
 // ── Global CSS ────────────────────────────────────────────────
 // Inject once per page. Contains all shared utility classes.
 // Class names use "onx-" prefix. Legacy "ef-" aliases included

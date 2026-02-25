@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { BRAND } from "./brand";
-import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM, BrandLogo } from "./theme";
+import { loadThemePrefs, getTheme, globalCSS, applyThemeToDOM } from "./theme";
 
 const C = BRAND.colors;
 const F = BRAND.fonts;
