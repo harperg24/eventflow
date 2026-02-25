@@ -23,7 +23,7 @@ export default function TicketSuccess() {
       attempts++;
       const { data: ord } = await supabase
         .from("ticket_orders").select("*, ticket_tiers(name), events(name,date)")
-        .eq("stripe_session_id", sessionId).single();
+        .eq("stripe_session_id", sessionId).maybeSingle();
       if (ord?.status === "paid") {
         setOrder(ord);
         const { data: tix } = await supabase

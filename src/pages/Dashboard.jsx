@@ -710,6 +710,25 @@ export default function Dashboard() {
 
   const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
   const ANON_KEY = supabase.supabaseKey || "";
+
+  // Helper: authenticated fetch to Supabase edge functions
+  const authFetch = async (path, body) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`${FUNCTIONS_BASE}/${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": ANON_KEY,
+        "Authorization": `Bearer ${session?.access_token || ""}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      throw new Error(err.error || `Request failed: ${res.status}`);
+    }
+    return res.json();
+  };
   const [activeNav, setActiveNav] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [queueModal, setQueueModal] = useState(null); // null=closed, "new"=create, obj=edit
@@ -1273,7 +1292,7 @@ export default function Dashboard() {
     if (vendor?.email && vendor?.form_submitted_at) {
       await fetch(`${FUNCTIONS_BASE}/vendor-decision`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY, Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token||""}` },
         body: JSON.stringify({ vendorId: id, decision: "declined", message: "" }),
       }).catch(() => {});
     }
@@ -1292,13 +1311,7 @@ export default function Dashboard() {
       if (error) throw error;
       setCollaborators(cs => [...cs, collab]);
       // Send invite email
-      const res = await fetch(`${FUNCTIONS_BASE}/send-collab-invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
-        body: JSON.stringify({ collabId: collab.id }),
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
+      await authFetch("send-collab-invite", { collabId: collab.id });
       setCollabInviteEmail(""); setCollabInviteRole("view_only");
     } catch (e) { alert("Error: " + e.message); }
     setSendingCollab(false);
@@ -1384,13 +1397,7 @@ export default function Dashboard() {
       if (error) throw error;
 
       // Send invite email
-      const res = await fetch(`${FUNCTIONS_BASE}/send-vendor-invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
-        body: JSON.stringify({ vendorId: newVendor.id }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      await authFetch("send-vendor-invite", { vendorId: newVendor.id });
 
       setVendors(vs => [...vs, newVendor]);
       setVendorInviteEmail("");
@@ -1404,9 +1411,10 @@ export default function Dashboard() {
     if (!showDecisionModal) return;
     setSendingDecision(true);
     try {
+      const { data: { session: _vdSess } } = await supabase.auth.getSession();
       const res = await fetch(`${FUNCTIONS_BASE}/vendor-decision`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", apikey: ANON_KEY },
+        headers: { "Content-Type": "application/json", apikey: ANON_KEY, Authorization: `Bearer ${_vdSess?.access_token||""}` },
         body: JSON.stringify({ vendorId: showDecisionModal.id, decision, message: decisionMessage }),
       });
       const data = await res.json();
@@ -2614,12 +2622,10 @@ export default function Dashboard() {
                         {(v.email || v.contact) && v.status === "invited" && (
                           <button className="btn-ghost" style={{ padding: "7px 12px", fontSize: 12 }}
                             onClick={async () => {
-                              await fetch(`${FUNCTIONS_BASE}/send-vendor-invite`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json", apikey: ANON_KEY },
-                                body: JSON.stringify({ vendorId: v.id }),
-                              });
-                              alert("Invite resent!");
+                              try {
+                                await authFetch("send-vendor-invite", { vendorId: v.id });
+                                alert("Invite resent!");
+                              } catch (e) { alert("Error: " + e.message); }
                             }}>↩ Resend</button>
                         )}
                       </>
