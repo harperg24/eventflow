@@ -76,63 +76,52 @@ async function sendGmail(to: string, subject: string, html: string, accessToken:
 function inviteTemplate(guestName: string, eventName: string, eventDate: string, rsvpUrl: string): string {
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark">
 </head>
-<body style="margin:0;padding:0;background:#f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;">
-    <tr><td align="center" style="padding:48px 16px;">
+<body style="margin:0;padding:0;background:#0a0a0a;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
+    <tr><td align="center" style="padding:40px 16px 0;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-        
-      <tr>
-        <td align="center" style="padding-bottom:32px;">
-          <table cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
-              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">Oneonetix</td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
-          <div style="height:4px;background:#5b5bd6;border-radius:4px 4px 0 0;"></div>
+        <tr><td align="center" style="padding-bottom:28px;">
+          <a href="https://oneonetix.app" style="text-decoration:none;">
+            <span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">ONE</span><span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#ff4d00;">O</span><span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">NETIX</span>
+          </a>
+        </td></tr>
+        <tr><td style="background:#111111;border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+          <div style="height:3px;background:#ff4d00;"></div>
           <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
-            <tr><td align="center" style="padding-bottom:16px;font-size:40px;">🎉</td></tr>
-            <tr><td align="center" style="padding-bottom:20px;">
-              <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:26px;font-weight:800;color:#1d1d1f;margin:0 0 6px;letter-spacing:-0.03em;">
-                You're invited${guestName ? `, ${guestName.split(" ")[0]}` : ""}
-              </h1>
-              <p style="font-size:15px;color:#6e6e73;margin:0;">to</p>
+            <tr><td align="center" style="padding-bottom:10px;">
+              <span style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#ff4d00;">You're Invited</span>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:6px;">
+              <h1 style="font-family:'Arial Black',Arial,sans-serif;font-size:30px;font-weight:900;color:#f5f0e8;margin:0;letter-spacing:0.02em;text-transform:uppercase;line-height:1.05;">${guestName ? guestName.split(" ")[0].toUpperCase() : "GUEST"}</h1>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:24px;">
+              <p style="font-size:12px;color:#888888;margin:8px 0 12px;font-family:Arial,sans-serif;letter-spacing:0.06em;text-transform:uppercase;">You have been invited to</p>
+              <div style="padding:16px 20px;background:#1c1c1c;border-radius:3px;border-left:3px solid #ff4d00;">
+                <div style="font-family:'Arial Black',Arial,sans-serif;font-size:18px;font-weight:900;color:#f5f0e8;letter-spacing:0.03em;text-transform:uppercase;">${eventName}</div>
+                ${eventDate ? `<div style="font-size:11px;color:#888888;margin-top:6px;letter-spacing:0.1em;text-transform:uppercase;font-family:Arial,sans-serif;">${eventDate}</div>` : ""}
+              </div>
             </td></tr>
             <tr><td align="center" style="padding-bottom:8px;">
-              <div style="font-size:22px;font-weight:800;color:#1d1d1f;letter-spacing:-0.02em;">${eventName}</div>
-            </td></tr>
-            <tr><td align="center" style="padding-bottom:28px;">
-              ${eventDate ? `<div style="font-size:14px;color:#6e6e73;margin-top:4px;">${eventDate}</div>` : ""}
-            </td></tr>
-            <tr><td align="center" style="padding:8px 0 20px;">
-              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${rsvpUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#5b5bd6"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">RSVP Now</center></v:roundrect><![endif]-->
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${rsvpUrl}" style="height:48px;v-text-anchor:middle;width:230px;" arcsize="2%" fillcolor="#ff4d00"><w:anchorlock/><center style="color:#0a0a0a;font-family:Arial,sans-serif;font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;">RSVP Now</center></v:roundrect><![endif]-->
               <!--[if !mso]><!-->
-              <a href="${rsvpUrl}" style="display:inline-block;background:#5b5bd6;color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">RSVP Now &rarr;</a>
+              <a href="${rsvpUrl}" style="display:inline-block;background:#ff4d00;color:#0a0a0a;font-family:'Arial Black',Arial,sans-serif;font-size:12px;font-weight:900;padding:13px 32px;border-radius:3px;text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;mso-hide:all;">RSVP NOW &rarr;</a>
               <!--<![endif]-->
             </td></tr>
-            <tr><td align="center" style="padding-top:4px;">
-              <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
+            <tr><td align="center">
+              <p style="font-size:11px;color:#555555;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
                 Or copy this link:<br>
-                <a href="${rsvpUrl}" style="color:#5b5bd6;word-break:break-all;">${rsvpUrl}</a>
+                <a href="${rsvpUrl}" style="color:#ff4d00;word-break:break-all;">${rsvpUrl}</a>
               </p>
             </td></tr>
           </table>
-        </td>
-      </tr>
-      <tr>
-        <td align="center" style="padding-top:24px;">
-          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#5b5bd6;font-weight:600;">Oneonetix</span>&nbsp;&middot;&nbsp;You received this because you were added to the guest list.
+        </td></tr>
+        <tr><td align="center" style="padding:20px 0 48px;">
+          <p style="font-size:11px;color:#444444;margin:0;font-family:Arial,sans-serif;line-height:1.8;letter-spacing:0.05em;text-transform:uppercase;">
+            POWERED BY <span style="color:#ff4d00;font-weight:700;">ONEONETIX</span>&nbsp;&#183;&nbsp;You received this because you were added to the guest list.
           </p>
-        </td>
-      </tr>
+        </td></tr>
       </table>
     </td></tr>
   </table>

@@ -52,60 +52,58 @@ function inviteEmailHtml(vendorName: string, eventName: string, eventDate: strin
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<meta name="color-scheme" content="dark">
 </head>
-<body style="margin:0;padding:0;background:#f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;">
-    <tr><td align="center" style="padding:48px 16px;">
+<body style="margin:0;padding:0;background:#0a0a0a;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
+    <tr><td align="center" style="padding:40px 16px 0;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
-        
-      <tr>
-        <td align="center" style="padding-bottom:32px;">
-          <table cellpadding="0" cellspacing="0">
-            <tr>
-              <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
-              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">Oneonetix</td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
-          <div style="height:4px;background:#5b5bd6;border-radius:4px 4px 0 0;"></div>
+        <tr><td align="center" style="padding-bottom:28px;">
+          <a href="https://oneonetix.app" style="text-decoration:none;">
+            <span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">ONE</span><span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#ff4d00;">O</span><span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">NETIX</span>
+          </a>
+        </td></tr>
+        <tr><td style="background:#111111;border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+          <div style="height:3px;background:#ff4d00;"></div>
           <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
-            <tr><td align="center" style="padding-bottom:16px;font-size:36px;">📋</td></tr>
-            <tr><td align="center" style="padding-bottom:20px;">
-              <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:800;color:#1d1d1f;margin:0 0 8px;letter-spacing:-0.03em;">Vendor Application</h1>
-              <div style="font-size:16px;font-weight:700;color:#5b5bd6;letter-spacing:-0.01em;">${eventName}${eventDate ? ` · ${eventDate}` : ""}</div>
+            <tr><td align="center" style="padding-bottom:8px;">
+              <span style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#ff4d00;">Vendor Application</span>
             </td></tr>
-            ${hostNote ? `<tr><td style="padding:0 0 20px;"><div style="background:#f0f0ff;border:1.5px solid #c7c7f0;border-radius:12px;padding:14px 16px;font-size:14px;color:#6e6e73;line-height:1.6;">${hostNote}</div></td></tr>` : ""}
-            <tr><td style="padding:0 0 24px;">
-              <p style="font-size:14px;color:#6e6e73;line-height:1.7;margin:0;">
-                Hi${vendorName ? ` ${vendorName}` : ""}! You've been invited to apply as a vendor. Click below to complete your application.
+            <tr><td align="center" style="padding-bottom:20px;">
+              <h1 style="font-family:'Arial Black',Arial,sans-serif;font-size:26px;font-weight:900;color:#f5f0e8;margin:0;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1;">${vendorName ? vendorName.toUpperCase() : "VENDOR"}</h1>
+            </td></tr>
+            <tr><td style="padding-bottom:20px;">
+              <div style="padding:16px 20px;background:#1c1c1c;border-radius:3px;border-left:3px solid #ff4d00;">
+                <div style="font-size:10px;color:#888888;letter-spacing:0.16em;text-transform:uppercase;font-family:Arial,sans-serif;margin-bottom:6px;">Event</div>
+                <div style="font-family:'Arial Black',Arial,sans-serif;font-size:16px;font-weight:900;color:#f5f0e8;text-transform:uppercase;letter-spacing:0.02em;">${eventName}</div>
+                ${eventDate ? `<div style="font-size:11px;color:#888888;margin-top:4px;letter-spacing:0.08em;text-transform:uppercase;font-family:Arial,sans-serif;">${eventDate}</div>` : ""}
+              </div>
+            </td></tr>
+            ${hostNote ? `<tr><td style="padding-bottom:20px;"><div style="padding:14px 18px;background:#1a1a1a;border-radius:3px;border:1px solid rgba(255,77,0,0.2);font-size:13px;color:#cccccc;line-height:1.6;font-family:Arial,sans-serif;">${hostNote}</div></td></tr>` : ""}
+            <tr><td style="padding-bottom:24px;">
+              <p style="font-size:13px;color:#888888;line-height:1.7;margin:0;font-family:Arial,sans-serif;">
+                You've been invited to apply as a vendor. Click below to complete your application.
               </p>
             </td></tr>
-            <tr><td align="center" style="padding:8px 0 20px;">
-              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${formUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#5b5bd6"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Complete Application</center></v:roundrect><![endif]-->
+            <tr><td align="center" style="padding-bottom:8px;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${formUrl}" style="height:48px;v-text-anchor:middle;width:230px;" arcsize="2%" fillcolor="#ff4d00"><w:anchorlock/><center style="color:#0a0a0a;font-family:Arial,sans-serif;font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;">Complete Application</center></v:roundrect><![endif]-->
               <!--[if !mso]><!-->
-              <a href="${formUrl}" style="display:inline-block;background:#5b5bd6;color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">Complete Application &rarr;</a>
+              <a href="${formUrl}" style="display:inline-block;background:#ff4d00;color:#0a0a0a;font-family:'Arial Black',Arial,sans-serif;font-size:12px;font-weight:900;padding:13px 32px;border-radius:3px;text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;mso-hide:all;">COMPLETE APPLICATION &rarr;</a>
               <!--<![endif]-->
             </td></tr>
-            <tr><td align="center" style="padding-top:4px;">
-              <p style="font-size:12px;color:#8e8e93;margin:0;line-height:1.6;font-family:'Helvetica Neue',Arial,sans-serif;">
+            <tr><td align="center">
+              <p style="font-size:11px;color:#555555;margin:0;line-height:1.7;font-family:Arial,sans-serif;">
                 Or copy this link:<br>
-                <a href="${formUrl}" style="color:#5b5bd6;word-break:break-all;">${formUrl}</a>
+                <a href="${formUrl}" style="color:#ff4d00;word-break:break-all;">${formUrl}</a>
               </p>
             </td></tr>
           </table>
-        </td>
-      </tr>
-      <tr>
-        <td align="center" style="padding-top:24px;">
-          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#5b5bd6;font-weight:600;">Oneonetix</span>&nbsp;&middot;&nbsp;You received this vendor invitation from an Oneonetix event organiser.
+        </td></tr>
+        <tr><td align="center" style="padding:20px 0 48px;">
+          <p style="font-size:11px;color:#444444;margin:0;font-family:Arial,sans-serif;line-height:1.8;letter-spacing:0.05em;text-transform:uppercase;">
+            POWERED BY <span style="color:#ff4d00;font-weight:700;">ONEONETIX</span>&nbsp;&#183;&nbsp;You received this vendor invitation from an event organiser.
           </p>
-        </td>
-      </tr>
+        </td></tr>
       </table>
     </td></tr>
   </table>

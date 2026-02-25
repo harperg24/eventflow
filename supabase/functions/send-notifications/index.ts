@@ -53,15 +53,56 @@ async function sendEmail(to: string, subject: string, html: string, token: strin
 }
 
 // ── Shared email layout ──────────────────────────────────────
-function notificationTemplate(opts: {
-  emoji: string;
-  heading: string;
-  body: string;
-  eventName: string;
-  eventDate?: string;
-  ctaLabel?: string;
-  ctaUrl?: string;
-  footerNote?: string;
+function notificationTemplate(subject: string, emoji: string, message: string, ctaLabel: string|null, ctaUrl: string|null, eventName: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
+    <tr><td align="center" style="padding:40px 16px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+        <tr><td align="center" style="padding-bottom:28px;">
+          <a href="https://oneonetix.app" style="text-decoration:none;">
+            <span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">ONE</span><span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#ff4d00;">O</span><span style="font-family:'Arial Black',Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">NETIX</span>
+          </a>
+        </td></tr>
+        <tr><td style="background:#111111;border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+          <div style="height:3px;background:#ff4d00;"></div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
+            <tr><td align="center" style="padding-bottom:8px;">
+              <span style="font-size:32px;">${emoji || "⚡"}</span>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:6px;">
+              <span style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#ff4d00;">${eventName}</span>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:20px;">
+              <h1 style="font-family:'Arial Black',Arial,sans-serif;font-size:26px;font-weight:900;color:#f5f0e8;margin:0;letter-spacing:0.02em;text-transform:uppercase;line-height:1.1;">${subject}</h1>
+            </td></tr>
+            <tr><td style="padding-bottom:24px;">
+              <div style="padding:16px 20px;background:#1c1c1c;border-radius:3px;border-left:3px solid #ff4d00;">
+                <p style="font-size:14px;color:#cccccc;margin:0;line-height:1.7;font-family:Arial,sans-serif;">${message}</p>
+              </div>
+            </td></tr>
+            ${ctaLabel && ctaUrl ? `<tr><td align="center" style="padding-bottom:8px;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:230px;" arcsize="2%" fillcolor="#ff4d00"><w:anchorlock/><center style="color:#0a0a0a;font-family:Arial,sans-serif;font-size:12px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;">${ctaLabel}</center></v:roundrect><![endif]-->
+              <!--[if !mso]><!-->
+              <a href="${ctaUrl}" style="display:inline-block;background:#ff4d00;color:#0a0a0a;font-family:'Arial Black',Arial,sans-serif;font-size:12px;font-weight:900;padding:13px 32px;border-radius:3px;text-decoration:none;letter-spacing:0.1em;text-transform:uppercase;mso-hide:all;">${ctaLabel} &rarr;</a>
+              <!--<![endif]-->
+            </td></tr>` : ""}
+          </table>
+        </td></tr>
+        <tr><td align="center" style="padding:20px 0 48px;">
+          <p style="font-size:11px;color:#444444;margin:0;font-family:Arial,sans-serif;line-height:1.8;letter-spacing:0.05em;text-transform:uppercase;">
+            POWERED BY <span style="color:#ff4d00;font-weight:700;">ONEONETIX</span>&nbsp;&#183;&nbsp;You received this because you are on the guest list.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }): string {
   const { emoji, heading, body, eventName, eventDate, ctaLabel, ctaUrl, footerNote } = opts;
   return `<!DOCTYPE html>
@@ -69,29 +110,29 @@ function notificationTemplate(opts: {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 </head>
-<body style="margin:0;padding:0;background:#f5f5f7;font-family:'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f7;">
+<body style="margin:0;padding:0;background:#111111;font-family:'Arial',Arial,sans-serif;-webkit-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#111111;">
     <tr><td align="center" style="padding:48px 16px;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
 
         <!-- Logo -->
         <tr><td align="center" style="padding-bottom:28px;">
           <table cellpadding="0" cellspacing="0"><tr>
-            <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
-            <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">Oneonetix</td>
+            <td style="background:var(--accent, #ff4d00);width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
+            <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Arial',Arial,sans-serif;letter-spacing:-0.01em;">Oneonetix</td>
           </tr></table>
         </td></tr>
 
         <!-- Card -->
         <tr><td style="background:#ffffff;border:1.5px solid #e5e5ea;border-radius:18px;overflow:hidden;">
-          <div style="height:4px;background:#5b5bd6;border-radius:4px 4px 0 0;"></div>
+          <div style="height:4px;background:var(--accent, #ff4d00);border-radius:4px 4px 0 0;"></div>
           <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
             <tr><td align="center" style="padding-bottom:12px;font-size:36px;">${emoji}</td></tr>
             <tr><td align="center" style="padding-bottom:8px;">
-              <h1 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:24px;font-weight:800;color:#1d1d1f;margin:0;letter-spacing:-0.03em;">${heading}</h1>
+              <h1 style="font-family:'Arial',Arial,sans-serif;font-size:24px;font-weight:800;color:#1d1d1f;margin:0;letter-spacing:-0.03em;">${heading}</h1>
             </td></tr>
             <tr><td align="center" style="padding-bottom:6px;">
-              <div style="font-size:18px;font-weight:700;color:#5b5bd6;letter-spacing:-0.02em;">${eventName}</div>
+              <div style="font-size:18px;font-weight:700;color:var(--accent, #ff4d00);letter-spacing:-0.02em;">${eventName}</div>
             </td></tr>
             ${eventDate ? `<tr><td align="center" style="padding-bottom:20px;"><div style="font-size:14px;color:#6e6e73;">${eventDate}</div></td></tr>` : "<tr><td style=\"padding-bottom:12px;\"></td></tr>"}
             <tr><td align="center" style="padding-bottom:24px;">
@@ -99,9 +140,9 @@ function notificationTemplate(opts: {
             </td></tr>
             ${ctaLabel && ctaUrl ? `
             <tr><td align="center" style="padding:4px 0 20px;">
-              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="#5b5bd6"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">${ctaLabel}</center></v:roundrect><![endif]-->
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${ctaUrl}" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="20%" fillcolor="var(--accent, #ff4d00)"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">${ctaLabel}</center></v:roundrect><![endif]-->
               <!--[if !mso]><!-->
-              <a href="${ctaUrl}" style="display:inline-block;background:#5b5bd6;color:#ffffff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">${ctaLabel} &rarr;</a>
+              <a href="${ctaUrl}" style="display:inline-block;background:var(--accent, #ff4d00);color:#ffffff;font-family:'Arial',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 36px;border-radius:12px;text-decoration:none;letter-spacing:0.01em;mso-hide:all;">${ctaLabel} &rarr;</a>
               <!--<![endif]-->
             </td></tr>` : ""}
           </table>
@@ -109,8 +150,8 @@ function notificationTemplate(opts: {
 
         <!-- Footer -->
         <tr><td align="center" style="padding-top:24px;">
-          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#5b5bd6;font-weight:600;">Oneonetix</span>&nbsp;&middot;&nbsp;${footerNote || "You received this because you are on the guest list for this event."}
+          <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Arial',Arial,sans-serif;line-height:1.6;">
+            Powered by <span style="color:var(--accent, #ff4d00);font-weight:600;">Oneonetix</span>&nbsp;&middot;&nbsp;${footerNote || "You received this because you are on the guest list for this event."}
           </p>
         </td></tr>
 
