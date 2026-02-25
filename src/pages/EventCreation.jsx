@@ -1,7 +1,7 @@
 // ============================================================
 //  EventCreation.jsx  —  New event wizard with feature selection
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, createEvent } from "../lib/supabase";
 import { useAppTheme } from "./Home";
@@ -62,6 +62,91 @@ export default function EventCreation() {
   });
 
   const update = (k,v) => setEvent(p=>({...p,[k]:v}));
+
+  // ── Google Places autocomplete ───────────────────────────────
+  const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const [placeSuggestions, setPlaceSuggestions] = useState([]);
+  const [placeLoading,     setPlaceLoading]     = useState(false);
+  const [mapCoords,        setMapCoords]        = useState(null); // {lat, lng, label}
+  const [showSuggestions,  setShowSuggestions]  = useState(false);
+  const suggestTimer = useRef(null);
+  const addressRef   = useRef(null);
+
+  const fetchSuggestions = useCallback(async (input) => {
+    if (!input || input.length < 3 || !MAPS_KEY) { setPlaceSuggestions([]); return; }
+    setPlaceLoading(true);
+    try {
+      // Use Places Autocomplete via the newer Places API (no backend needed)
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${MAPS_KEY}&language=en`,
+        { mode: "no-cors" }
+      ).catch(() => null);
+      // Falls back to the JS-SDK approach if fetch is blocked by CORS
+      // We'll use the window.google approach loaded via script tag
+      if (window.google?.maps?.places) {
+        const svc = new window.google.maps.places.AutocompleteService();
+        svc.getPlacePredictions(
+          { input, types: ["establishment", "geocode"] },
+          (predictions, status) => {
+            setPlaceLoading(false);
+            if (status === "OK" && predictions) {
+              setPlaceSuggestions(predictions.slice(0, 5));
+              setShowSuggestions(true);
+            } else {
+              setPlaceSuggestions([]);
+            }
+          }
+        );
+      } else {
+        setPlaceLoading(false);
+      }
+    } catch { setPlaceLoading(false); }
+  }, [MAPS_KEY]);
+
+  // Load Google Maps JS SDK once
+  useEffect(() => {
+    if (!MAPS_KEY || window.google?.maps) return;
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
+    script.async = true;
+    document.head.appendChild(script);
+    return () => { /* leave script loaded for reuse */ };
+  }, [MAPS_KEY]);
+
+  const handleAddressChange = (val) => {
+    update("address", val);
+    clearTimeout(suggestTimer.current);
+    suggestTimer.current = setTimeout(() => fetchSuggestions(val), 300);
+  };
+
+  const selectPlace = (prediction) => {
+    // Get lat/lng via Places Details
+    update("address", prediction.description);
+    // Auto-fill venue name if empty
+    if (!event.venue) {
+      const venuePart = prediction.structured_formatting?.main_text || "";
+      if (venuePart) update("venue", venuePart);
+    }
+    setShowSuggestions(false);
+    setPlaceSuggestions([]);
+    if (window.google?.maps?.places) {
+      const svc = new window.google.maps.places.PlacesService(
+        document.createElement("div")
+      );
+      svc.getDetails(
+        { placeId: prediction.place_id, fields: ["geometry", "name", "formatted_address"] },
+        (place, status) => {
+          if (status === "OK" && place?.geometry?.location) {
+            setMapCoords({
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+              label: prediction.description,
+            });
+          }
+        }
+      );
+    }
+  };
   const handleTypeSelect = (id) => { setEventType(id); setFeatures(TYPE_PRESETS[id]?.suggested||[]); update("type",id); };
   const toggleFeature = (id) => setFeatures(f=>f.includes(id)?f.filter(x=>x!==id):[...f,id]);
 
@@ -298,9 +383,109 @@ export default function EventCreation() {
         {step===3 && (
           <div>
             <p style={{ color:t.text2, fontSize:15, marginBottom:28 }}>Where is it taking place?</p>
-            <div className="ef-form-row"><label className="ef-label">Venue Name</label><input className="ef-input" value={event.venue} onChange={e=>update("venue",e.target.value)} placeholder="e.g. Spark Arena"/></div>
-            <div className="ef-form-row"><label className="ef-label">Address</label><input className="ef-input" value={event.address} onChange={e=>update("address",e.target.value)} placeholder="Full street address"/></div>
-            <div className="ef-form-row"><label className="ef-label">Capacity</label><input type="number" className="ef-input" value={event.capacity} onChange={e=>update("capacity",e.target.value)} placeholder="Maximum attendees"/></div>
+
+            {/* Venue name */}
+            <div className="ef-form-row">
+              <label className="ef-label">Venue Name</label>
+              <input className="ef-input" value={event.venue}
+                onChange={e=>update("venue",e.target.value)}
+                placeholder="e.g. Spark Arena"/>
+            </div>
+
+            {/* Address with autocomplete */}
+            <div className="ef-form-row" style={{ position:"relative" }}>
+              <label className="ef-label">
+                Address
+                {!MAPS_KEY && <span style={{ fontWeight:400, letterSpacing:0, textTransform:"none",
+                  fontSize:10, color:t.text3, marginLeft:8 }}>
+                  (add VITE_GOOGLE_MAPS_API_KEY for autocomplete)
+                </span>}
+              </label>
+              <div style={{ position:"relative" }}>
+                <input
+                  ref={addressRef}
+                  className="ef-input"
+                  value={event.address}
+                  onChange={e=>handleAddressChange(e.target.value)}
+                  onFocus={()=>{ if(placeSuggestions.length) setShowSuggestions(true); }}
+                  onBlur={()=>setTimeout(()=>setShowSuggestions(false),180)}
+                  placeholder="Start typing an address…"
+                  autoComplete="off"
+                />
+                {placeLoading && (
+                  <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
+                    width:14, height:14, border:"2px solid var(--border)",
+                    borderTopColor:"var(--accent)", borderRadius:"50%",
+                    animation:"spin 0.7s linear infinite" }}/>
+                )}
+              </div>
+
+              {/* Suggestions dropdown */}
+              {showSuggestions && placeSuggestions.length > 0 && (
+                <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:100,
+                  background:"var(--bg2)", border:"1px solid var(--accentBorder)",
+                  borderRadius:"var(--radiusLg,4px)", overflow:"hidden",
+                  boxShadow:"0 8px 32px rgba(0,0,0,0.4)", marginTop:4 }}>
+                  {placeSuggestions.map((p,i)=>(
+                    <button key={p.place_id} onMouseDown={()=>selectPlace(p)}
+                      style={{ display:"block", width:"100%", textAlign:"left",
+                        padding:"11px 14px", background:"none", border:"none",
+                        borderBottom: i<placeSuggestions.length-1 ? "1px solid var(--border)" : "none",
+                        cursor:"pointer", transition:"background 0.1s",
+                        fontFamily:"inherit" }}
+                      onMouseEnter={e=>e.currentTarget.style.background="var(--bg3)"}
+                      onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                      <div style={{ fontSize:13, color:"var(--text)", fontWeight:600, marginBottom:2 }}>
+                        {p.structured_formatting?.main_text || p.description}
+                      </div>
+                      <div style={{ fontSize:11, color:"var(--text3)" }}>
+                        {p.structured_formatting?.secondary_text || ""}
+                      </div>
+                    </button>
+                  ))}
+                  <div style={{ padding:"6px 14px", fontSize:10, color:"var(--text3)",
+                    borderTop:"1px solid var(--border)", display:"flex", alignItems:"center", gap:4 }}>
+                    <span>Powered by</span>
+                    <svg width="40" height="10" viewBox="0 0 40 10" fill="none">
+                      <text x="0" y="9" fontSize="9" fill="var(--text3)" fontFamily="sans-serif">Google</text>
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Map pin preview */}
+            {mapCoords && (
+              <div style={{ marginBottom:20, borderRadius:"var(--radiusLg,4px)", overflow:"hidden",
+                border:"1px solid var(--accentBorder)", position:"relative" }}>
+                <iframe
+                  title="venue-map"
+                  width="100%"
+                  height="220"
+                  frameBorder="0"
+                  style={{ display:"block" }}
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${MAPS_KEY}&q=${encodeURIComponent(mapCoords.label)}&zoom=15`}
+                />
+                <div style={{ position:"absolute", bottom:0, left:0, right:0,
+                  background:"linear-gradient(transparent,rgba(0,0,0,0.5))",
+                  padding:"8px 12px", fontSize:11, color:"#fff", display:"flex",
+                  alignItems:"center", gap:6 }}>
+                  <span style={{ color:"var(--accent)", fontSize:14 }}>◉</span>
+                  {mapCoords.label}
+                </div>
+              </div>
+            )}
+
+            {/* Capacity */}
+            <div className="ef-form-row">
+              <label className="ef-label">Capacity</label>
+              <input type="number" className="ef-input" value={event.capacity}
+                onChange={e=>update("capacity",e.target.value)}
+                placeholder="Maximum attendees"/>
+            </div>
+
+            <style>{`@keyframes spin { to { transform:translateY(-50%) rotate(360deg); } }`}</style>
           </div>
         )}
 

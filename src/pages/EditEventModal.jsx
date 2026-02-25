@@ -2,7 +2,24 @@
 //  src/components/EditEventModal.jsx
 //  Edit key event details — drop this into your dashboard
 // ============================================================
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const ALL_FEATURES = [
+  { id:"guests",        label:"Guest Management",   icon:"◉", color:"#6366f1" },
+  { id:"budget",        label:"Budget Tracker",      icon:"◎", color:"#22c55e" },
+  { id:"playlist",      label:"Playlist",            icon:"♫", color:"#8b5cf6" },
+  { id:"polls",         label:"Polls",               icon:"◐", color:"#f59e0b" },
+  { id:"vendors",       label:"Vendors",             icon:"◇", color:"#06b6d4" },
+  { id:"collab",        label:"Collaborate",         icon:"◈", color:"#ec4899" },
+  { id:"checklist",     label:"Checklist",           icon:"☑", color:"#10b981" },
+  { id:"queue",         label:"Virtual Queue",       icon:"↕", color:"#8b5cf6" },
+  { id:"operations",    label:"Operations",          icon:"⚙️", color:"#0ea5e9" },
+  { id:"sitemap",       label:"Site Map",            icon:"🗺️", color:"#8b5cf6" },
+  { id:"notifications", label:"Notifications",       icon:"🔔", color:"#ff4d00" },
+  { id:"tickets",       label:"Ticket Hub",          icon:"▣", color:"#f97316" },
+  { id:"checkin",       label:"Check-in",            icon:"✓", color:"#4ade80" },
+  { id:"staff",         label:"Staff & Timesheets",  icon:"⏱", color:"#60a5fa" },
+];
 import { supabase } from "../lib/supabase";
 
 const EVENT_TYPES = [
@@ -28,6 +45,70 @@ export default function EditEventModal({ event, onClose, onSave }) {
     capacity:     event.capacity     || "",
     total_budget: event.total_budget || "",
   });
+  const [features, setFeatures] = useState(
+    Array.isArray(event.enabled_features)
+      ? event.enabled_features.filter(f => f !== "overview")
+      : []
+  );
+  const toggleFeature = (id) =>
+    setFeatures(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]);
+
+  // ── Address autocomplete ────────────────────────────────────
+  const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const [placeSuggs,    setPlaceSuggs]    = useState([]);
+  const [showSuggs,     setShowSuggs]     = useState(false);
+  const [mapCoords,     setMapCoords]     = useState(
+    event.venue_address ? { label: event.venue_address } : null
+  );
+  const [placeLoading,  setPlaceLoading]  = useState(false);
+  const suggestTimer = useRef(null);
+
+  useEffect(() => {
+    if (!MAPS_KEY || window.google?.maps) return;
+    const s = document.createElement("script");
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
+    s.async = true;
+    document.head.appendChild(s);
+  }, [MAPS_KEY]);
+
+  const fetchSuggs = useCallback((input) => {
+    if (!input || input.length < 3 || !window.google?.maps?.places) {
+      setPlaceSuggs([]); return;
+    }
+    setPlaceLoading(true);
+    new window.google.maps.places.AutocompleteService().getPlacePredictions(
+      { input, types: ["establishment", "geocode"] },
+      (predictions, status) => {
+        setPlaceLoading(false);
+        if (status === "OK" && predictions) {
+          setPlaceSuggs(predictions.slice(0, 5));
+          setShowSuggs(true);
+        } else setPlaceSuggs([]);
+      }
+    );
+  }, []);
+
+  const handleAddrChange = (val) => {
+    update("venue_address", val);
+    clearTimeout(suggestTimer.current);
+    suggestTimer.current = setTimeout(() => fetchSuggs(val), 300);
+  };
+
+  const selectPlace = (p) => {
+    update("venue_address", p.description);
+    if (!form.venue_name) update("venue_name", p.structured_formatting?.main_text || "");
+    setShowSuggs(false); setPlaceSuggs([]);
+    if (window.google?.maps?.places) {
+      new window.google.maps.places.PlacesService(document.createElement("div"))
+        .getDetails({ placeId: p.place_id, fields: ["geometry"] }, (place, status) => {
+          if (status === "OK" && place?.geometry?.location) {
+            setMapCoords({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng(), label: p.description });
+          }
+        });
+    } else {
+      setMapCoords({ label: p.description });
+    }
+  };
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState(null);
 
@@ -41,16 +122,17 @@ export default function EditEventModal({ event, onClose, onSave }) {
       const { data, error } = await supabase
         .from("events")
         .update({
-          name:          form.name.trim(),
-          type:          form.type,
-          date:          form.date,
-          time:          form.time,
-          description:   form.description,
-          venue_name:    form.venue_name,
-          venue_address: form.venue_address,
-          capacity:      form.capacity ? parseInt(form.capacity) : null,
-          total_budget:  form.total_budget ? parseFloat(form.total_budget) : 0,
-          updated_at:    new Date().toISOString(),
+          name:             form.name.trim(),
+          type:             form.type,
+          date:             form.date,
+          time:             form.time,
+          description:      form.description,
+          venue_name:       form.venue_name,
+          venue_address:    form.venue_address,
+          capacity:         form.capacity ? parseInt(form.capacity) : null,
+          total_budget:     form.total_budget ? parseFloat(form.total_budget) : 0,
+          enabled_features: ["overview", ...features],
+          updated_at:       new Date().toISOString(),
         })
         .eq("id", event.id)
         .select()
@@ -149,9 +231,102 @@ export default function EditEventModal({ event, onClose, onSave }) {
             <input className="ef-field" value={form.venue_name} onChange={e => update("venue_name", e.target.value)} placeholder="e.g. The Civic Rooftop" />
           </div>
 
+          <div style={{ position:"relative" }}>
+            <label className="ef-label">
+              Address
+              {!MAPS_KEY && <span style={{ fontWeight:400, fontSize:10, color:"var(--text3)", marginLeft:6, textTransform:"none", letterSpacing:0 }}>(add VITE_GOOGLE_MAPS_API_KEY for autocomplete)</span>}
+            </label>
+            <div style={{ position:"relative" }}>
+              <input className="ef-field" value={form.venue_address}
+                onChange={e=>handleAddrChange(e.target.value)}
+                onFocus={()=>{ if(placeSuggs.length) setShowSuggs(true); }}
+                onBlur={()=>setTimeout(()=>setShowSuggs(false),180)}
+                placeholder="Start typing an address…"
+                autoComplete="off"
+              />
+              {placeLoading && (
+                <div style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
+                  width:13, height:13, border:"2px solid var(--border)",
+                  borderTopColor:"var(--accent)", borderRadius:"50%",
+                  animation:"emSpin 0.7s linear infinite" }}/>
+              )}
+            </div>
+            {showSuggs && placeSuggs.length > 0 && (
+              <div style={{ position:"absolute", top:"100%", left:0, right:0, zIndex:9999,
+                background:"var(--bg2)", border:"1px solid var(--accentBorder)",
+                borderRadius:"var(--radiusLg,4px)", overflow:"hidden",
+                boxShadow:"0 8px 32px rgba(0,0,0,0.5)", marginTop:4 }}>
+                {placeSuggs.map((p,i)=>(
+                  <button key={p.place_id} onMouseDown={()=>selectPlace(p)}
+                    style={{ display:"block", width:"100%", textAlign:"left",
+                      padding:"10px 14px", background:"none", border:"none",
+                      borderBottom: i<placeSuggs.length-1?"1px solid var(--border)":"none",
+                      cursor:"pointer", fontFamily:"inherit" }}
+                    onMouseEnter={e=>e.currentTarget.style.background="var(--bg3)"}
+                    onMouseLeave={e=>e.currentTarget.style.background="none"}>
+                    <div style={{ fontSize:13, color:"var(--text)", fontWeight:600, marginBottom:2 }}>
+                      {p.structured_formatting?.main_text || p.description}
+                    </div>
+                    <div style={{ fontSize:11, color:"var(--text3)" }}>
+                      {p.structured_formatting?.secondary_text || ""}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {mapCoords && MAPS_KEY && (
+              <div style={{ marginTop:10, borderRadius:"var(--radiusLg,4px)", overflow:"hidden",
+                border:"1px solid var(--accentBorder)" }}>
+                <iframe title="map" width="100%" height="180" frameBorder="0"
+                  style={{ display:"block" }} referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${MAPS_KEY}&q=${encodeURIComponent(mapCoords.label)}&zoom=15`}/>
+              </div>
+            )}
+            <style>{`@keyframes emSpin { to { transform:translateY(-50%) rotate(360deg); } }`}</style>
+          </div>
+
+          {/* Features */}
           <div>
-            <label className="ef-label">Address</label>
-            <input className="ef-field" value={form.venue_address} onChange={e => update("venue_address", e.target.value)} placeholder="Street address, city" />
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 20, marginBottom: 4 }}>
+              <label className="ef-label" style={{ marginBottom: 12, display:"block" }}>Active Features</label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 7 }}>
+                {ALL_FEATURES.map(f => {
+                  const on = features.includes(f.id);
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => toggleFeature(f.id)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8,
+                        padding: "9px 10px",
+                        background: on ? `${f.color}14` : "var(--bg3)",
+                        border: `1.5px solid ${on ? f.color + "50" : "var(--border)"}`,
+                        borderRadius: "var(--radius,3px)",
+                        cursor: "pointer", transition: "all 0.12s",
+                        fontFamily: "inherit",
+                      }}
+                      title={f.label}
+                    >
+                      <span style={{ fontSize: 14, flexShrink: 0 }}>{f.icon}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700,
+                        fontFamily: "'Barlow Condensed', Arial, sans-serif",
+                        letterSpacing: "0.04em",
+                        color: on ? f.color : "var(--text2)",
+                        textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap",
+                      }}>{f.label}</span>
+                      {on && (
+                        <span style={{ marginLeft:"auto", width:7, height:7, borderRadius:"50%",
+                          background: f.color, flexShrink:0 }}/>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 8 }}>
+                Tap to toggle — changes take effect immediately after saving.
+              </div>
+            </div>
           </div>
 
           {/* Capacity + Budget */}
