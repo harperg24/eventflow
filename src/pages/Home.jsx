@@ -379,9 +379,39 @@ export default function Home() {
 
               {/* Appearance */}
               <SettingsBlock title="Appearance" t={t}>
-                <FormLabel label="Accent Colour" t={t}/>
+                <FormLabel label="Colour Scheme" t={t}/>
+                {/* Two signature schemes */}
+                <div style={{ display:"flex", gap:10, marginBottom:16 }}>
+                  {[
+                    { name:"Oneonetix Orange", value:"#ff4d00", swatches:["#ff4d00","#ffd000"] },
+                    { name:"Indigo",           value:"#4f46e5", swatches:["#4f46e5","#6366f1"] },
+                  ].map(scheme => {
+                    const active = prefs.accent === scheme.value;
+                    return (
+                      <button key={scheme.value} onClick={()=>handleAccent(scheme.value)}
+                        style={{ flex:1, padding:"14px 12px", cursor:"pointer",
+                          background:active ? t.accentBg : t.bg3,
+                          border:`1.5px solid ${active ? t.accentBorder : t.border}`,
+                          borderRadius:BRAND.radius, transition:"all .15s",
+                          display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
+                        <div style={{ display:"flex", gap:4 }}>
+                          {scheme.swatches.map((c,i) => (
+                            <div key={i} style={{ width:22, height:22, borderRadius:"2px", background:c,
+                              border:`1px solid rgba(255,255,255,0.1)` }}/>
+                          ))}
+                        </div>
+                        <div style={{ fontFamily:F.condensed, fontSize:".68rem", fontWeight:700,
+                          letterSpacing:".1em", textTransform:"uppercase",
+                          color:active ? t.accent : t.text2 }}>{scheme.name}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* More accent colours */}
+                <FormLabel label="Other Colours" t={t}/>
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:14 }}>
-                  {ACCENTS.map(a=>(
+                  {ACCENTS.filter(a => a.value !== "#ff4d00" && a.value !== "#4f46e5").map(a=>(
                     <button key={a.value} onClick={()=>handleAccent(a.value)} title={a.name}
                       style={{ width:32, height:32, borderRadius:BRAND.radius, background:a.value,
                         border:`2.5px solid ${prefs.accent===a.value?"#fff":"transparent"}`,
@@ -393,7 +423,7 @@ export default function Home() {
                   <input type="color" value={customHex}
                     onChange={e=>setCustomHex(e.target.value)}
                     onBlur={()=>handleAccent(customHex)}
-                    title="Custom"
+                    title="Custom colour"
                     style={{ width:32, height:32, borderRadius:BRAND.radius, padding:2,
                       border:`1.5px solid ${t.border}`, background:t.bg2, cursor:"pointer" }}/>
                 </div>

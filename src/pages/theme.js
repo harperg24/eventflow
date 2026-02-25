@@ -24,10 +24,27 @@ export const ACCENTS = [
 // ── Load / save ──────────────────────────────────────────────
 export function loadThemePrefs() {
   try {
+    // Migrate old key (ef_theme → onx_theme)
+    const OLD_KEY = "ef_theme";
+    const old = localStorage.getItem(OLD_KEY);
+    if (old) {
+      const parsed = JSON.parse(old);
+      // If old prefs had the purple default, reset to orange
+      if (parsed.accent === "#4f46e5" || parsed.accent === "#5b5bd6") {
+        parsed.accent = C.primary;
+      }
+      localStorage.setItem(BRAND.storageKey, JSON.stringify(parsed));
+      localStorage.removeItem(OLD_KEY);
+      return parsed;
+    }
     const raw = localStorage.getItem(BRAND.storageKey);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Also fix if someone saved purple under the new key
+      if (parsed.accent === "#5b5bd6") parsed.accent = C.primary;
+      return parsed;
+    }
   } catch {}
-  // Default: dark mode to match the Oneonetix brand aesthetic
   return { mode: "dark", accent: C.primary };
 }
 
@@ -47,6 +64,7 @@ export function applyThemeToDOM(prefs) {
     "--accent": t.accent,
     "--accentBg": t.accentBg, "--accentBorder": t.accentBorder,
     "--accentText": t.accentText,
+    "--accentHover": C.primaryHover,
     "--shadow": t.shadow, "--shadowLg": t.shadowLg,
     "--radius": t.radius, "--radiusLg": t.radiusLg, "--radiusXl": t.radiusXl,
     "--sidebar": t.sidebar,
@@ -117,7 +135,7 @@ export function globalCSS(t) {
       --border:${t.border};
       --text:${t.text};--text2:${t.text2};--text3:${t.text3};
       --accent:${t.accent};--accentBg:${t.accentBg};
-      --accentBorder:${t.accentBorder};--accentText:${t.accentText};
+      --accentBorder:${t.accentBorder};--accentText:${t.accentText};--accentHover:${C.primaryHover};
       --shadow:${t.shadow};--shadowLg:${t.shadowLg};
       --radius:${t.radius};--radiusLg:${t.radiusLg};--radiusXl:${t.radiusXl};
       --sidebar:${t.sidebar};

@@ -32,7 +32,7 @@ import {
 // Read-only banner shown when a collaborator views a section they can't edit
 function ReadOnlyBanner({ role }) {
   return (
-    <div style={{ background: "rgba(90,90,114,0.08)", border: "1px solid rgba(90,90,114,0.2)", borderRadius: 10, padding: "10px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ background: "rgba(90,90,114,0.08)", border: "1px solid rgba(90,90,114,0.2)", borderRadius:"var(--radius,3px)", padding: "10px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
       <span style={{ fontSize: 14 }}>🔒</span>
       <span style={{ fontSize: 13, color: "var(--text2)" }}>
         You have <strong style={{ color: "var(--text2)" }}>view-only</strong> access to this section as a <strong style={{ color: "var(--text2)" }}>{(role || "").replace("_"," ")}</strong>.
@@ -104,7 +104,7 @@ function AttendeeTab({ eventId, supabase, orders, navigate }) {
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search by name, email or ticket number…"
-          style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }} />
+          style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} />
         <div style={{ fontSize: 13, color: "var(--text2)", flexShrink: 0 }}>
           <span style={{ color: "#10b981", fontWeight: 600 }}>{checkedIn}</span>/{tickets.length} in
         </div>
@@ -207,7 +207,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
 
   const inp = {
     width:"100%", boxSizing:"border-box", background:"var(--bg3)",
-    border:"1.5px solid var(--border)", borderRadius:8, padding:"9px 12px",
+    border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"9px 12px",
     color:"var(--text)", fontSize:14, outline:"none", fontFamily:"inherit"
   };
 
@@ -273,15 +273,14 @@ function NotifModal({ notif, event, onSave, onClose }) {
   const S = {
     label: { fontSize:12, fontWeight:700, color:"var(--text2)", display:"block", marginBottom:6,
       textTransform:"uppercase", letterSpacing:"0.05em" },
-    section: { fontSize:11, fontWeight:800, color:"var(--text3)", textTransform:"uppercase",
-      letterSpacing:"0.08em", marginBottom:12 },
+    section: { fontFamily:"'Barlow Condensed',Arial,sans-serif", fontSize:"11px", fontWeight:700, color:"var(--text3)", textTransform:"uppercase", letterSpacing:"0.16em", marginBottom:12 },
   };
 
   return (
     <div onMouseDown={e => e.target === e.currentTarget && onClose()}
       style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.5)",
         backdropFilter:"blur(4px)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div style={{ background:"var(--bg2)", borderRadius:20, width:"100%", maxWidth:520,
+      <div style={{ background:"var(--bg2)", borderRadius:"var(--radiusLg,4px)", width:"100%", maxWidth:520,
         border:"1.5px solid var(--border)", boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
         display:"flex", flexDirection:"column", maxHeight:"min(720px,calc(100vh - 40px))" }}>
 
@@ -289,7 +288,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
         <div style={{ padding:"20px 24px 16px", flexShrink:0, borderBottom:"1.5px solid var(--border)",
           display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
-            <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.03em" }}>
+            <div style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.4rem", letterSpacing:"0.02em", lineHeight:1 }}>
               {isEdit ? "Edit Notification" : "New Notification"}
             </div>
             <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>
@@ -315,7 +314,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
                 <div key={opt.v} onMouseDown={() => setType(opt.v)}
                   style={{ background: type===opt.v ? "var(--accentBg)" : "var(--bg3)",
                     border:`1.5px solid ${type===opt.v ? "var(--accent)" : "var(--border)"}`,
-                    borderRadius:12, padding:"14px 16px", cursor:"pointer", transition:"all 0.12s" }}>
+                    borderRadius:"var(--radiusLg,4px)", padding:"14px 16px", cursor:"pointer", transition:"all 0.12s" }}>
                   <div style={{ fontSize:22, marginBottom:6 }}>{opt.icon}</div>
                   <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:3 }}>{opt.title}</div>
                   <div style={{ fontSize:12, color:"var(--text3)", lineHeight:1.4 }}>{opt.desc}</div>
@@ -335,7 +334,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
                   style={{ background:recipientType===opt.value?"var(--accent)":"var(--bg3)",
                     border:`1.5px solid ${recipientType===opt.value?"var(--accent)":"var(--border)"}`,
                     color:recipientType===opt.value?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
+                    borderRadius:"var(--radius,3px)", padding:"7px 14px", fontSize:13, fontWeight:600,
                     cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
                   {opt.label}
                 </button>
@@ -358,7 +357,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
                     style={{ background:(!isCustomHours&&hoursPreset===p.hours)?"var(--accent)":"var(--bg3)",
                       border:`1.5px solid ${(!isCustomHours&&hoursPreset===p.hours)?"var(--accent)":"var(--border)"}`,
                       color:(!isCustomHours&&hoursPreset===p.hours)?"#fff":"var(--text)",
-                      borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
+                      borderRadius:"var(--radius,3px)", padding:"7px 14px", fontSize:13, fontWeight:600,
                       cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
                     {p.label}
                   </button>
@@ -367,7 +366,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
                   style={{ background:isCustomHours?"var(--accent)":"var(--bg3)",
                     border:`1.5px solid ${isCustomHours?"var(--accent)":"var(--border)"}`,
                     color:isCustomHours?"#fff":"var(--text)",
-                    borderRadius:8, padding:"7px 14px", fontSize:13, fontWeight:600,
+                    borderRadius:"var(--radius,3px)", padding:"7px 14px", fontSize:13, fontWeight:600,
                     cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
                   Custom…
                 </button>
@@ -383,7 +382,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
               )}
               {event?.date && (
                 <div style={{ marginTop:10, fontSize:12, color:"var(--text3)", background:"var(--bg3)",
-                  borderRadius:8, padding:"8px 12px" }}>
+                  borderRadius:"var(--radius,3px)", padding:"8px 12px" }}>
                   Will send: <strong style={{ color:"var(--text)" }}>{
                     (() => {
                       const h = isCustomHours ? (parseInt(customHours)||0) : hoursPreset;
@@ -451,7 +450,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
                     <div key={opt.v} onMouseDown={() => setSendMode(opt.v)}
                       style={{ background: sendMode===opt.v ? "var(--accentBg)" : "var(--bg3)",
                         border:`1.5px solid ${sendMode===opt.v ? "var(--accent)" : "var(--border)"}`,
-                        borderRadius:10, padding:"12px 14px", cursor:"pointer", transition:"all 0.12s" }}>
+                        borderRadius:"var(--radius,3px)", padding:"12px 14px", cursor:"pointer", transition:"all 0.12s" }}>
                       <div style={{ fontSize:18, marginBottom:4 }}>{opt.icon}</div>
                       <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:2 }}>{opt.title}</div>
                       <div style={{ fontSize:11, color:"var(--text3)", lineHeight:1.4 }}>{opt.desc}</div>
@@ -464,7 +463,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
                 )}
                 {sendMode === "now" && (
                   <div style={{ fontSize:12, color:"var(--text3)", background:"var(--bg3)",
-                    borderRadius:8, padding:"8px 12px" }}>
+                    borderRadius:"var(--radius,3px)", padding:"8px 12px" }}>
                     The email will be sent to recipients as soon as you click <strong>Send Now</strong>.
                   </div>
                 )}
@@ -474,7 +473,7 @@ function NotifModal({ notif, event, onSave, onClose }) {
 
           {err && (
             <div style={{ background:"rgba(220,38,38,0.08)", border:"1.5px solid rgba(220,38,38,0.25)",
-              borderRadius:8, padding:"10px 14px", fontSize:13, color:"#dc2626" }}>
+              borderRadius:"var(--radius,3px)", padding:"10px 14px", fontSize:13, color:"#dc2626" }}>
               {err}
             </div>
           )}
@@ -485,12 +484,12 @@ function NotifModal({ notif, event, onSave, onClose }) {
           display:"flex", gap:10, flexShrink:0 }}>
           <button onMouseDown={onClose}
             style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
-              borderRadius:10, padding:"11px", fontSize:14, color:"var(--text2)",
+              borderRadius:"var(--radius,3px)", padding:"11px", fontSize:14, color:"var(--text2)",
               cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
             Cancel
           </button>
           <button onMouseDown={handleSave} disabled={saving}
-            style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:10,
+            style={{ flex:2, background:"var(--accent)", border:"none", borderRadius:"var(--radius,3px)",
               padding:"11px", fontSize:14, fontWeight:700, color:"#fff",
               cursor:saving?"not-allowed":"pointer", fontFamily:"inherit", opacity:saving?0.6:1 }}>
             {saving ? "Sending…" : isEdit ? "Save Changes" : type === "custom" && sendMode === "now" ? "Send Now ⚡" : "Schedule Notification"}
@@ -530,7 +529,7 @@ function QueueFormModal({ queue, onSave, onClose }) {
   const maxJoinsN   = form.max_joins_per_device ?? 1;
 
   const inp = { width:"100%", boxSizing:"border-box", background:"var(--bg3)",
-    border:"1.5px solid var(--border)", borderRadius:8, padding:"9px 12px",
+    border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"9px 12px",
     color:"var(--text)", fontSize:14, outline:"none", fontFamily:"inherit" };
 
   useEffect(() => {
@@ -543,7 +542,7 @@ function QueueFormModal({ queue, onSave, onClose }) {
     <button type="button" onClick={onClick}
       style={{ background:active?"var(--accent)":"var(--bg3)",
         border:`1.5px solid ${active?"var(--accent)":"var(--border)"}`,
-        color:active?"#fff":"var(--text)", borderRadius:8, padding:"7px 14px",
+        color:active?"#fff":"var(--text)", borderRadius:"var(--radius,3px)", padding:"7px 14px",
         fontSize:13, fontWeight:600, cursor:"pointer", transition:"all 0.12s", fontFamily:"inherit" }}>
       {label}
     </button>
@@ -557,7 +556,7 @@ function QueueFormModal({ queue, onSave, onClose }) {
       style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,0.5)",
         backdropFilter:"blur(4px)", display:"flex", alignItems:"center",
         justifyContent:"center", padding:20 }}>
-      <div style={{ background:"var(--bg2)", borderRadius:20, width:"100%", maxWidth:480,
+      <div style={{ background:"var(--bg2)", borderRadius:"var(--radiusLg,4px)", width:"100%", maxWidth:480,
         border:"1.5px solid var(--border)", boxShadow:"0 32px 80px rgba(0,0,0,0.4)",
         display:"flex", flexDirection:"column",
         maxHeight:"min(680px,calc(100vh - 40px))" }}>
@@ -566,7 +565,7 @@ function QueueFormModal({ queue, onSave, onClose }) {
         <div style={{ padding:"20px 24px 16px", flexShrink:0, borderBottom:"1.5px solid var(--border)",
           display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
-            <div style={{ fontSize:17, fontWeight:800, letterSpacing:"-0.03em" }}>
+            <div style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.4rem", letterSpacing:"0.02em", lineHeight:1 }}>
               {form.id ? "Edit Queue" : "New Queue"}
             </div>
             <div style={{ fontSize:12, color:"var(--text3)", marginTop:2 }}>
@@ -637,7 +636,7 @@ function QueueFormModal({ queue, onSave, onClose }) {
               </div>
             )}
             <div style={{ marginTop:8, fontSize:12, color:"var(--text3)", lineHeight:1.5,
-              background:"var(--bg3)", borderRadius:8, padding:"8px 12px" }}>
+              background:"var(--bg3)", borderRadius:"var(--radius,3px)", padding:"8px 12px" }}>
               {autoCallerN===0
                 ? <>Manual mode — use the <strong>📣 Call</strong> button to call people one at a time.</>
                 : <>Hitting <strong>✓ Served</strong> auto-calls the next person, keeping <strong>{autoCallerN}</strong> {autoCallerN===1?"person":"people"} called at once.{autoCallerN>=10?" Great for large events — staff can serve a whole batch.":""}</>
@@ -686,13 +685,13 @@ function QueueFormModal({ queue, onSave, onClose }) {
           display:"flex", gap:10, flexShrink:0 }}>
           <button onMouseDown={onClose}
             style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
-              borderRadius:10, padding:"11px", fontSize:14, color:"var(--text2)",
+              borderRadius:"var(--radius,3px)", padding:"11px", fontSize:14, color:"var(--text2)",
               cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
             Cancel
           </button>
           <button onMouseDown={() => form.name?.trim() && onSave(form)}
             style={{ flex:2, background: form.name?.trim()?"var(--accent)":"var(--bg3)",
-              border:"none", borderRadius:10, padding:"11px", fontSize:14,
+              border:"none", borderRadius:"var(--radius,3px)", padding:"11px", fontSize:14,
               fontWeight:700, color: form.name?.trim()?"#fff":"var(--text3)",
               cursor: form.name?.trim()?"pointer":"not-allowed", fontFamily:"inherit" }}>
             {form.id ? "Save Changes" : "Create Queue"}
@@ -1485,55 +1484,120 @@ export default function Dashboard() {
   const removePollOption = (i) => setPollOptions(opts => opts.filter((_, idx) => idx !== i));
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "var(--bg,#fafaf8)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", color: "var(--text3,#9b9890)", fontSize: 15 }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg,#fafaf8)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", color: "var(--text3,#9b9890)", fontSize: 15 }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'); :root{--bg:#fafaf8}`}</style>
       Loading your event…
     </div>
   );
 
   if (!event) return (
-    <div style={{ minHeight: "100vh", background: "var(--bg,#fafaf8)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", color: "var(--danger,#dc2626)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg,#fafaf8)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", color: "var(--danger,#dc2626)" }}>
       Event not found.
     </div>
   );
 
   // ── Styles (theme-aware via CSS variables from theme.js) ──
   const css = globalCSS(__t) + `
-    /* Dashboard-specific overrides */
-    ::selection { background: var(--accent); color: #fff; }
-    .nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s; font-size:14px; font-weight:500; color:var(--text2); border:none; background:none; width:100%; text-align:left; font-family:inherit; }
+    ::selection { background:var(--accent); color:#0a0a0a; }
+
+    /* Nav */
+    .nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px;
+      border-radius:var(--radius,3px); cursor:pointer; transition:all 0.12s;
+      font-family:'Barlow Condensed',Arial,sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+      color:var(--text2); border:none; background:none; width:100%; text-align:left; }
     .nav-item:hover { background:var(--bg3); color:var(--text); }
-    .nav-item.active { background:var(--accentBg); color:var(--accent); font-weight:600; }
-    .card { background:var(--bg2); border:1.5px solid var(--border); border-radius:var(--radius); }
-    .field { background:var(--bg); border:1.5px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-size:14px; outline:none; font-family:inherit; width:100%; transition:border-color 0.15s,box-shadow 0.15s; }
+    .nav-item.active { background:var(--accentBg); color:var(--accent); }
+
+    /* Cards */
+    .card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radiusLg,4px); }
+
+    /* Inputs */
+    .field { background:var(--bg3); border:1.5px solid var(--border); border-radius:var(--radius,3px);
+      padding:11px 14px; color:var(--text); font-size:14px; outline:none;
+      font-family:inherit; width:100%; transition:border-color 0.15s,box-shadow 0.15s; }
     .field:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accentBg); }
     .field::placeholder { color:var(--text3); }
-    .btn-gold { background:var(--accent); color:#fff; border:none; padding:9px 18px; border-radius:8px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; transition:opacity 0.15s; white-space:nowrap; display:inline-flex; align-items:center; gap:6px; }
-    .btn-gold:hover:not(:disabled) { opacity:0.85; }
+    .ef-field { background:var(--bg3); border:1.5px solid var(--border); border-radius:var(--radius,3px);
+      padding:11px 14px; color:var(--text); font-size:14px; outline:none;
+      font-family:inherit; width:100%; transition:border-color 0.15s,box-shadow 0.15s; }
+    .ef-field:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accentBg); }
+    .ef-label { display:block; font-family:'Barlow Condensed',Arial,sans-serif;
+      font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+      color:var(--text2); margin-bottom:7px; }
+
+    /* Buttons */
+    .btn-gold { background:var(--accent); color:var(--accentText,#0a0a0a); border:none;
+      padding:10px 20px; border-radius:var(--radius,3px);
+      font-family:'Barlow Condensed',Arial,sans-serif;
+      font-size:12px; font-weight:900; letter-spacing:0.1em; text-transform:uppercase;
+      cursor:pointer; transition:background 0.15s; white-space:nowrap;
+      display:inline-flex; align-items:center; gap:6px; }
+    .btn-gold:hover:not(:disabled) { background:var(--accentHover,#ffd000); color:#0a0a0a; }
     .btn-gold:disabled { opacity:0.45; cursor:not-allowed; }
-    .btn-ghost { background:transparent; color:var(--text2); border:1.5px solid var(--border); padding:8px 16px; border-radius:8px; font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .btn-ghost { background:transparent; color:var(--text2); border:1.5px solid var(--border);
+      padding:9px 18px; border-radius:var(--radius,3px);
+      font-family:'Barlow Condensed',Arial,sans-serif;
+      font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+      cursor:pointer; transition:all 0.15s; white-space:nowrap; }
     .btn-ghost:hover { color:var(--text); border-color:var(--text3); background:var(--bg3); }
-    .tag { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-    .tag-green  { background:rgba(5,150,105,0.1);  color:#059669; }
-    .tag-amber  { background:rgba(217,119,6,0.1);  color:#d97706; }
-    .tag-red    { background:rgba(220,38,38,0.1);  color:#dc2626; }
-    .tag-blue   { background:rgba(37,99,235,0.1);  color:#2563eb; }
-    .progress-bar { height:5px; background:var(--bg3); border-radius:3px; overflow:hidden; border:1px solid var(--border); }
-    .progress-fill { height:100%; border-radius:3px; transition:width 0.6s cubic-bezier(0.16,1,0.3,1); }
+
+    /* Tags */
+    .tag { display:inline-block; padding:2px 8px; border-radius:2px;
+      font-family:'Barlow Condensed',Arial,sans-serif;
+      font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+    .tag-green { background:rgba(34,197,94,0.1);  color:#22c55e; border:1px solid rgba(34,197,94,0.2); }
+    .tag-amber { background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.2); }
+    .tag-red   { background:rgba(239,68,68,0.1);  color:#ef4444; border:1px solid rgba(239,68,68,0.2); }
+    .tag-blue  { background:rgba(59,130,246,0.1); color:#3b82f6; border:1px solid rgba(59,130,246,0.2); }
+
+    /* Progress */
+    .progress-bar { height:4px; background:var(--bg3); border-radius:2px; overflow:hidden; }
+    .progress-fill { height:100%; border-radius:2px; transition:width 0.6s cubic-bezier(0.16,1,0.3,1); }
+
+    /* Rows */
+    .row-hover { transition:background 0.12s; }
     .row-hover:hover { background:var(--bg3); cursor:pointer; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+
+    /* Animations */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);} }
     .fade-up { animation:fadeUp 0.25s ease forwards; }
-    .vote-btn { opacity:0.5; transition:opacity 0.15s; background:var(--accentBg); border:none; border-radius:6px; color:var(--accent); padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit; }
+
+    /* Playlist */
+    .vote-btn { opacity:0.5; transition:opacity 0.15s; background:var(--accentBg);
+      border:none; border-radius:2px; color:var(--accent); padding:5px 10px;
+      font-size:12px; cursor:pointer; font-family:inherit; }
     .song-row:hover .vote-btn { opacity:1; }
     .vote-btn:hover { opacity:1!important; }
-    .mobile-nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; color:var(--text3); cursor:pointer; font-family:inherit; padding:8px 4px; flex:1; transition:color 0.15s; min-width:0; }
+
+    /* Mobile nav */
+    .mobile-nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px;
+      background:none; border:none; color:var(--text3); cursor:pointer;
+      font-family:inherit; padding:8px 4px; flex:1; transition:color 0.15s; min-width:0; }
     .mobile-nav-btn.active { color:var(--accent); }
-    .mobile-nav-btn span.icon { font-size:20px; }
-    .mobile-nav-btn span.label { font-size:10px; letter-spacing:0.03em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-    .mode-pill { display:inline-flex; background:var(--bg3); border:1.5px solid var(--border); border-radius:99px; padding:3px; gap:2px; }
-    .mode-pill button { border:none; border-radius:99px; padding:6px 14px; font-size:12px; font-weight:500; cursor:pointer; font-family:inherit; transition:all 0.2s; }
-    .mode-pill button.active { background:var(--accent); color:#fff; }
-    .mode-pill button:not(.active) { background:none; color:var(--text3); }
+    .mobile-nav-btn span.icon { font-size:18px; }
+    .mobile-nav-btn span.label { font-size:9px; font-weight:700; letter-spacing:0.1em;
+      text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+
+    /* Mode pill */
+    .mode-pill { display:flex; background:var(--bg3); border:1px solid var(--border);
+      border-radius:3px; overflow:hidden; }
+    .mode-pill button { border:none; padding:6px 14px;
+      font-family:'Barlow Condensed',Arial,sans-serif;
+      font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--text2); cursor:pointer; transition:all 0.15s; background:none; }
+    .mode-pill button.active { background:var(--accent); color:var(--accentText,#0a0a0a); }
+
+    /* Modals */
+    .bm-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      display:flex; align-items:center; justify-content:center;
+      z-index:1000; padding:20px; backdrop-filter:blur(4px); }
+    .bm-modal { background:var(--bg2); border:1px solid var(--border);
+      border-radius:var(--radiusLg,4px); padding:28px 32px;
+      width:100%; max-width:460px; max-height:90vh; overflow-y:auto;
+      border-top:3px solid var(--accent); }
+    .bm-modal h3 { font-family:'Bebas Neue','Arial Black',Arial,sans-serif;
+      font-size:1.8rem; letter-spacing:0.02em; margin-bottom:20px; color:var(--text); }
   `;
 
   // Mobile ticketing mode nav items
@@ -1548,7 +1612,7 @@ export default function Dashboard() {
   ).slice(0, 5); // show first 5 on mobile bottom nav
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg)", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", color: "var(--text)", flexDirection: isMobile ? "column" : "row" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg)", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", color: "var(--text)", flexDirection: isMobile ? "column" : "row" }}>
       <style>{css}</style>
 
       {/* ── Mobile Header ── */}
@@ -1556,7 +1620,7 @@ export default function Dashboard() {
         <div style={{ background: "var(--bg2)", borderBottom: "1.5px solid var(--border)", padding: "12px 16px", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={() => navigate("/events")} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 18, padding: 0, marginRight: 4 }}>←</button>
-            <div style={{ width: 24, height: 24, background: "var(--accent)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✦</div>
+            <div style={{ width: 24, height: 24, background: "var(--accent)", borderRadius:"var(--radius,3px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✦</div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}>{event.name}</div>
               <div style={{ fontSize: 11, color: "var(--accent)" }}>{new Date(event.date).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}</div>
@@ -1581,7 +1645,7 @@ export default function Dashboard() {
         </div>
 
         {/* Event mini card */}
-        <div style={{ background: "var(--accentBg)", border: "1.5px solid var(--accentBorder)", borderRadius: 10, padding: "12px 14px", marginBottom: 20 }}>
+        <div style={{ background: "var(--accentBg)", border: "1.5px solid var(--accentBorder)", borderRadius:"var(--radius,3px)", padding: "12px 14px", marginBottom: 20 }}>
           <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3, marginBottom: 4 }}>{event.name}</div>
           <div style={{ fontSize: 11, color: "var(--accent)" }}>{new Date(event.date).toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" })}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
@@ -1599,11 +1663,11 @@ export default function Dashboard() {
               {n.label}
               {n.id === "guests" && (
                 <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5 }}>
-                  <span style={{ background: "var(--border)", borderRadius: 10, padding: "1px 7px", fontSize: 11, color: "var(--text2)" }}>{guests.length}</span>
-                  {requests.length > 0 && <span style={{ background: "#ef4444", borderRadius: 10, padding: "1px 7px", fontSize: 11, color: "#fff", fontWeight: 700 }}>{requests.length}</span>}
+                  <span style={{ background: "var(--border)", borderRadius:"var(--radius,3px)", padding: "1px 7px", fontSize: 11, color: "var(--text2)" }}>{guests.length}</span>
+                  {requests.length > 0 && <span style={{ background: "#ef4444", borderRadius:"var(--radius,3px)", padding: "1px 7px", fontSize: 11, color: "#fff", fontWeight: 700 }}>{requests.length}</span>}
                 </span>
               )}
-              {n.id === "playlist" && <span style={{ marginLeft: "auto", background: "var(--border)", borderRadius: 10, padding: "1px 7px", fontSize: 11, color: "var(--text2)" }}>{songs.length}</span>}
+              {n.id === "playlist" && <span style={{ marginLeft: "auto", background: "var(--border)", borderRadius:"var(--radius,3px)", padding: "1px 7px", fontSize: 11, color: "var(--text2)" }}>{songs.length}</span>}
             </button>
           ))}
         </nav>
@@ -1613,9 +1677,9 @@ export default function Dashboard() {
             ← My Events
           </button>
           <div style={{ fontSize: 11, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>Invite Link</div>
-          <a href={inviteLink} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 8, padding: "9px 12px", fontSize: 11, color: "var(--text2)", wordBreak: "break-all", lineHeight: 1.4, marginBottom: 8, textDecoration: "none", cursor: "pointer" }} onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"} onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border)"}>/e/{event?.invite_slug}</a>
+          <a href={inviteLink} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "9px 12px", fontSize: 11, color: "var(--text2)", wordBreak: "break-all", lineHeight: 1.4, marginBottom: 8, textDecoration: "none", cursor: "pointer" }} onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"} onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border)"}>/e/{event?.invite_slug}</a>
           <button className="btn-gold" onClick={copyLink} style={{ width: "100%", padding: "9px", fontSize: 12, justifyContent: "center" }}>{copied ? "✓ Copied!" : "Copy Link"}</button>
-          <button onClick={() => supabase.auth.signOut()} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "none", border: "1.5px solid var(--border)", borderRadius: 8, color: "var(--text3)", fontSize: 12, cursor: "pointer", padding: "8px", width: "100%", fontFamily: "inherit", marginTop: 8, transition: "all 0.15s" }} onMouseEnter={e=>{ e.currentTarget.style.color="#dc2626"; e.currentTarget.style.borderColor="rgba(220,38,38,0.3)"; }} onMouseLeave={e=>{ e.currentTarget.style.color="var(--text3)"; e.currentTarget.style.borderColor="var(--border)"; }}>
+          <button onClick={() => supabase.auth.signOut()} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", color: "var(--text3)", fontSize: 12, cursor: "pointer", padding: "8px", width: "100%", fontFamily: "inherit", marginTop: 8, transition: "all 0.15s" }} onMouseEnter={e=>{ e.currentTarget.style.color="#dc2626"; e.currentTarget.style.borderColor="rgba(220,38,38,0.3)"; }} onMouseLeave={e=>{ e.currentTarget.style.color="var(--text3)"; e.currentTarget.style.borderColor="var(--border)"; }}>
             Sign out
           </button>
         </div>
@@ -1629,7 +1693,7 @@ export default function Dashboard() {
           <div className="fade-up">
             <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
-                <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text)", marginBottom: 4 }}>{event.name}</h1>
+                <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.2rem", letterSpacing:"0.02em", lineHeight:0.95, color:"var(--text)", marginBottom:8 }}>{event.name}</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>{new Date(event.date).toLocaleDateString("en-NZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} · {event.time?.slice(0,5)} · {event.venue_name}</p>
               </div>
               <button onClick={() => setShowEdit(true)} className="btn-ghost" style={{ flexShrink: 0, marginTop: 4 }}>
@@ -1645,7 +1709,7 @@ export default function Dashboard() {
               ].map(s => (
                 <div key={s.label} className="card" style={{ padding: "20px 22px", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: s.accent, opacity: 0.7 }} />
-                  <div style={{ fontSize: 28, fontWeight: 700, color: s.accent, fontFamily: "inherit", marginBottom: 2 }}>{s.value}</div>
+                  <div style={{ fontFamily:"\'Bebas Neue\',\'Arial Black\',Arial,sans-serif", fontSize:"2.6rem", lineHeight:1, letterSpacing:"0.01em", color:s.accent, marginBottom:4 }}>{s.value}</div>
                   <div style={{ fontSize: 13, marginBottom: 2 }}>{s.label}</div>
                   <div style={{ fontSize: 11, color: "var(--text3)" }}>{s.sub}</div>
                 </div>
@@ -1663,7 +1727,7 @@ export default function Dashboard() {
                 </div>
                 {tasks.slice(0, 6).map(t => (
                   <div key={t.id} className="row-hover" onClick={() => handleToggleTask(t.id, !t.done)}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius: 8 }}>
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius:"var(--radius,3px)" }}>
                     <div style={{ width: 18, height: 18, border: `1.5px solid ${t.done ? "var(--accent)" : "var(--text3)"}`, borderRadius: 5, background: t.done ? "var(--accent)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--bg)", flexShrink: 0, transition: "all 0.2s" }}>
                       {t.done ? "✓" : ""}
                     </div>
@@ -1682,7 +1746,7 @@ export default function Dashboard() {
                     { label: "Pending",   count: pending,   color: "#f59e0b" },
                     { label: "Declined",  count: declined,  color: "#ef4444" },
                   ].map(r => (
-                    <div key={r.label} style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "12px", textAlign: "center" }}>
+                    <div key={r.label} style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "12px", textAlign: "center" }}>
                       <div style={{ fontSize: 22, fontWeight: 700, color: r.color, fontFamily: "inherit" }}>{r.count}</div>
                       <div style={{ fontSize: 11, color: "var(--text2)", marginTop: 2 }}>{r.label}</div>
                     </div>
@@ -1736,7 +1800,7 @@ export default function Dashboard() {
             {isReadOnly("guests") && <ReadOnlyBanner role={userRole} />}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Guest List</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Guest List</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>{attending} attending · {pending} pending · {declined} declined</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1752,7 +1816,7 @@ export default function Dashboard() {
               </div>
             </div>
             {inviteResult && (
-              <div style={{ background: inviteResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${inviteResult.success ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`, borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 14, color: inviteResult.success ? "#10b981" : "#ef4444" }}>
+              <div style={{ background: inviteResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${inviteResult.success ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`, borderRadius:"var(--radius,3px)", padding: "12px 16px", marginBottom: 20, fontSize: 14, color: inviteResult.success ? "#10b981" : "#ef4444" }}>
                 {inviteResult.success ? "✓" : "⚠"} {inviteResult.message}
               </div>
             )}
@@ -1765,7 +1829,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {requests.map(req => (
-                    <div key={req.id} style={{ background: "rgba(201,168,76,0.04)", border: "1px solid rgba(201,168,76,0.15)", borderRadius: 12, padding: "16px 18px" }}>
+                    <div key={req.id} style={{ background: "rgba(255,77,0,0.04)", border: "1px solid rgba(255,77,0,0.15)", borderRadius:"var(--radiusLg,4px)", padding: "16px 18px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: req.message ? 10 : 0 }}>
                         <div>
                           <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 3 }}>{req.name}</div>
@@ -1776,16 +1840,16 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                          <button onClick={() => handleRejectRequest(req.id)} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "7px 14px", color: "#ef4444", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(239,68,68,0.18)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(239,68,68,0.1)"}>
+                          <button onClick={() => handleRejectRequest(req.id)} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "#ef4444", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(239,68,68,0.18)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(239,68,68,0.1)"}>
                             Decline
                           </button>
-                          <button onClick={() => handleApproveRequest(req)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, padding: "7px 14px", color: "#10b981", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(16,185,129,0.18)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(16,185,129,0.1)"}>
+                          <button onClick={() => handleApproveRequest(req)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "#10b981", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(16,185,129,0.18)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(16,185,129,0.1)"}>
                             Approve
                           </button>
                         </div>
                       </div>
                       {req.message && (
-                        <div style={{ fontSize: 13, color: "#7a7268", fontStyle: "italic", borderLeft: "2px solid rgba(201,168,76,0.2)", paddingLeft: 12, lineHeight: 1.6 }}>
+                        <div style={{ fontSize: 13, color: "#7a7268", fontStyle: "italic", borderLeft: "2px solid rgba(255,77,0,0.2)", paddingLeft: 12, lineHeight: 1.6 }}>
                           "{req.message}"
                         </div>
                       )}
@@ -1824,7 +1888,7 @@ export default function Dashboard() {
                 <div style={{ padding: "32px", textAlign: "center", color: "var(--text3)", fontSize: 14 }}>No guests yet — add someone above.</div>
               )}
               {guests.map((g, i) => (
-                <div key={g.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 2fr 1fr 1fr auto", padding: "12px 20px", borderBottom: i < guests.length - 1 ? "1px solid #0f0f1a" : "none", alignItems: "center", gap: 8, background: selectedGuests.includes(g.id) ? "rgba(201,168,76,0.03)" : "transparent" }}>
+                <div key={g.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 2fr 1fr 1fr auto", padding: "12px 20px", borderBottom: i < guests.length - 1 ? "1px solid #0f0f1a" : "none", alignItems: "center", gap: 8, background: selectedGuests.includes(g.id) ? "rgba(255,77,0,0.03)" : "transparent" }}>
                   <input type="checkbox"
                     checked={selectedGuests.includes(g.id)}
                     disabled={!g.email}
@@ -1843,8 +1907,8 @@ export default function Dashboard() {
                     }
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => setEditingGuest({ ...g })} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 6, padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>Edit</button>
-                    <button onClick={() => setDeletingGuest(g.id)} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 6, padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; e.currentTarget.style.color = "#ef4444"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>✕</button>
+                    <button onClick={() => setEditingGuest({ ...g })} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>Edit</button>
+                    <button onClick={() => setDeletingGuest(g.id)} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; e.currentTarget.style.color = "#ef4444"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>✕</button>
                   </div>
                 </div>
               ))}
@@ -1857,25 +1921,25 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("budget") && <ReadOnlyBanner role={userRole} />}
             <style>{`
-              .ef-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+              .ef-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
               .ef-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .ef-field::placeholder { color: var(--text3); }
-              .ef-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--font,'Plus Jakarta Sans',sans-serif); }
+              .ef-label { display: block; font-family: 'Barlow Condensed',Arial,sans-serif; font-size: 11px; font-weight:700; color: var(--text2); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--fontBody,'Barlow',sans-serif); }
               .bm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; backdrop-filter: blur(6px); }
-              .bm-modal { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 18px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.6); animation: modalIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
+              .bm-modal { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radiusLg,4px); width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; border-top: 3px solid var(--accent); 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
               .bm-modal-wide { max-width: 560px; }
               @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
-              .bm-swatch { width: 28px; height: 28px; border-radius: 7px; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; }
+              .bm-swatch { width: 28px; height: 28px; border-radius: var(--radius,3px); border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; }
               .bm-swatch:hover { transform: scale(1.15); }
               .bm-swatch.sel { border-color: var(--text); transform: scale(1.1); }
-              .bm-icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-              .bm-icon-btn:hover { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.05); }
+              .bm-icon-btn { width: 36px; height: 36px; border-radius: var(--radius,3px); border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+              .bm-icon-btn:hover { border-color: rgba(255,77,0,0.3); background: rgba(255,77,0,0.05); }
               .bm-icon-btn.sel { border-color: var(--accent); background: var(--accentBg); }
             `}</style>
 
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Budget</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Budget</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>
                   ${totalSpent.toLocaleString()} spent of ${totalBudget.toLocaleString()} · <span style={{ color: totalBudget - totalSpent < 0 ? "#ef4444" : "#10b981" }}>${Math.abs(totalBudget - totalSpent).toLocaleString()} {totalBudget - totalSpent < 0 ? "over" : "remaining"}</span>
                 </p>
@@ -1955,7 +2019,7 @@ export default function Dashboard() {
                   {/* Row header */}
                   <div style={{ padding: "16px 20px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{c.icon}</div>
+                      <div style={{ width: 34, height: 34, borderRadius:"var(--radius,3px)", background: "var(--bg3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{c.icon}</div>
                       <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "var(--text)" }}>{c.label}</span>
                       <span style={{ fontSize: 13, color: over ? "#ef4444" : "var(--text2)" }}>
                         ${spent.toLocaleString()} <span style={{ color: "var(--text3)" }}>/ ${(c.allocated || 0).toLocaleString()}</span>
@@ -1971,8 +2035,8 @@ export default function Dashboard() {
                         style={{ padding: "5px 9px", fontSize: 12, color: "var(--text3)" }}>✕</button>
                     </div>
                     {/* Progress bar with coloured fill matching category colour */}
-                    <div style={{ height: 5, background: "var(--bg2)", borderRadius: 99, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: over ? "#ef4444" : (c.color || "var(--accent)"), borderRadius: 99, transition: "width 0.4s" }} />
+                    <div style={{ height: 5, background: "var(--bg2)", borderRadius:"99px", overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${Math.min(pct, 100)}%`, background: over ? "#ef4444" : (c.color || "var(--accent)"), borderRadius:"99px", transition: "width 0.4s" }} />
                     </div>
                   </div>
 
@@ -2043,7 +2107,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 {expenseCategory.allocated > 0 && (
-                  <div style={{ background: "var(--bg3)", borderRadius: 9, padding: "10px 14px", fontSize: 12, color: "var(--text2)" }}>
+                  <div style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "10px 14px", fontSize: 12, color: "var(--text2)" }}>
                     Budget: <span style={{ color: "var(--text)" }}>${(expenseCategory.spent || 0).toLocaleString()}</span> spent of <span style={{ color: "var(--accent)" }}>${expenseCategory.allocated.toLocaleString()}</span> allocated
                   </div>
                 )}
@@ -2118,8 +2182,8 @@ export default function Dashboard() {
 
                 {/* Preview */}
                 {categoryForm.label && (
-                  <div style={{ background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--bg2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{categoryForm.icon}</div>
+                  <div style={{ background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius:"var(--radius,3px)", background: "var(--bg2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{categoryForm.icon}</div>
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: "var(--text)" }}>{categoryForm.label}</span>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: categoryForm.color }} />
                     {categoryForm.allocated && <span style={{ fontSize: 13, color: "var(--text2)" }}>${parseFloat(categoryForm.allocated || 0).toLocaleString()}</span>}
@@ -2144,14 +2208,14 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("playlist") && <ReadOnlyBanner role={userRole} />}
             <style>{`
-              .sp-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 9px; padding: 11px 14px; color: var(--text); font-size: 14px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .sp-field { background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 11px 14px; color: var(--text); font-size: 14px; outline: none; font-family: var(--fontBody,'Barlow',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .sp-field:focus { border-color: #1db954; box-shadow: 0 0 0 3px rgba(29,185,84,0.1); }
               .sp-field::placeholder { color: var(--text3); }
-              .sp-result { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 9px; transition: background 0.15s; }
+              .sp-result { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius,3px); transition: background 0.15s; }
               .sp-result:hover { background: var(--bg3); }
               .sp-play { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(29,185,84,0.15); color: #1db954; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
               .sp-play:hover, .sp-play.playing { background: rgba(29,185,84,0.28); }
-              .sp-add { background: rgba(29,185,84,0.12); border: 1px solid rgba(29,185,84,0.2); color: #1db954; border-radius: 7px; padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: var(--font,'Plus Jakarta Sans',sans-serif); transition: all 0.15s; white-space: nowrap; }
+              .sp-add { background: rgba(29,185,84,0.12); border: 1px solid rgba(29,185,84,0.2); border-radius: var(--radius,3px); color: #1db954; border-radius: var(--radius,3px); padding: 5px 12px; font-size: 12px; cursor: pointer; font-family: var(--fontBody,'Barlow',sans-serif); transition: all 0.15s; white-space: nowrap; }
               .sp-add:hover { background: rgba(29,185,84,0.22); }
               .sp-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(29,185,84,0.1); border: 1px solid rgba(29,185,84,0.2); color: #1db954; border-radius: 5px; padding: 2px 7px; font-size: 10px; font-weight: 500; }
               .voted-badge { display: inline-flex; align-items: center; background: var(--accentBg); border: 1.5px solid var(--accentBorder); color: var(--accent); border-radius: 5px; padding: 3px 8px; font-size: 11px; }
@@ -2161,14 +2225,14 @@ export default function Dashboard() {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Playlist</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Playlist</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>
                   {songs.length} song{songs.length !== 1 ? "s" : ""} · guests vote · top tracks make the cut
                 </p>
               </div>
               {songs.length > 0 && (
                 <button onClick={handleExportCSV}
-                  style={{ display: "flex", alignItems: "center", gap: 7, background: "var(--bg3)", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s" }}
+                  style={{ display: "flex", alignItems: "center", gap: 7, background: "var(--bg3)", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor="var(--accent)"; e.currentTarget.style.color="var(--accent)"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text2)"; }}>
                   ↓ Export CSV
@@ -2178,7 +2242,7 @@ export default function Dashboard() {
 
             {/* Spotify iframe player */}
             {nowPlaying?.spotify_id && (
-              <div style={{ marginBottom: 16, borderRadius: 14, overflow: "hidden", animation: "playerIn 0.2s ease" }}>
+              <div style={{ marginBottom: 16, borderRadius:"var(--radiusLg,4px)", overflow: "hidden", animation: "playerIn 0.2s ease" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 4px 6px" }}>
                   <span style={{ fontSize: 11, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>Now Playing</span>
                   <button onClick={() => setNowPlaying(null)}
@@ -2191,7 +2255,7 @@ export default function Dashboard() {
                   width="100%" height="80" frameBorder="0"
                   allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                   loading="lazy"
-                  style={{ borderRadius: 12, display: "block" }}
+                  style={{ borderRadius:"var(--radiusLg,4px)", display: "block" }}
                 />
               </div>
             )}
@@ -2223,7 +2287,7 @@ export default function Dashboard() {
                     const isPlaying    = playingPreview === track.id;
                     return (
                       <div key={track.id} className="sp-result">
-                        <div style={{ width: 40, height: 40, borderRadius: 6, overflow: "hidden", flexShrink: 0, background: "var(--bg2)" }}>
+                        <div style={{ width: 40, height: 40, borderRadius:"var(--radius,3px)", overflow: "hidden", flexShrink: 0, background: "var(--bg2)" }}>
                           {track.album?.images?.[2] && <img src={track.album.images[2].url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -2271,7 +2335,7 @@ export default function Dashboard() {
 
                     {/* Artwork — click to play */}
                     <div onClick={() => playFullSong(s)}
-                      style={{ width: 44, height: 44, borderRadius: 7, overflow: "hidden", background: "var(--bg3)", flexShrink: 0, position: "relative", cursor: s.spotify_id ? "pointer" : "default" }}>
+                      style={{ width: 44, height: 44, borderRadius:"var(--radius,3px)", overflow: "hidden", background: "var(--bg3)", flexShrink: 0, position: "relative", cursor: s.spotify_id ? "pointer" : "default" }}>
                       {s.artwork_url
                         ? <img src={s.artwork_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)", fontSize: 18 }}>♪</div>
@@ -2331,10 +2395,10 @@ export default function Dashboard() {
 
             {/* CSV export hint */}
             {songs.length > 0 && (
-              <div style={{ marginTop: 12, padding: "11px 16px", background: "var(--bg2)", border: "1px solid #1a1a2a", borderRadius: 10, fontSize: 12, color: "var(--text3)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ marginTop: 12, padding: "11px 16px", background: "var(--bg2)", border: "1px solid #1a1a2a", borderRadius:"var(--radius,3px)", fontSize: 12, color: "var(--text3)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span>Export the playlist as a CSV to import into Spotify, Apple Music, or any playlist tool.</span>
                 <button onClick={handleExportCSV}
-                  style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", whiteSpace: "nowrap", marginLeft: 12 }}>
+                  style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", whiteSpace: "nowrap", marginLeft: 12 }}>
                   ↓ Download CSV
                 </button>
               </div>
@@ -2347,7 +2411,7 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("polls") && <ReadOnlyBanner role={userRole} />}
             <div style={{ marginBottom: 28 }}>
-              <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Polls</h1>
+              <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Polls</h1>
               <p style={{ color: "var(--text2)", fontSize: 14 }}>Ask guests anything · live results</p>
             </div>
             <div className="card" style={{ padding: "22px 24px", marginBottom: 20 }}>
@@ -2368,9 +2432,9 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
-                <button onClick={addPollOption} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: 13, cursor: "pointer", marginTop: 8, padding: "4px 0", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "color 0.15s" }} onMouseEnter={e=>e.currentTarget.style.color="var(--accent)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text2)"}>+ Add option</button>
+                <button onClick={addPollOption} style={{ background: "none", border: "none", color: "var(--text2)", fontSize: 13, cursor: "pointer", marginTop: 8, padding: "4px 0", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "color 0.15s" }} onMouseEnter={e=>e.currentTarget.style.color="var(--accent)"} onMouseLeave={e=>e.currentTarget.style.color="var(--text2)"}>+ Add option</button>
               </div>
-              {pollError && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 8, padding: "10px 14px", fontSize: 13, color: "#ef4444", marginBottom: 12 }}>⚠ {pollError}</div>}
+              {pollError && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius:"var(--radius,3px)", padding: "10px 14px", fontSize: 13, color: "#ef4444", marginBottom: 12 }}>⚠ {pollError}</div>}
               {canEdit("polls") && <button className="btn-gold" onClick={handleCreatePoll} style={{ width: "100%" }}>Create Poll</button>}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -2419,7 +2483,7 @@ export default function Dashboard() {
           <div className="fade-up">
             {isReadOnly("vendors") && <ReadOnlyBanner role={userRole} />}
             <style>{`
-              .vd-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+              .vd-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
               .vd-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .vd-field::placeholder { color: var(--text3); }
               .vd-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
               .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; }
@@ -2433,7 +2497,7 @@ export default function Dashboard() {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Vendors</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Vendors</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>
                   {vendors.length} supplier{vendors.length !== 1 ? "s" : ""} ·{" "}
                   {vendors.filter(v => v.status === "submitted").length > 0 && (
@@ -2454,7 +2518,7 @@ export default function Dashboard() {
 
             {/* Invite panel */}
             {vendorView === "invite" && (
-              <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "24px", marginBottom: 24 }}>
+              <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "24px", marginBottom: 24 }}>
                 <h3 style={{ fontFamily: "inherit", fontSize: 18, marginBottom: 4 }}>Invite a Vendor</h3>
                 <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>They'll receive a link to complete their application form.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -2493,8 +2557,8 @@ export default function Dashboard() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       {v.image_url
-                        ? <img src={v.image_url} style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", border: "1.5px solid var(--border)" }} alt={v.name} />
-                        : <div style={{ width: 44, height: 44, background: "var(--bg3)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, border: "1.5px solid var(--border)" }}>{v.icon || "🏢"}</div>}
+                        ? <img src={v.image_url} style={{ width: 44, height: 44, borderRadius:"var(--radius,3px)", objectFit: "cover", border: "1.5px solid var(--border)" }} alt={v.name} />
+                        : <div style={{ width: 44, height: 44, background: "var(--bg3)", borderRadius:"var(--radius,3px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, border: "1.5px solid var(--border)" }}>{v.icon || "🏢"}</div>}
                       <div>
                         <div style={{ fontSize: 14, fontWeight: 600 }}>{v.name}</div>
                         <div style={{ fontSize: 12, color: "var(--text2)" }}>{v.role}</div>
@@ -2511,7 +2575,7 @@ export default function Dashboard() {
                   {v.website  && <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 3 }}>🌐 {v.website}</div>}
                   {v.instagram && <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 3 }}>📸 @{v.instagram}</div>}
                   {v.description && (
-                    <div style={{ fontSize: 12, color: "var(--text2)", background: "var(--bg3)", borderRadius: 6, padding: "8px 10px", marginTop: 8, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 12, color: "var(--text2)", background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "8px 10px", marginTop: 8, lineHeight: 1.5 }}>
                       {v.description.length > 120 ? v.description.slice(0, 120) + "…" : v.description}
                     </div>
                   )}
@@ -2575,16 +2639,16 @@ export default function Dashboard() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }}
             onClick={() => setShowVendorModal(false)}>
             <style>{`
-              .vm-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+              .vm-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
               .vm-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .vm-field::placeholder { color: var(--text3); }
               .vm-field::placeholder { color: var(--text3); }
-              .vm-label { display: block; font-size: 11px; color: #5a5a72; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--font,'Plus Jakarta Sans',sans-serif); }
-              .vm-icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-              .vm-icon-btn:hover { border-color: rgba(201,168,76,0.3); }
+              .vm-label { display: block; font-family: 'Barlow Condensed',Arial,sans-serif; font-size: 11px; font-weight:700; color: var(--text2); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--fontBody,'Barlow',sans-serif); }
+              .vm-icon-btn { width: 36px; height: 36px; border-radius: var(--radius,3px); border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+              .vm-icon-btn:hover { border-color: rgba(255,77,0,0.3); }
               .vm-icon-btn.sel { border-color: var(--accent); background: var(--accentBg); }
             `}</style>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 18, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", animation: "modalIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+              style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", animation: "modalIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards" }}>
               <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <h2 style={{ fontFamily: "inherit", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>
@@ -2631,13 +2695,13 @@ export default function Dashboard() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }}
             onClick={() => setShowDecisionModal(null)}>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 18, width: "100%", maxWidth: 500, boxShadow: "0 32px 80px rgba(0,0,0,0.6)", padding: 28 }}>
+              style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 500, boxShadow: "0 32px 80px rgba(0,0,0,0.6)", padding: 28 }}>
 
               {/* Vendor summary */}
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 20, paddingBottom: 20, borderBottom: "1.5px solid var(--border)" }}>
                 {showDecisionModal.image_url
-                  ? <img src={showDecisionModal.image_url} style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", flexShrink: 0 }} alt="" />
-                  : <div style={{ width: 56, height: 56, background: "var(--bg3)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>{showDecisionModal.icon || "🏢"}</div>}
+                  ? <img src={showDecisionModal.image_url} style={{ width: 56, height: 56, borderRadius:"var(--radiusLg,4px)", objectFit: "cover", flexShrink: 0 }} alt="" />
+                  : <div style={{ width: 56, height: 56, background: "var(--bg3)", borderRadius:"var(--radiusLg,4px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>{showDecisionModal.icon || "🏢"}</div>}
                 <div style={{ flex: 1 }}>
                   <h2 style={{ fontFamily: "inherit", fontSize: 20, margin: "0 0 2px" }}>{showDecisionModal.name}</h2>
                   <div style={{ fontSize: 13, color: "var(--accent)", marginBottom: 4 }}>{showDecisionModal.role}</div>
@@ -2650,7 +2714,7 @@ export default function Dashboard() {
               </div>
 
               {showDecisionModal.description && (
-                <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
+                <div style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "var(--text2)", lineHeight: 1.6 }}>
                   {showDecisionModal.description}
                 </div>
               )}
@@ -2660,22 +2724,22 @@ export default function Dashboard() {
                   Message to vendor (optional)
                 </label>
                 <textarea
-                  style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "11px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", resize: "vertical" }}
+                  style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "11px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", resize: "vertical" }}
                   rows={3} placeholder="Add a personal message — it'll be included in the decision email…"
                   value={decisionMessage} onChange={e => setDecisionMessage(e.target.value)} />
               </div>
 
               <button onClick={() => { setShowDecisionModal(null); setManualVendor({ ...showDecisionModal }); setShowManualVendor(true); }}
-                style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: "9px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", marginBottom: 10 }}>
+                style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: "9px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", marginBottom: 10 }}>
                 ✎ Edit vendor details
               </button>
               <div style={{ display: "flex", gap: 10 }}>
                 <button onClick={() => handleVendorDecision("declined")} disabled={sendingDecision}
-                  style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", opacity: sendingDecision ? 0.6 : 1 }}>
+                  style={{ flex: 1, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius:"var(--radius,3px)", padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", opacity: sendingDecision ? 0.6 : 1 }}>
                   ✕ Decline
                 </button>
                 <button onClick={() => handleVendorDecision("confirmed")} disabled={sendingDecision}
-                  style={{ flex: 2, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", color: "#fff", borderRadius: 10, padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", opacity: sendingDecision ? 0.6 : 1 }}>
+                  style={{ flex: 2, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", color: "#fff", borderRadius:"var(--radius,3px)", padding: "12px", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", opacity: sendingDecision ? 0.6 : 1 }}>
                   {sendingDecision ? "Sending…" : "✓ Confirm Vendor"}
                 </button>
               </div>
@@ -2698,11 +2762,11 @@ export default function Dashboard() {
         {activeNav === "tickets" && (
           <div className="fade-up">
             <style>{`
-              .tier-card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 14px; padding: 20px 22px; transition: border-color 0.15s; }
+              .tier-card { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radiusLg,4px); padding: 20px 22px; transition: border-color 0.15s; }
               .tier-card:hover { border-color: var(--accent); }
-              .tf { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 9px; padding: 10px 13px; color: var(--text); font-size: 13px; outline: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
+              .tf { background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 10px 13px; color: var(--text); font-size: 13px; outline: none; font-family: var(--fontBody,'Barlow',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .tf:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .tf::placeholder { color: var(--text3); }
-              .hub-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; font-family: var(--font,'Plus Jakarta Sans',sans-serif); transition: all 0.15s; }
+              .hub-tab { padding: 8px 16px; border-radius: var(--radius,3px); font-family: 'Barlow Condensed',Arial,sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border: none; font-family: var(--fontBody,'Barlow',sans-serif); transition: all 0.15s; }
               .hub-tab.active { background: var(--accentBg); color: var(--accent); }
               .hub-tab:not(.active) { background: none; color: #5a5a72; }
               .hub-tab:not(.active):hover { color: var(--text); }
@@ -2711,7 +2775,7 @@ export default function Dashboard() {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Ticket Hub</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Ticket Hub</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>
                   {orders.filter(o => o.status === "paid").reduce((s,o) => s + o.quantity, 0)} sold ·{" "}
                   ${(orders.filter(o => o.status === "paid").reduce((s,o) => s + o.total_amount, 0) / 100).toFixed(2)} revenue
@@ -2721,12 +2785,12 @@ export default function Dashboard() {
                 onClick={() => setShowPublishModal(event?.published ? "unpublish" : "publish")}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "10px 18px",
-                  borderRadius: 10, border: "none", cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)",
+                  borderRadius:"var(--radius,3px)", border: "none", cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)",
                   fontSize: 14, fontWeight: 700, transition: "all 0.2s",
                   background: event?.published
                     ? "rgba(16,185,129,0.12)" : "var(--accent)",
                   color: event?.published ? "#10b981" : "var(--bg)",
-                  boxShadow: event?.published ? "none" : "0 4px 20px rgba(201,168,76,0.3)",
+                  boxShadow: event?.published ? "none" : "0 4px 20px rgba(255,77,0,0.3)",
                 }}>
                 <span style={{ fontSize: 16 }}>{event?.published ? "✓" : "▶"}</span>
                 {event?.published ? "Live" : "Go Live →"}
@@ -2734,14 +2798,14 @@ export default function Dashboard() {
             </div>
 
             {/* Sub-tabs */}
-            <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 10, padding: 4 }}>
+            <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: 4 }}>
               {[
                 { id: "tiers",     label: "Tiers" },
                 { id: "orders",    label: "Orders" },
                 { id: "attendees", label: "Attendees" },
               ].map(t => (
                 <button key={t.id} onClick={() => setHubTab(t.id)}
-                  style={{ flex: 1, border: "none", borderRadius: 7, padding: "8px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s",
+                  style={{ flex: 1, border: "none", borderRadius:"var(--radius,3px)", padding: "8px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s",
                     background: hubTab === t.id ? "var(--accentBg)" : "none",
                     color: hubTab === t.id ? "var(--accent)" : "var(--text2)" }}>
                   {t.label}
@@ -2753,18 +2817,18 @@ export default function Dashboard() {
             {hubTab === "tiers" && (
               <div>
                 {event?.published && (
-                  <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius:"var(--radiusLg,4px)", padding: "14px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: 13, color: "#10b981", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {window.location.origin}/tickets/{event?.invite_slug}
                     </span>
                     <button onClick={() => navigator.clipboard.writeText(window.location.origin + "/tickets/" + event?.invite_slug)}
-                      style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 7, padding: "5px 12px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", flexShrink: 0 }}>
+                      style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius:"var(--radius,3px)", padding: "5px 12px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", flexShrink: 0 }}>
                       Copy
                     </button>
                   </div>
                 )}
                 {!event?.published && (
-                  <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, padding: "12px 18px", marginBottom: 16, fontSize: 13, color: "#f59e0b" }}>
+                  <div style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", borderRadius:"var(--radiusLg,4px)", padding: "12px 18px", marginBottom: 16, fontSize: 13, color: "#f59e0b" }}>
                     ⚠ Toggle Published above to make the ticket page live.
                   </div>
                 )}
@@ -2791,7 +2855,7 @@ export default function Dashboard() {
                               setTiers(ts => ts.map(t => t.id === editingTier.id ? { ...t, ...editingTier } : t));
                               setEditingTier(null);
                             }}>Save</button>
-                            <button onClick={() => setEditingTier(null)} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>Cancel</button>
+                            <button onClick={() => setEditingTier(null)} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>Cancel</button>
                           </div>
                         </div>
                       ) : (
@@ -2807,17 +2871,17 @@ export default function Dashboard() {
                           </div>
                           {tier.capacity && (
                             <div style={{ width: 60 }}>
-                              <div style={{ height: 4, background: "var(--border)", borderRadius: 99, overflow: "hidden" }}>
-                                <div style={{ height: "100%", width: `${Math.min(100,(tier.sold/tier.capacity)*100)}%`, background: tier.sold >= tier.capacity ? "#ef4444" : "#10b981", borderRadius: 99 }} />
+                              <div style={{ height: 4, background: "var(--border)", borderRadius:"99px", overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${Math.min(100,(tier.sold/tier.capacity)*100)}%`, background: tier.sold >= tier.capacity ? "#ef4444" : "#10b981", borderRadius:"99px" }} />
                               </div>
                             </div>
                           )}
                           <div style={{ display: "flex", gap: 6 }}>
-                            <button onClick={() => setEditingTier({ ...tier })} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 7, padding: "5px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}
+                            <button onClick={() => setEditingTier({ ...tier })} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}
                               onMouseEnter={e => { e.currentTarget.style.borderColor="var(--accent)"; e.currentTarget.style.color="var(--accent)"; }}
                               onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text2)"; }}>Edit</button>
                             <button onClick={async () => { await supabase.from("ticket_tiers").delete().eq("id", tier.id); setTiers(ts => ts.filter(t => t.id !== tier.id)); }}
-                              style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 7, padding: "5px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}
+                              style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}
                               onMouseEnter={e => { e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
                               onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text2)"; }}>×</button>
                           </div>
@@ -2850,7 +2914,7 @@ export default function Dashboard() {
                           setNewTier({ name: "", description: "", price: "", capacity: "" });
                           setAddingTier(false); setTierError(null);
                         }}>Add Tier</button>
-                        <button onClick={() => { setAddingTier(false); setTierError(null); }} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>Cancel</button>
+                        <button onClick={() => { setAddingTier(false); setTierError(null); }} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>Cancel</button>
                       </div>
                     </div>
                   )}
@@ -2905,7 +2969,7 @@ export default function Dashboard() {
         {activeNav === "collab" && (
           <div className="fade-up">
             <style>{`
-              .role-select { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 13px; font-weight: 500; outline: none; cursor: pointer; font-family: inherit; transition: border-color 0.15s; } .role-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
+              .role-select { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 7px 10px; color: var(--text); font-size: 13px; font-weight: 500; outline: none; cursor: pointer; font-family: inherit; transition: border-color 0.15s; } .role-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); }
             `}</style>
 
             {/* My-role banner for non-owners */}
@@ -2913,7 +2977,7 @@ export default function Dashboard() {
               const roleColors = { ticketing: "var(--accent)", check_in: "#10b981", view_only: "var(--text2)" };
               const col = roleColors[userRole] || "var(--text2)";
               return (
-                <div style={{ background: `${col}0d`, border: `1px solid ${col}30`, borderRadius: 12, padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ background: `${col}0d`, border: `1px solid ${col}30`, borderRadius:"var(--radiusLg,4px)", padding: "14px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{ fontSize: 20 }}>🤝</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: col, marginBottom: 2 }}>
@@ -2925,11 +2989,11 @@ export default function Dashboard() {
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={() => setShowRequestModal(true)}
-                      style={{ background: "none", border: `1px solid ${col}40`, color: col, borderRadius: 8, padding: "7px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontWeight: 600 }}>
+                      style={{ background: "none", border: `1px solid ${col}40`, color: col, borderRadius:"var(--radius,3px)", padding: "7px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 600 }}>
                       Request Access ↑
                     </button>
                     <button onClick={handleLeaveEvent}
-                      style={{ background: "none", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 8, padding: "7px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                      style={{ background: "none", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius:"var(--radius,3px)", padding: "7px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                       Leave
                     </button>
                   </div>
@@ -2939,7 +3003,7 @@ export default function Dashboard() {
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Collaborate</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Collaborate</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>
                   {collaborators.filter(c => c.status === "accepted").length} active · {collaborators.filter(c => c.status === "invited").length} pending invite
                 </p>
@@ -2947,7 +3011,7 @@ export default function Dashboard() {
             </div>
 
             {/* Role legend */}
-            <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "18px 20px", marginBottom: 24 }}>
+            <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "18px 20px", marginBottom: 24 }}>
               <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 12, fontWeight: 600 }}>Permission Tiers</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
                 {[
@@ -2987,13 +3051,13 @@ export default function Dashboard() {
                   {/* Owner badge with tooltip */}
                   <span
                     title="Owner: Full control over this event. Can transfer ownership, manage all collaborators, and cannot be removed."
-                    style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "var(--accentBg)", color: "var(--accent)", border: "1px solid rgba(201,168,76,0.25)", fontWeight: 600, cursor: "help", whiteSpace: "nowrap" }}>
+                    style={{ fontSize: 11, padding: "3px 10px", borderRadius:"var(--radiusLg,4px)", background: "var(--accentBg)", color: "var(--accent)", border: "1px solid rgba(255,77,0,0.25)", fontWeight: 600, cursor: "help", whiteSpace: "nowrap" }}>
                     👑 Owner
                   </span>
                   {/* Transfer ownership button — owner only */}
                   {userRole === "owner" && collaborators.some(c => c.status === "accepted" && c.user_id) && (
                     <button
-                      style={{ background: "none", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 6, padding: "4px 10px", fontSize: 11, color: "var(--accent)", cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", whiteSpace: "nowrap" }}
+                      style={{ background: "none", border: "1px solid rgba(255,77,0,0.25)", borderRadius:"var(--radius,3px)", padding: "4px 10px", fontSize: 11, color: "var(--accent)", cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", whiteSpace: "nowrap" }}
                       onClick={() => {
                         const first = collaborators.find(c => c.status === "accepted" && c.user_id);
                         setTransferTarget(first?.id || "");
@@ -3034,20 +3098,20 @@ export default function Dashboard() {
                             <option value="view_only">View Only</option>
                           </select>
                         ) : (
-                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 20, background: `${col}18`, color: col, border: `1px solid ${col}40`, fontWeight: 600 }}>
+                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius:"var(--radiusLg,4px)", background: `${col}18`, color: col, border: `1px solid ${col}40`, fontWeight: 600 }}>
                             {c.role.replace("_", " ")}
                           </span>
                         )}
                         {/* Access request badge */}
                         {(userRole === "owner" || userRole === "admin") && c.host_message?.startsWith("ACCESS REQUEST:") && (
-                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius: 20, background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)", cursor: "pointer", whiteSpace: "nowrap" }}
+                          <span style={{ fontSize: 11, padding: "2px 10px", borderRadius:"var(--radiusLg,4px)", background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.25)", cursor: "pointer", whiteSpace: "nowrap" }}
                             title={c.host_message} onClick={() => alert(c.host_message)}>
                             ⚡ Request
                           </span>
                         )}
                         {(userRole === "owner" || userRole === "admin") && (
                           <button onClick={() => handleRemoveCollab(c.id)}
-                            style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 6, padding: "4px 8px", fontSize: 11, color: "#ef4444", cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                            style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "4px 8px", fontSize: 11, color: "#ef4444", cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                             ✕
                           </button>
                         )}
@@ -3060,17 +3124,17 @@ export default function Dashboard() {
 
             {/* Invite form */}
             {(userRole === "owner" || userRole === "admin") && (
-              <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 14, padding: "22px" }}>
+              <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "22px" }}>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Invite Collaborator</div>
                 <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 16 }}>They'll receive an email with a link to accept.</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                   <input
-                    style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}
+                    style={{ flex: 1, background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}
                     type="email" placeholder="collaborator@email.com"
                     value={collabInviteEmail} onChange={e => setCollabInviteEmail(e.target.value)} />
                   <select className="role-select"
                     value={collabInviteRole} onChange={e => setCollabInviteRole(e.target.value)}
-                    style={{ background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 12px", fontSize: 13 }}>
+                    style={{ background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 12px", fontSize: 13 }}>
                     <option value="admin">Admin</option>
                     <option value="ticketing">Ticketing</option>
                     <option value="check_in">Check-in</option>
@@ -3125,13 +3189,13 @@ export default function Dashboard() {
               .task-row:hover { background: var(--bg3); }
               .task-row:hover .task-actions { opacity: 1; }
               .task-actions { opacity: 0; display: flex; gap: 6px; transition: opacity 0.15s; }
-              .cl-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
+              .cl-field { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 10px 14px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
               .cl-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .cl-field::placeholder { color: var(--text3); }
             `}</style>
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
               <div>
-                <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Checklist</h1>
+                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Checklist</h1>
                 <p style={{ color: "var(--text2)", fontSize: 14 }}>
                   {tasks.filter(t => t.done).length} of {tasks.length} done
                 </p>
@@ -3140,7 +3204,7 @@ export default function Dashboard() {
               <div style={{ display: "flex", gap: 6 }}>
                 {["all", "pending", "done"].map(f => (
                   <button key={f} onClick={() => setTaskFilter(f)}
-                    style={{ background: taskFilter === f ? "var(--accentBg)" : "transparent", border: `1px solid ${taskFilter === f ? "rgba(201,168,76,0.3)" : "var(--border)"}`, color: taskFilter === f ? "var(--accent)" : "var(--text2)", borderRadius: 7, padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", textTransform: "capitalize", transition: "all 0.15s" }}>
+                    style={{ background: taskFilter === f ? "var(--accentBg)" : "transparent", border: `1px solid ${taskFilter === f ? "rgba(255,77,0,0.3)" : "var(--border)"}`, color: taskFilter === f ? "var(--accent)" : "var(--text2)", borderRadius:"var(--radius,3px)", padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", textTransform: "capitalize", transition: "all 0.15s" }}>
                     {f}
                   </button>
                 ))}
@@ -3153,8 +3217,8 @@ export default function Dashboard() {
                 <span>Progress</span>
                 <span style={{ color: "var(--accent)" }}>{tasks.length ? Math.round((tasks.filter(t=>t.done).length/tasks.length)*100) : 0}%</span>
               </div>
-              <div style={{ height: 6, background: "var(--bg3)", borderRadius: 99, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: tasks.length ? `${(tasks.filter(t=>t.done).length/tasks.length)*100}%` : "0%", background: "linear-gradient(90deg,var(--accent),var(--success,#059669))", borderRadius: 99, transition: "width 0.4s" }} />
+              <div style={{ height: 6, background: "var(--bg3)", borderRadius:"99px", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: tasks.length ? `${(tasks.filter(t=>t.done).length/tasks.length)*100}%` : "0%", background: "linear-gradient(90deg,var(--accent),var(--success,#059669))", borderRadius:"99px", transition: "width 0.4s" }} />
               </div>
             </div>
 
@@ -3203,7 +3267,7 @@ export default function Dashboard() {
                           style={{ width: 140 }}
                           onChange={e => setEditingTask(et => ({ ...et, due_date: e.target.value }))} />
                         {canEdit("checklist") && <button className="btn-gold" style={{ padding: "8px 14px", fontSize: 12 }} onClick={handleUpdateTask}>Save</button>}
-                        <button onClick={() => setEditingTask(null)} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>Cancel</button>
+                        <button onClick={() => setEditingTask(null)} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>Cancel</button>
                       </div>
                     ) : (
                       <>
@@ -3215,13 +3279,13 @@ export default function Dashboard() {
                         )}
                         <div className="task-actions">
                           <button onClick={() => setEditingTask({ id: t.id, text: t.text, due_date: t.due_date || "" })}
-                            style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 6, padding: "4px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s" }}
+                            style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "4px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }}
                             onMouseEnter={e => { e.currentTarget.style.borderColor="var(--accent)"; e.currentTarget.style.color="var(--accent)"; }}
                             onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text2)"; }}>
                             Edit
                           </button>
                           <button onClick={() => handleDeleteTask(t.id)}
-                            style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 6, padding: "4px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s" }}
+                            style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "4px 10px", color: "var(--text2)", cursor: "pointer", fontSize: 12, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }}
                             onMouseEnter={e => { e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}
                             onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text2)"; }}>
                             ×
@@ -3266,14 +3330,14 @@ export default function Dashboard() {
                 </div>
               </div>
               <button onClick={() => setQrGuest(g)}
-                style={{ background: "none", border: "1.5px solid var(--border)", borderRadius: 7, padding: "5px 10px", color: "var(--text3)", cursor: "pointer", fontSize: 12, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s", flexShrink: 0 }}
+                style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text3)", cursor: "pointer", fontSize: 12, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s", flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor="var(--text2)"; e.currentTarget.style.color="var(--text2)"; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text3)"; }}>
                 QR
               </button>
               {g.checked_in ? (
                 <button onClick={() => canEdit("checkin") && handleUnCheckIn(g.id)}
-                  style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid #10b981", borderRadius: 8, padding: "7px 14px", color: "#10b981", cursor: canEdit("checkin") ? "pointer" : "default", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
+                  style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid #10b981", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "#10b981", cursor: canEdit("checkin") ? "pointer" : "default", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
                   onMouseEnter={e => { if(canEdit("checkin")){ e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}}
                   onMouseLeave={e => { e.currentTarget.style.background="rgba(16,185,129,0.1)"; e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
                   title="Undo check-in">
@@ -3281,7 +3345,7 @@ export default function Dashboard() {
                 </button>
               ) : (
                 <button onClick={() => handleCheckIn(g.id)}
-                  style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius: 8, padding: "7px 14px", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
+                  style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor="var(--text3)"; e.currentTarget.style.color="var(--text2)"; }}>
                   Check in
@@ -3295,18 +3359,18 @@ export default function Dashboard() {
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
                 <div>
-                  <h1 style={{ fontFamily: "inherit", fontSize: 28, fontWeight: 700, marginBottom: 4 }}>Check-in</h1>
+                  <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Check-in</h1>
                   <p style={{ color: "var(--text2)", fontSize: 14 }}>{checkedIn} of {attending} checked in tonight</p>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   {["ticketed","hybrid"].includes(event?.ticketing) && (
                     <button onClick={() => navigate("/scanner/" + eventId)}
-                      style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--accentBg)", border: "1px solid rgba(201,168,76,0.3)", color: "var(--accent)", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontWeight: 600 }}>
+                      style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--accentBg)", border: "1px solid rgba(255,77,0,0.3)", color: "var(--accent)", borderRadius:"var(--radius,3px)", padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 600 }}>
                       🎟 Ticket Scanner
                     </button>
                   )}
                   <button onClick={() => setEventQrOpen(true)}
-                    style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--bg3)", border: "1.5px solid var(--border)", color: "var(--text)", borderRadius: 9, padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s" }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--bg3)", border: "1.5px solid var(--border)", color: "var(--text)", borderRadius:"var(--radius,3px)", padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text)"; }}>
                     📷 Event QR Code
@@ -3316,7 +3380,7 @@ export default function Dashboard() {
 
               {/* Scan flash */}
               {scanResult && (
-                <div style={{ marginBottom: 16, padding: "14px 18px", background: scanResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${scanResult.success ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 10, display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ marginBottom: 16, padding: "14px 18px", background: scanResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${scanResult.success ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius:"var(--radius,3px)", display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 20 }}>{scanResult.success ? "✓" : "⚠"}</span>
                   <span style={{ fontSize: 14, color: scanResult.success ? "#10b981" : "#ef4444", fontWeight: 500 }}>
                     {scanResult.success ? `${scanResult.name} checked in!` : scanResult.name}
@@ -3341,11 +3405,11 @@ export default function Dashboard() {
                   <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text3)", fontSize: 13, pointerEvents: "none" }}>🔍</span>
                   <input value={checkInSearch} onChange={e => setCheckInSearch(e.target.value)}
                     placeholder="Search by name, email, phone…"
-                    style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px 10px 38px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }} />
+                    style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px 10px 38px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} />
                 </div>
                 {["all","in","out"].map(f => (
                   <button key={f} onClick={() => setCheckInFilter(f)}
-                    style={{ background: checkInFilter === f ? "rgba(16,185,129,0.12)" : "transparent", border: `1px solid ${checkInFilter === f ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: checkInFilter === f ? "#10b981" : "var(--text2)", borderRadius: 7, padding: "9px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s", textTransform: "capitalize" }}>
+                    style={{ background: checkInFilter === f ? "rgba(16,185,129,0.12)" : "transparent", border: `1px solid ${checkInFilter === f ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: checkInFilter === f ? "#10b981" : "var(--text2)", borderRadius:"var(--radius,3px)", padding: "9px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s", textTransform: "capitalize" }}>
                     {f === "in" ? "✓ In" : f === "out" ? "Not in" : "All"}
                   </button>
                 ))}
@@ -3382,21 +3446,21 @@ export default function Dashboard() {
         {eventQrOpen && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
             onClick={() => setEventQrOpen(false)}>
-            <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, padding: "36px 32px", textAlign: "center", maxWidth: 340, width: "100%" }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "36px 32px", textAlign: "center", maxWidth: 340, width: "100%" }}>
               <div style={{ fontFamily: "inherit", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{event?.name}</div>
               <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 24 }}>Guests scan this to check themselves in</div>
-              <div style={{ background: "#fff", borderRadius: 14, padding: 14, display: "inline-block", marginBottom: 20 }}>
+              <div style={{ background: "#fff", borderRadius:"var(--radiusLg,4px)", padding: 14, display: "inline-block", marginBottom: 20 }}>
                 <img src={getEventQRUrl()} alt="Event QR" width="220" height="220" />
               </div>
               <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 20 }}>
                 Print this and display it at the entrance, or show guests on screen.
               </p>
               <button onClick={() => window.print()}
-                style={{ width: "100%", background: "var(--accentBg)", border: "1px solid rgba(201,168,76,0.3)", color: "var(--accent)", borderRadius: 9, padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", marginBottom: 10 }}>
+                style={{ width: "100%", background: "var(--accentBg)", border: "1px solid rgba(255,77,0,0.3)", color: "var(--accent)", borderRadius:"var(--radius,3px)", padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", marginBottom: 10 }}>
                 🖨 Print QR Code
               </button>
               <button onClick={() => setEventQrOpen(false)}
-                style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 9, padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Close
               </button>
             </div>
@@ -3407,22 +3471,22 @@ export default function Dashboard() {
         {qrGuest && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
             onClick={() => setQrGuest(null)}>
-            <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 18, padding: "32px", textAlign: "center", maxWidth: 320, width: "100%" }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "32px", textAlign: "center", maxWidth: 320, width: "100%" }}>
               <div style={{ fontFamily: "inherit", fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{qrGuest.name || qrGuest.email}</div>
               <div style={{ fontSize: 12, color: "var(--text2)", marginBottom: 24 }}>Individual QR for this guest</div>
-              <div style={{ background: "#fff", borderRadius: 12, padding: 12, display: "inline-block", marginBottom: 20 }}>
+              <div style={{ background: "#fff", borderRadius:"var(--radiusLg,4px)", padding: 12, display: "inline-block", marginBottom: 20 }}>
                 <img src={getQRUrl(qrGuest.id)} alt="QR Code" width="180" height="180" />
               </div>
               {qrGuest.checked_in ? (
                 <div style={{ fontSize: 13, color: "#10b981", marginBottom: 16 }}>✓ Already checked in</div>
               ) : (
                 <button onClick={() => { handleCheckIn(qrGuest.id); setQrGuest(g => ({ ...g, checked_in: true })); }}
-                  style={{ width: "100%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 9, padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", marginBottom: 12 }}>
+                  style={{ width: "100%", background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius:"var(--radius,3px)", padding: "11px", fontSize: 14, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", marginBottom: 12 }}>
                   ✓ Mark as Checked In
                 </button>
               )}
               <button onClick={() => setQrGuest(null)}
-                style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 9, padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ width: "100%", background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: "10px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Close
               </button>
             </div>
@@ -3436,7 +3500,7 @@ export default function Dashboard() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
           onClick={() => setShowTransferModal(false)}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "var(--bg2)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            style={{ background: "var(--bg2)", border: "1px solid rgba(255,77,0,0.2)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
             <div style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>👑</div>
             <h2 style={{ fontFamily: "inherit", fontSize: 20, textAlign: "center", margin: "0 0 6px" }}>Transfer Ownership</h2>
             <p style={{ fontSize: 13, color: "var(--text2)", textAlign: "center", marginBottom: 20, lineHeight: 1.6 }}>
@@ -3445,7 +3509,7 @@ export default function Dashboard() {
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Transfer to</label>
               <select value={transferTarget} onChange={e => setTransferTarget(e.target.value)}
-                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 {collaborators.filter(c => c.status === "accepted" && c.user_id).map(c => (
                   <option key={c.id} value={c.id}>{c.email} ({c.role.replace("_"," ")})</option>
                 ))}
@@ -3453,12 +3517,12 @@ export default function Dashboard() {
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowTransferModal(false)}
-                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Cancel
               </button>
               <button onClick={async () => { setShowTransferModal(false); await handleTransferOwnership(transferTarget); }}
                 disabled={!transferTarget}
-                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Confirm Transfer
               </button>
             </div>
@@ -3471,13 +3535,13 @@ export default function Dashboard() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
           onClick={() => setShowRequestModal(false)}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
             <h2 style={{ fontFamily: "inherit", fontSize: 20, margin: "0 0 6px" }}>Request Higher Access</h2>
             <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>The event owner will see your request in the Collaborate section.</p>
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Requesting Role</label>
               <select value={requestedRole} onChange={e => setRequestedRole(e.target.value)}
-                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 <option value="admin">Admin — Full access</option>
                 <option value="ticketing">Ticketing — Tickets & sales</option>
                 <option value="check_in">Check-in — Guest arrivals</option>
@@ -3487,16 +3551,16 @@ export default function Dashboard() {
               <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Note (optional)</label>
               <textarea value={requestNote} onChange={e => setRequestNote(e.target.value)}
                 placeholder="Explain why you need higher access…"
-                style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", resize: "vertical" }}
+                style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", resize: "vertical" }}
                 rows={3} />
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowRequestModal(false)}
-                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Cancel
               </button>
               <button onClick={handleRequestAccess} disabled={sendingRequest}
-                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", opacity: sendingRequest ? 0.6 : 1 }}>
+                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", opacity: sendingRequest ? 0.6 : 1 }}>
                 {sendingRequest ? "Sending…" : "Send Request"}
               </button>
             </div>
@@ -3510,7 +3574,7 @@ export default function Dashboard() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
           onClick={() => setShowTransferModal(false)}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "var(--bg2)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            style={{ background: "var(--bg2)", border: "1px solid rgba(255,77,0,0.2)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
             <div style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>👑</div>
             <h2 style={{ fontFamily: "inherit", fontSize: 20, textAlign: "center", margin: "0 0 6px" }}>Transfer Ownership</h2>
             <p style={{ fontSize: 13, color: "var(--text2)", textAlign: "center", marginBottom: 20, lineHeight: 1.6 }}>
@@ -3519,7 +3583,7 @@ export default function Dashboard() {
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Transfer to</label>
               <select value={transferTarget} onChange={e => setTransferTarget(e.target.value)}
-                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 {collaborators.filter(c => c.status === "accepted" && c.user_id).map(c => (
                   <option key={c.id} value={c.id}>{c.email} ({c.role.replace("_"," ")})</option>
                 ))}
@@ -3527,12 +3591,12 @@ export default function Dashboard() {
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowTransferModal(false)}
-                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Cancel
               </button>
               <button onClick={async () => { setShowTransferModal(false); await handleTransferOwnership(transferTarget); }}
                 disabled={!transferTarget}
-                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Confirm Transfer
               </button>
             </div>
@@ -3545,13 +3609,13 @@ export default function Dashboard() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
           onClick={() => setShowRequestModal(false)}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 440, padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
             <h2 style={{ fontFamily: "inherit", fontSize: 20, margin: "0 0 6px" }}>Request Higher Access</h2>
             <p style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>The event owner will see your request in the Collaborate section.</p>
             <div style={{ marginBottom: 14 }}>
               <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Requesting Role</label>
               <select value={requestedRole} onChange={e => setRequestedRole(e.target.value)}
-                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ width: "100%", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 <option value="admin">Admin — Full access</option>
                 <option value="ticketing">Ticketing — Tickets & sales</option>
                 <option value="check_in">Check-in — Guest arrivals</option>
@@ -3561,16 +3625,16 @@ export default function Dashboard() {
               <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Note (optional)</label>
               <textarea value={requestNote} onChange={e => setRequestNote(e.target.value)}
                 placeholder="Explain why you need higher access…"
-                style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", resize: "vertical" }}
+                style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", resize: "vertical" }}
                 rows={3} />
             </div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowRequestModal(false)}
-                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                 Cancel
               </button>
               <button onClick={handleRequestAccess} disabled={sendingRequest}
-                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", opacity: sendingRequest ? 0.6 : 1 }}>
+                style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", opacity: sendingRequest ? 0.6 : 1 }}>
                 {sendingRequest ? "Sending…" : "Send Request"}
               </button>
             </div>
@@ -3583,7 +3647,7 @@ export default function Dashboard() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(8px)" }}
           onClick={() => setShowPublishModal(false)}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "var(--bg2)", border: `1px solid ${showPublishModal === "publish" ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius: 20, width: "100%", maxWidth: 480, padding: "32px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            style={{ background: "var(--bg2)", border: `1px solid ${showPublishModal === "publish" ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)"}`, borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 480, padding: "32px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
 
             {showPublishModal === "publish" ? (
               <>
@@ -3592,13 +3656,13 @@ export default function Dashboard() {
                 <p style={{ fontSize: 14, color: "var(--text2)", textAlign: "center", marginBottom: 24, lineHeight: 1.7 }}>
                   This will make your ticket page publicly accessible. Anyone with the link can purchase tickets.
                 </p>
-                <div style={{ background: "var(--bg3)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "16px 18px", marginBottom: 24 }}>
+                <div style={{ background: "var(--bg3)", border: "1px solid rgba(16,185,129,0.2)", borderRadius:"var(--radiusLg,4px)", padding: "16px 18px", marginBottom: 24 }}>
                   <div style={{ fontSize: 11, color: "#10b981", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8, fontWeight: 600 }}>Your ticket link</div>
                   <div style={{ fontSize: 13, color: "var(--text)", wordBreak: "break-all", marginBottom: 12 }}>
                     {window.location.origin}/tickets/{event?.invite_slug}
                   </div>
                   <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/tickets/${event?.invite_slug}`)}
-                    style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius: 7, padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                    style={{ background: "none", border: "1px solid rgba(16,185,129,0.3)", color: "#10b981", borderRadius:"var(--radius,3px)", padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                     Copy Link
                   </button>
                 </div>
@@ -3607,7 +3671,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={() => setShowPublishModal(false)}
-                    style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                    style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                     Cancel
                   </button>
                   <button onClick={async () => {
@@ -3615,7 +3679,7 @@ export default function Dashboard() {
                     await supabase.from("events").update({ published: true }).eq("id", eventId);
                     setShowPublishModal(false);
                   }}
-                    style={{ flex: 2, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", color: "#fff", borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                    style={{ flex: 2, background: "linear-gradient(135deg,#10b981,#059669)", border: "none", color: "#fff", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                     Go Live →
                   </button>
                 </div>
@@ -3629,7 +3693,7 @@ export default function Dashboard() {
                 </p>
                 <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={() => setShowPublishModal(false)}
-                    style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                    style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 14, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                     Cancel
                   </button>
                   <button onClick={async () => {
@@ -3637,7 +3701,7 @@ export default function Dashboard() {
                     await supabase.from("events").update({ published: false }).eq("id", eventId);
                     setShowPublishModal(false);
                   }}
-                    style={{ flex: 2, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                    style={{ flex: 2, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                     Take Offline
                   </button>
                 </div>
@@ -3652,7 +3716,7 @@ export default function Dashboard() {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24, backdropFilter: "blur(6px)" }}
           onClick={() => setShowManualVendor(false)}>
           <div onClick={e => e.stopPropagation()}
-            style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
+            style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: "28px", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
               <h2 style={{ fontFamily: "inherit", fontSize: 20, margin: 0 }}>
                 {manualVendor?.id ? "Edit Vendor Details" : "Add Vendor Manually"}
@@ -3671,7 +3735,7 @@ export default function Dashboard() {
                 <div key={key}>
                   <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{label}</label>
                   <input
-                    style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "11px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}
+                    style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "11px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}
                     placeholder={placeholder}
                     value={manualVendor?.[key] || ""}
                     onChange={e => setManualVendor(v => ({ ...v, [key]: e.target.value }))} />
@@ -3680,14 +3744,14 @@ export default function Dashboard() {
               <div>
                 <label style={{ display: "block", fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Description</label>
                 <textarea
-                  style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius: 9, padding: "11px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", resize: "vertical" }}
+                  style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "11px 14px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", resize: "vertical" }}
                   rows={3} placeholder="About their services…"
                   value={manualVendor?.description || ""}
                   onChange={e => setManualVendor(v => ({ ...v, description: e.target.value }))} />
               </div>
               <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
                 <button onClick={() => setShowManualVendor(false)}
-                  style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius: 10, padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                  style={{ flex: 1, background: "none", border: "1.5px solid var(--border)", color: "var(--text2)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                   Cancel
                 </button>
                 <button disabled={!manualVendor?.name?.trim()} onClick={async () => {
@@ -3710,7 +3774,7 @@ export default function Dashboard() {
                   }
                   setShowManualVendor(false);
                 }}
-                  style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius: 10, padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)" }}>
+                  style={{ flex: 2, background: "var(--accent)", border: "none", color: "var(--bg)", borderRadius:"var(--radius,3px)", padding: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }}>
                   {manualVendor?.id ? "Save Changes" : "Add Vendor"}
                 </button>
               </div>
@@ -3746,7 +3810,7 @@ export default function Dashboard() {
       {/* Edit Guest Modal */}
       {editingGuest && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }} onClick={() => setEditingGuest(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "28px 32px", width: "100%", maxWidth: 460, boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "28px 32px", width: "100%", maxWidth: 460, boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}>
             <h2 style={{ fontFamily: "inherit", fontSize: 20, fontWeight: 700, marginBottom: 20, color: "var(--text)" }}>Edit Guest</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
               <div>
@@ -3761,7 +3825,7 @@ export default function Dashboard() {
                 <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Status</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   {["pending", "attending", "declined"].map(s => (
-                    <button key={s} onClick={() => setEditingGuest(g => ({ ...g, status: s }))} style={{ flex: 1, padding: "9px", borderRadius: 8, border: `1.5px solid ${editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--border)"}`, background: editingGuest.status === s ? (s === "attending" ? "rgba(16,185,129,0.1)" : s === "declined" ? "rgba(239,68,68,0.08)" : "var(--accentBg)") : "transparent", color: editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", transition: "all 0.15s", textTransform: "capitalize" }}>
+                    <button key={s} onClick={() => setEditingGuest(g => ({ ...g, status: s }))} style={{ flex: 1, padding: "9px", borderRadius:"var(--radius,3px)", border: `1.5px solid ${editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--border)"}`, background: editingGuest.status === s ? (s === "attending" ? "rgba(16,185,129,0.1)" : s === "declined" ? "rgba(239,68,68,0.08)" : "var(--accentBg)") : "transparent", color: editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s", textTransform: "capitalize" }}>
                       {s}
                     </button>
                   ))}
@@ -3783,13 +3847,13 @@ export default function Dashboard() {
       {/* Delete Guest Confirm */}
       {deletingGuest && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }} onClick={() => setDeletingGuest(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16, padding: "28px 32px", width: "100%", maxWidth: 400, boxShadow: "0 32px 80px rgba(0,0,0,0.6)", textAlign: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "28px 32px", width: "100%", maxWidth: 400, boxShadow: "0 32px 80px rgba(0,0,0,0.6)", textAlign: "center" }}>
             <div style={{ fontSize: 32, marginBottom: 14 }}>🗑️</div>
             <h2 style={{ fontFamily: "inherit", fontSize: 20, marginBottom: 10, color: "var(--text)" }}>Remove this guest?</h2>
             <p style={{ color: "var(--text2)", fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>They'll be removed from the guest list and won't receive future invites.</p>
             <div style={{ display: "flex", gap: 10 }}>
               <button className="btn-ghost" onClick={() => setDeletingGuest(null)} style={{ flex: 1 }}>Cancel</button>
-              <button onClick={() => handleDeleteGuest(deletingGuest)} style={{ flex: 1, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius: 10, padding: "10px", fontFamily: "var(--font,'Plus Jakarta Sans',sans-serif)", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Remove</button>
+              <button onClick={() => handleDeleteGuest(deletingGuest)} style={{ flex: 1, background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", borderRadius:"var(--radius,3px)", padding: "10px", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>Remove</button>
             </div>
           </div>
         </div>
