@@ -15,7 +15,7 @@ function StatusBadge({ status }) {
   const c = COLOR_STATUS[status] || COLOR_STATUS.waiting;
   const labels = { waiting:"Waiting", called:"Called!", done:"Done", left:"Left" };
   return (
-    <span style={{ fontSize:11, padding:"2px 10px", borderRadius:20, fontWeight:700,
+    <span style={{ fontSize:11, padding:"2px 10px", borderRadius:"var(--radiusLg,4px)", fontWeight:700,
       background:c.bg, border:`1.5px solid ${c.border}`, color:c.text }}>
       {status === "called" ? "📣 " : ""}{labels[status] || status}
     </span>
@@ -208,7 +208,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
   const btn = (label, onClick, opts={}) => (
     <button onClick={onClick} disabled={opts.disabled}
       style={{ background: opts.bg || "var(--accent)", border: opts.border || "none",
-        color: opts.color || "#fff", borderRadius:9, padding: opts.pad || "8px 16px",
+        color: opts.color || "#fff", borderRadius:"var(--radius,3px)", padding: opts.pad || "8px 16px",
         fontSize: opts.fs || 13, fontWeight:700, cursor:"pointer", fontFamily:"inherit",
         transition:"opacity 0.12s", opacity: opts.disabled ? 0.45 : 1,
         whiteSpace:"nowrap", ...opts.extra }}>
@@ -228,7 +228,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
       {/* ── Page header ── */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:20 }}>
         <div>
-          <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:"-0.04em", marginBottom:4 }}>Queue Manager</h1>
+          <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing:"-0.04em", marginBottom:4 }}>Queue Manager</h1>
           <p style={{ color:"var(--text2)", fontSize:14 }}>
             {queues.length} queue{queues.length!==1?"s":""}{"  ·  "}virtual line system
           </p>
@@ -238,9 +238,9 @@ export default function QueueManager({ eventId, onOpenModal }) {
 
       {queues.length === 0 ? (
         <div style={{ textAlign:"center", padding:"80px 20px", background:"var(--bg2)",
-          border:"1.5px solid var(--border)", borderRadius:16 }}>
+          border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)" }}>
           <div style={{ fontSize:48, marginBottom:16 }}>🎟</div>
-          <h2 style={{ fontSize:20, fontWeight:800, marginBottom:8 }}>No queues yet</h2>
+          <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, marginBottom:8 }}>No queues yet</h2>
           <p style={{ color:"var(--text2)", fontSize:14, marginBottom:24, maxWidth:360, margin:"0 auto 24px" }}>
             Create a virtual queue for gelato, photo booths, bars — anything with a line.
           </p>
@@ -261,7 +261,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
                 <div key={q.id} onClick={()=>setActive(q.id)}
                   style={{ background: isActive ? "var(--accentBg)" : "var(--bg2)",
                     border:`1.5px solid ${isActive?"var(--accent)":"var(--border)"}`,
-                    borderRadius:12, padding:"14px 16px", cursor:"pointer",
+                    borderRadius:"var(--radius,3px)", padding:"14px 16px", cursor:"pointer",
                     boxShadow: isActive ? "0 0 0 3px var(--accentBg)" : "none",
                     transition:"all 0.15s" }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
@@ -286,15 +286,15 @@ export default function QueueManager({ eventId, onOpenModal }) {
             <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
 
               {/* ── Queue header card ── */}
-              <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:16, padding:"20px 22px" }}>
+              <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding:"20px 22px" }}>
 
                 {/* Top row: title + stats */}
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:12, marginBottom:16 }}>
                   <div style={{ flex:1 }}>
-                    <h2 style={{ fontSize:20, fontWeight:800, letterSpacing:"-0.03em", marginBottom:4 }}>{activeQueue.name}</h2>
+                    <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing:"-0.03em", marginBottom:4 }}>{activeQueue.name}</h2>
                     {activeQueue.description && <p style={{ color:"var(--text2)", fontSize:13, margin:"0 0 10px" }}>{activeQueue.description}</p>}
                     <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                      <div style={{ display:"inline-flex", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:8, overflow:"hidden" }}>
+                      <div style={{ display:"inline-flex", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", overflow:"hidden" }}>
                         {["open","paused","closed"].map(s => (
                           <button key={s} onClick={()=>setQueueStatus(activeQueue.id, s)}
                             style={{ background:activeQueue.status===s?"var(--accent)":"none",
@@ -316,8 +316,8 @@ export default function QueueManager({ eventId, onOpenModal }) {
                   <div style={{ display:"flex", gap:10 }}>
                     {[["Waiting",waiting.length,"#818cf8"],["Called",called.length,"var(--success,#059669)"],["Served",totalServed,"var(--accent)"]].map(([l,v,c])=>(
                       <div key={l} style={{ textAlign:"center", background:"var(--bg3)", border:"1.5px solid var(--border)",
-                        borderRadius:10, padding:"10px 14px", minWidth:58 }}>
-                        <div style={{ fontSize:20, fontWeight:800, color:c, letterSpacing:"-0.02em" }}>{v}</div>
+                        borderRadius:"var(--radius,3px)", padding:"10px 14px", minWidth:58 }}>
+                        <div style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, color:c, letterSpacing:"-0.02em" }}>{v}</div>
                         <div style={{ fontSize:10, color:"var(--text3)", fontWeight:700, textTransform:"uppercase" }}>{l}</div>
                       </div>
                     ))}
@@ -325,7 +325,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
                 </div>
 
                 {/* ── Auto-caller status bar ── */}
-                <div style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10,
+                <div style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)",
                   padding:"12px 16px", display:"flex", alignItems:"center", gap:16, flexWrap:"wrap" }}>
 
                   {/* Slot visualiser */}
@@ -396,7 +396,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
               {/* ── Called list ── */}
               {called.length > 0 && (
                 <div style={{ background:"var(--bg2)", border:"2px solid rgba(5,150,105,0.3)",
-                  borderRadius:14, overflow:"hidden" }}>
+                  borderRadius:"var(--radiusLg,4px)", overflow:"hidden" }}>
                   <div style={{ padding:"12px 18px", borderBottom:"1.5px solid rgba(5,150,105,0.15)",
                     background:"rgba(5,150,105,0.04)",
                     display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -437,7 +437,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
               )}
 
               {/* ── Waiting list ── */}
-              <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:14, overflow:"hidden" }}>
+              <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", overflow:"hidden" }}>
                 <div style={{ padding:"12px 18px", borderBottom:"1.5px solid var(--border)",
                   display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div style={{ fontSize:13, fontWeight:700 }}>Waiting List</div>
@@ -480,7 +480,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
                         </div>
                         {willBeCalled && (
                           <span style={{ fontSize:11, color:"var(--success,#059669)", fontWeight:700,
-                            background:"rgba(5,150,105,0.08)", padding:"3px 10px", borderRadius:20, whiteSpace:"nowrap" }}>
+                            background:"rgba(5,150,105,0.08)", padding:"3px 10px", borderRadius:"var(--radiusLg,4px)", whiteSpace:"nowrap" }}>
                             Filling slot…
                           </span>
                         )}
@@ -506,7 +506,7 @@ export default function QueueManager({ eventId, onOpenModal }) {
                     ▸ {done.length} served / left (expand)
                   </summary>
                   <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
-                    borderRadius:12, marginTop:8, overflow:"hidden" }}>
+                    borderRadius:"var(--radius,3px)", marginTop:8, overflow:"hidden" }}>
                     {done.map((e,i) => (
                       <div key={e.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 16px",
                         borderBottom:i<done.length-1?"1px solid var(--border)":"none", opacity:0.65 }}>

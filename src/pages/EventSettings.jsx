@@ -65,11 +65,11 @@ export default function EventSettings({ eventId, event, setEvent }) {
   };
 
   const S = {
-    card:   { background:"var(--bg2)", border:"1px solid #222228", borderRadius:12, overflow:"hidden" },
+    card:   { background:"var(--bg2)", border:"1px solid #222228", borderRadius:"var(--radius,3px)", overflow:"hidden" },
     label:  { display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:6 },
-    input:  { width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1px solid #2a2a30", borderRadius:8, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" },
-    btn:    { background:accent, border:"none", color:"#fff", borderRadius:8, padding:"9px 18px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
-    ghost:  { background:"none", border:"1px solid #222228", color:"var(--text2)", borderRadius:8, padding:"9px 18px", fontSize:13, cursor:"pointer", fontFamily:"inherit" },
+    input:  { width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1px solid #2a2a30", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" },
+    btn:    { background:accent, border:"none", color:"#fff", borderRadius:"var(--radius,3px)", padding:"9px 18px", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"inherit" },
+    ghost:  { background:"none", border:"1px solid #222228", color:"var(--text2)", borderRadius:"var(--radius,3px)", padding:"9px 18px", fontSize:13, cursor:"pointer", fontFamily:"inherit" },
     row:    { display:"flex", justifyContent:"space-between", alignItems:"center", padding:"14px 18px", borderBottom:"1px solid #1c1c20" },
   };
 
@@ -104,7 +104,7 @@ export default function EventSettings({ eventId, event, setEvent }) {
   return (
     <div style={{ fontFamily:"'Inter','Helvetica Neue',sans-serif", color:"var(--text)" }}>
       <style>{`input:focus, select:focus, textarea:focus { border-color: ${accent} !important; outline: none; } * { box-sizing: border-box; }`}</style>
-      <h1 style={{ fontSize:22, fontWeight:700, letterSpacing:"-0.03em", marginBottom:6 }}>Event Settings</h1>
+      <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing:"-0.03em", marginBottom:6 }}>Event Settings</h1>
       <p style={{ color:"var(--text2)", fontSize:14, marginBottom:28 }}>Manage features, details, and preferences for this event.</p>
 
       {/* ── Event Details ── */}
@@ -136,8 +136,8 @@ export default function EventSettings({ eventId, event, setEvent }) {
             const on = features.includes(f.id);
             return (
               <div key={f.id} onClick={() => toggleFeature(f.id)}
-                style={{ background:on?`${f.color}08`:"var(--bg3)", border:`1px solid ${on?f.color+"35":"var(--border)"}`, borderRadius:10, padding:"12px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, transition:"all 0.15s" }}>
-                <div style={{ width:30, height:30, borderRadius:8, background:on?`${f.color}18`:"var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:on?f.color:"var(--text2)", flexShrink:0 }}>
+                style={{ background:on?`${f.color}08`:"var(--bg3)", border:`1px solid ${on?f.color+"35":"var(--border)"}`, borderRadius:"var(--radius,3px)", padding:"12px 14px", cursor:"pointer", display:"flex", alignItems:"center", gap:12, transition:"all 0.15s" }}>
+                <div style={{ width:30, height:30, borderRadius:"var(--radius,3px)", background:on?`${f.color}18`:"var(--border)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:on?f.color:"var(--text2)", flexShrink:0 }}>
                   {f.icon}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
@@ -173,14 +173,14 @@ export default function EventSettings({ eventId, event, setEvent }) {
       {/* ── Danger Zone ── */}
       <div>
         <div style={{ fontSize:12, color:"#ef444460", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.07em", marginBottom:12 }}>Danger Zone</div>
-        <div style={{ background:"#1a1010", border:"1px solid #3a2020", borderRadius:12, padding:"18px" }}>
+        <div style={{ background:"#1a1010", border:"1px solid #3a2020", borderRadius:"var(--radius,3px)", padding:"18px" }}>
           {!danger ? (
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
               <div>
                 <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>Delete this event</div>
                 <div style={{ fontSize:12, color:"var(--text2)" }}>This permanently removes the event and all associated data.</div>
               </div>
-              <button onClick={() => setDanger(true)} style={{ background:"none", border:"1px solid #5a2020", color:"#ef4444", borderRadius:8, padding:"9px 16px", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>Delete Event</button>
+              <button onClick={() => setDanger(true)} style={{ background:"none", border:"1px solid #5a2020", color:"#ef4444", borderRadius:"var(--radius,3px)", padding:"9px 16px", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>Delete Event</button>
             </div>
           ) : (
             <div>

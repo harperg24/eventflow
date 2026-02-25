@@ -92,7 +92,7 @@ function EditEntryModal({ entry, emp, onSave, onClose }) {
 
   const labelStyle = { display:"block", fontSize:12, fontWeight:700, color:"var(--text2)", marginBottom:6 };
   const inputStyle = { width:"100%", boxSizing:"border-box", background:"var(--bg2)", border:"1.5px solid var(--border)",
-    borderRadius:8, padding:"9px 12px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" };
+    borderRadius:"var(--radius,3px)", padding:"9px 12px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" };
 
   const handleSave = async () => {
     if (!clockIn) return;
@@ -116,7 +116,7 @@ function EditEntryModal({ entry, emp, onSave, onClose }) {
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", display:"flex", alignItems:"center",
       justifyContent:"center", zIndex:500, padding:24, backdropFilter:"blur(6px)" }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
-        borderRadius:18, width:"100%", maxWidth:480, boxShadow:"0 24px 60px rgba(0,0,0,0.4)" }}>
+        borderRadius:"var(--radiusLg,4px)", width:"100%", maxWidth:480, boxShadow:"0 24px 60px rgba(0,0,0,0.4)" }}>
 
         {/* Header */}
         <div style={{ padding:"20px 24px", borderBottom:"1.5px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -124,13 +124,13 @@ function EditEntryModal({ entry, emp, onSave, onClose }) {
             <div style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.02em" }}>Edit Time Entry</div>
             <div style={{ fontSize:12, color:"var(--text2)", marginTop:2 }}>{emp?.name} · manager override</div>
           </div>
-          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:8,
+          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)",
             padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:13 }}>✕</button>
         </div>
 
         {/* Warning banner */}
         <div style={{ margin:"16px 24px 0", background:"rgba(245,158,11,0.08)", border:"1.5px solid rgba(245,158,11,0.25)",
-          borderRadius:10, padding:"10px 14px", fontSize:12, color:"#b45309", lineHeight:1.5 }}>
+          borderRadius:"var(--radius,3px)", padding:"10px 14px", fontSize:12, color:"#b45309", lineHeight:1.5 }}>
           ⚠ The employee will see an alert on their portal about this change.
         </div>
 
@@ -156,9 +156,9 @@ function EditEntryModal({ entry, emp, onSave, onClose }) {
           </div>
           <div style={{ display:"flex", gap:10, marginTop:4 }}>
             <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)",
-              borderRadius:9, padding:"10px", fontSize:14, color:"var(--text2)", cursor:"pointer" }}>Cancel</button>
+              borderRadius:"var(--radius,3px)", padding:"10px", fontSize:14, color:"var(--text2)", cursor:"pointer" }}>Cancel</button>
             <button onClick={handleSave} disabled={saving} style={{ flex:2, background:"var(--accent)", border:"none",
-              borderRadius:9, padding:"10px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer" }}>
+              borderRadius:"var(--radius,3px)", padding:"10px", fontSize:14, fontWeight:700, color:"#fff", cursor:"pointer" }}>
               {saving ? "Saving…" : "Save & Alert Employee"}
             </button>
           </div>
@@ -175,14 +175,14 @@ function EmployeeModal({ emp, onSave, onClose }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:400, padding:24, backdropFilter:"blur(8px)" }}
       onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:20, width:"100%", maxWidth:520, padding:28, boxShadow:"0 32px 80px rgba(0,0,0,0.7)", maxHeight:"90vh", overflowY:"auto" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width:"100%", maxWidth:520, padding:28, boxShadow:"0 32px 80px rgba(0,0,0,0.7)", maxHeight:"90vh", overflowY:"auto" }}>
         <h2 style={{ fontFamily:"inherit,serif", fontSize:20, margin:"0 0 20px" }}>{emp?.id ? "Edit Employee" : "Add Employee"}</h2>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:14 }}>
           {[["name","Full Name *","text"],["role","Role / Position","text"],["email","Email","email"],["phone","Phone","tel"]].map(([k,l,t])=>(
             <div key={k}>
               <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>{l}</label>
               <input type={t} value={form[k]||""} onChange={e=>set(k,e.target.value)}
-                style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }} />
+                style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif" }} />
             </div>
           ))}
         </div>
@@ -191,19 +191,19 @@ function EmployeeModal({ emp, onSave, onClose }) {
             <div key={k}>
               <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>{l}</label>
               <input type="number" min="0" step="0.01" value={form[k]||""} onChange={e=>set(k,e.target.value)}
-                style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }} />
+                style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif" }} />
             </div>
           ))}
         </div>
         <div style={{ marginBottom:20 }}>
           <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>Notes</label>
           <textarea value={form.notes||""} onChange={e=>set("notes",e.target.value)} rows={2}
-            style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif", resize:"vertical" }} />
+            style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif", resize:"vertical" }} />
         </div>
         <div style={{ display:"flex", gap:10 }}>
-          <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:10, padding:12, fontSize:13, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Cancel</button>
+          <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:"var(--radius,3px)", padding:12, fontSize:13, cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>Cancel</button>
           <button onClick={()=>onSave(form)} disabled={!form.name?.trim()}
-            style={{ flex:2, background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:10, padding:12, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", opacity:!form.name?.trim()?0.4:1 }}>
+            style={{ flex:2, background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:"var(--radius,3px)", padding:12, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Barlow',sans-serif", opacity:!form.name?.trim()?0.4:1 }}>
             {emp?.id ? "Save Changes" : "Add Employee"}
           </button>
         </div>
@@ -219,12 +219,12 @@ function ShiftModal({ shift, employees, onSave, onClose }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:400, padding:24, backdropFilter:"blur(8px)" }}
       onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:20, width:"100%", maxWidth:460, padding:28, boxShadow:"0 32px 80px rgba(0,0,0,0.7)" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width:"100%", maxWidth:460, padding:28, boxShadow:"0 32px 80px rgba(0,0,0,0.7)" }}>
         <h2 style={{ fontFamily:"inherit,serif", fontSize:20, margin:"0 0 20px" }}>{shift?.id ? "Edit Shift" : "Add Shift"}</h2>
         <div style={{ marginBottom:14 }}>
           <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>Employee *</label>
           <select value={form.employee_id} onChange={e=>set("employee_id",e.target.value)}
-            style={{ width:"100%", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color: form.employee_id ? "var(--text)":"var(--text3)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+            style={{ width:"100%", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color: form.employee_id ? "var(--text)":"var(--text3)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif" }}>
             <option value="">Select employee…</option>
             {employees.map(e=><option key={e.id} value={e.id}>{e.name} {e.role ? `(${e.role})`:""}</option>)}
           </select>
@@ -234,24 +234,24 @@ function ShiftModal({ shift, employees, onSave, onClose }) {
             <div key={k}>
               <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>{l}</label>
               <input type="datetime-local" value={form[k]?.slice?.(0,16)||""} onChange={e=>set(k,e.target.value)}
-                style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }} />
+                style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif" }} />
             </div>
           ))}
         </div>
         <div style={{ marginBottom:14 }}>
           <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>Role Override</label>
           <input value={form.role||""} onChange={e=>set("role",e.target.value)}
-            style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }} />
+            style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif" }} />
         </div>
         <div style={{ marginBottom:20 }}>
           <label style={{ display:"block", fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:5 }}>Notes</label>
           <input value={form.notes||""} onChange={e=>set("notes",e.target.value)}
-            style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }} />
+            style={{ width:"100%", boxSizing:"border-box", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 13px", color:"var(--text)", fontSize:13, outline:"none", fontFamily:"'Barlow',sans-serif" }} />
         </div>
         <div style={{ display:"flex", gap:10 }}>
-          <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:10, padding:12, fontSize:13, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Cancel</button>
+          <button onClick={onClose} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:"var(--radius,3px)", padding:12, fontSize:13, cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>Cancel</button>
           <button onClick={()=>onSave(form)} disabled={!form.employee_id||!form.start_time||!form.end_time}
-            style={{ flex:2, background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:10, padding:12, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", opacity:(!form.employee_id||!form.start_time||!form.end_time)?0.4:1 }}>
+            style={{ flex:2, background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:"var(--radius,3px)", padding:12, fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Barlow',sans-serif", opacity:(!form.employee_id||!form.start_time||!form.end_time)?0.4:1 }}>
             {shift?.id ? "Save Changes" : "Add Shift"}
           </button>
         </div>
@@ -298,7 +298,7 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
     const emp = employees.find(e=>e.id===s.employee_id);
     const col = empColor(s.employee_id);
     return (
-      <div onClick={()=>onEditShift(s)} style={{ background:`${col}18`, border:`1px solid ${col}40`, borderRadius:6, padding:"3px 8px", fontSize:11, color:col, cursor:"pointer", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}
+      <div onClick={()=>onEditShift(s)} style={{ background:`${col}18`, border:`1px solid ${col}40`, borderRadius:"var(--radius,3px)", padding:"3px 8px", fontSize:11, color:col, cursor:"pointer", marginBottom:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}
         title={`${emp?.name} ${fmtTime(s.start_time)}–${fmtTime(s.end_time)}`}>
         {fmtTime(s.start_time)} {emp?.name?.split(" ")[0]}
       </div>
@@ -316,25 +316,25 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
       {/* Controls */}
       <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20, flexWrap:"wrap" }}>
         <div style={{ display:"flex", gap:6 }}>
-          <button onClick={()=>navigate(-1)} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14 }}>←</button>
-          <button onClick={()=>setCursor(new Date())} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:12 }}>Today</button>
-          <button onClick={()=>navigate(1)} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif", fontSize:14 }}>→</button>
+          <button onClick={()=>navigate(-1)} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"7px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif", fontSize:14 }}>←</button>
+          <button onClick={()=>setCursor(new Date())} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:"var(--radius,3px)", padding:"7px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif", fontSize:12 }}>Today</button>
+          <button onClick={()=>navigate(1)} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"7px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif", fontSize:14 }}>→</button>
         </div>
         <div style={{ flex:1, fontSize:15, fontWeight:600, color:"var(--text)" }}>{headerLabel}</div>
         {/* View toggles */}
-        <div style={{ display:"flex", background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:9, overflow:"hidden" }}>
+        <div style={{ display:"flex", background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", overflow:"hidden" }}>
           {["day","week","month"].map(v=>(
-            <button key={v} onClick={()=>setView(v)} style={{ background:view===v?"var(--border)":"none", border:"none", color:view===v?"var(--text)":"var(--text2)", padding:"7px 14px", cursor:"pointer", fontSize:12, fontFamily:"'Plus Jakarta Sans',sans-serif", textTransform:"capitalize" }}>{v}</button>
+            <button key={v} onClick={()=>setView(v)} style={{ background:view===v?"var(--border)":"none", border:"none", color:view===v?"var(--text)":"var(--text2)", padding:"7px 14px", cursor:"pointer", fontSize:12, fontFamily:"'Barlow',sans-serif", textTransform:"capitalize" }}>{v}</button>
           ))}
-          <button onClick={()=>setListView(l=>!l)} style={{ background:listView?"var(--border)":"none", border:"none", borderLeft:"1.5px solid var(--border)", color:listView?"var(--text)":"var(--text2)", padding:"7px 12px", cursor:"pointer", fontSize:12, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>≡ List</button>
+          <button onClick={()=>setListView(l=>!l)} style={{ background:listView?"var(--border)":"none", border:"none", borderLeft:"1.5px solid var(--border)", color:listView?"var(--text)":"var(--text2)", padding:"7px 12px", cursor:"pointer", fontSize:12, fontFamily:"'Barlow',sans-serif" }}>≡ List</button>
         </div>
         {/* Employee filter */}
         <select value={filterEmp} onChange={e=>setFilterEmp(e.target.value)}
-          style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"7px 12px", color:"var(--text)", fontSize:12, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+          style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"7px 12px", color:"var(--text)", fontSize:12, outline:"none", fontFamily:"'Barlow',sans-serif" }}>
           <option value="all">All Staff</option>
           {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
         </select>
-        <button onClick={onAddShift} style={{ background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:9, padding:"8px 16px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>+ Shift</button>
+        <button onClick={onAddShift} style={{ background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:"var(--radius,3px)", padding:"8px 16px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>+ Shift</button>
       </div>
 
       {/* List view */}
@@ -352,9 +352,9 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
                   <div style={{ fontSize:13, fontWeight:600, color:"var(--text)" }}>{emp?.name}</div>
                   <div style={{ fontSize:12, color:"var(--text2)" }}>{fmt(s.start_time)} · {fmtTime(s.start_time)}–{fmtTime(s.end_time)} · {dur.toFixed(1)}h</div>
                 </div>
-                {s.role && <span style={{ fontSize:11, padding:"2px 9px", borderRadius:20, background:"var(--bg3)", color:"var(--text2)", border:"1.5px solid var(--border)" }}>{s.role}</span>}
-                <button onClick={()=>onEditShift(s)} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:7, padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:12, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>✎</button>
-                <button onClick={()=>onDeleteShift(s.id)} style={{ background:"none", border:"none", color:"var(--text3)", cursor:"pointer", fontSize:14, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>✕</button>
+                {s.role && <span style={{ fontSize:11, padding:"2px 9px", borderRadius:"var(--radiusLg,4px)", background:"var(--bg3)", color:"var(--text2)", border:"1.5px solid var(--border)" }}>{s.role}</span>}
+                <button onClick={()=>onEditShift(s)} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:12, fontFamily:"'Barlow',sans-serif" }}>✎</button>
+                <button onClick={()=>onDeleteShift(s.id)} style={{ background:"none", border:"none", color:"var(--text3)", cursor:"pointer", fontSize:14, fontFamily:"'Barlow',sans-serif" }}>✕</button>
               </div>
             );
           })}
@@ -371,7 +371,7 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
               const inMonth = day.getMonth()===cursor.getMonth();
               const isToday = sameDay(day, new Date());
               return (
-                <div key={i} style={{ minHeight:90, background:isToday?"rgba(201,168,76,0.04)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:8, padding:"6px 8px", opacity:inMonth?1:0.3 }}>
+                <div key={i} style={{ minHeight:90, background:isToday?"rgba(255,77,0,0.04)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:"var(--radius,3px)", padding:"6px 8px", opacity:inMonth?1:0.3 }}>
                   <div style={{ fontSize:12, color:isToday?"var(--accent)":"var(--text2)", fontWeight:isToday?700:400, marginBottom:4 }}>{day.getDate()}</div>
                   {dayShifts.slice(0,3).map(s=><ShiftChip key={s.id} s={s}/>)}
                   {dayShifts.length>3 && <div style={{ fontSize:10, color:"var(--text3)" }}>+{dayShifts.length-3} more</div>}
@@ -388,11 +388,11 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
               const dayShifts = shiftsOnDay(day);
               const isToday = sameDay(day, new Date());
               return (
-                <div key={i} style={{ minHeight:140, background:isToday?"rgba(201,168,76,0.04)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:12, padding:"10px 10px 8px", cursor:"pointer" }}
+                <div key={i} style={{ minHeight:140, background:isToday?"rgba(255,77,0,0.04)":"var(--bg2)", border:`1px solid ${isToday?"var(--accentBorder)":"var(--bg3)"}`, borderRadius:"var(--radius,3px)", padding:"10px 10px 8px", cursor:"pointer" }}
                   onClick={()=>{setCursor(day);setView("day");}}>
                   <div style={{ marginBottom:8 }}>
                     <div style={{ fontSize:11, color:"var(--text2)" }}>{DAYS[i]}</div>
-                    <div style={{ fontSize:18, fontWeight:700, color:isToday?"var(--accent)":"var(--text)" }}>{day.getDate()}</div>
+                    <div style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, color:isToday?"var(--accent)":"var(--text)" }}>{day.getDate()}</div>
                   </div>
                   {dayShifts.map(s=><ShiftChip key={s.id} s={s}/>)}
                   {dayShifts.length===0 && <div style={{ fontSize:10, color:"var(--bg3)", marginTop:8, textAlign:"center" }}>+</div>}
@@ -404,9 +404,9 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
       ) : (
         /* Day view */
         <div>
-          <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:14, padding:"20px" }}>
+          <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding:"20px" }}>
             {shiftsOnDay(cursor).length===0
-              ? <div style={{ textAlign:"center", padding:"40px 0", color:"var(--text3)", fontSize:13 }}>No shifts scheduled for this day. <button onClick={onAddShift} style={{ background:"none", border:"none", color:"var(--accent)", cursor:"pointer", fontSize:13, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>+ Add one</button></div>
+              ? <div style={{ textAlign:"center", padding:"40px 0", color:"var(--text3)", fontSize:13 }}>No shifts scheduled for this day. <button onClick={onAddShift} style={{ background:"none", border:"none", color:"var(--accent)", cursor:"pointer", fontSize:13, fontFamily:"'Barlow',sans-serif" }}>+ Add one</button></div>
               : [...shiftsOnDay(cursor)].sort((a,b)=>new Date(a.start_time)-new Date(b.start_time)).map((s,i)=>{
                   const emp = employees.find(e=>e.id===s.employee_id);
                   const col = empColor(s.employee_id);
@@ -420,7 +420,7 @@ function ScheduleCalendar({ eventId, employees, shifts, onAddShift, onEditShift,
                         <div style={{ fontSize:14, fontWeight:600, color:"var(--text)" }}>{emp?.name}</div>
                         <div style={{ fontSize:12, color:"var(--text2)" }}>{fmtTime(s.start_time)} – {fmtTime(s.end_time)} · {dur}h{s.role?` · ${s.role}`:""}</div>
                       </div>
-                      <button onClick={()=>onEditShift(s)} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:7, padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:12, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>✎ Edit</button>
+                      <button onClick={()=>onEditShift(s)} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"5px 10px", color:"var(--text2)", cursor:"pointer", fontSize:12, fontFamily:"'Barlow',sans-serif" }}>✎ Edit</button>
                     </div>
                   );
                 })
@@ -461,29 +461,29 @@ function EmployeeTimesheet({ emp, entries, onEditEntry, onClose }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:400, padding:24, backdropFilter:"blur(8px)" }}
       onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:20, width:"100%", maxWidth:680, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 32px 80px rgba(0,0,0,0.7)" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width:"100%", maxWidth:680, maxHeight:"90vh", overflowY:"auto", boxShadow:"0 32px 80px rgba(0,0,0,0.7)" }}>
         <div style={{ padding:"24px 28px", borderBottom:"1.5px solid var(--border)", display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
           <div>
-            <h2 style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.03em", margin:"0 0 4px" }}>{emp.name}</h2>
+            <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing:"-0.03em", margin:"0 0 4px" }}>{emp.name}</h2>
             <div style={{ fontSize:13, color:"var(--text2)" }}>{emp.role} · ${(emp.hourly_rate||0).toFixed(2)}/hr · {emp.tax_rate||0}% tax</div>
           </div>
-          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:8, padding:"6px 12px", color:"var(--text2)", cursor:"pointer", fontSize:13, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>✕ Close</button>
+          <button onClick={onClose} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"6px 12px", color:"var(--text2)", cursor:"pointer", fontSize:13, fontFamily:"'Barlow',sans-serif" }}>✕ Close</button>
         </div>
 
         {/* Week nav */}
         <div style={{ padding:"16px 28px", borderBottom:"1.5px solid var(--border)", display:"flex", alignItems:"center", gap:12 }}>
-          <button onClick={()=>setWeekCursor(addDays(weekCursor,-7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>←</button>
+          <button onClick={()=>setWeekCursor(addDays(weekCursor,-7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"6px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>←</button>
           <div style={{ flex:1, textAlign:"center", fontSize:14, fontWeight:600 }}>{fmt(ws2)} – {fmt(addDays(ws2,6))}</div>
-          <button onClick={()=>setWeekCursor(addDays(weekCursor,7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>→</button>
-          <button onClick={exportCSV} style={{ background:"none", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:8, padding:"6px 12px", cursor:"pointer", fontSize:12, fontFamily:"inherit", fontWeight:600 }}>⬇ Export CSV</button>
+          <button onClick={()=>setWeekCursor(addDays(weekCursor,7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"6px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>→</button>
+          <button onClick={exportCSV} style={{ background:"none", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:"var(--radius,3px)", padding:"6px 12px", cursor:"pointer", fontSize:12, fontFamily:"inherit", fontWeight:600 }}>⬇ Export CSV</button>
         </div>
 
         {/* Pay summary cards */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, padding:"20px 28px", borderBottom:"1.5px solid var(--border)" }}>
           {[["Hours Worked", `${totalHours.toFixed(2)}h`, "#818cf8"],["Gross Pay", `$${gross.toFixed(2)}`, "var(--accent)"],["Tax", `-$${taxAmt.toFixed(2)}`, "#ef4444"],["Net Pay", `$${net.toFixed(2)}`, "#10b981"]].map(([l,v,c])=>(
-            <div key={l} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+            <div key={l} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"14px 16px" }}>
               <div style={{ fontSize:11, color:"var(--text2)", marginBottom:6 }}>{l}</div>
-              <div style={{ fontSize:18, fontWeight:700, color:c }}>{v}</div>
+              <div style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, color:c }}>{v}</div>
             </div>
           ))}
         </div>
@@ -507,7 +507,7 @@ function EmployeeTimesheet({ emp, entries, onEditEntry, onClose }) {
                       <div key={e.id} style={{ display:"flex", gap:8, alignItems:"center", fontSize:12, color:"var(--text2)", marginBottom:i<dayEntries.length-1?8:0,
                         background: e.manager_edited ? "rgba(245,158,11,0.05)" : "transparent",
                         border: e.manager_edited ? "1px solid rgba(245,158,11,0.15)" : "1px solid transparent",
-                        borderRadius:8, padding:"6px 8px" }}>
+                        borderRadius:"var(--radius,3px)", padding:"6px 8px" }}>
                         <span style={{ color:"#10b981" }}>▶ {fmtTime(e.clock_in)}</span>
                         <span>→</span>
                         <span style={{ color: e.clock_out?"var(--text2)":"#f59e0b" }}>{e.clock_out ? `■ ${fmtTime(e.clock_out)}` : "● Active"}</span>
@@ -515,7 +515,7 @@ function EmployeeTimesheet({ emp, entries, onEditEntry, onClose }) {
                         {e.manager_edited && <span style={{ fontSize:10, background:"rgba(245,158,11,0.15)", color:"#b45309", borderRadius:4, padding:"1px 6px", fontWeight:700 }}>edited</span>}
                         <span style={{ marginLeft:"auto", color:"var(--text)", fontWeight:600 }}>{hoursWorked(e).toFixed(2)}h</span>
                         <button onClick={()=>onEditEntry(e)}
-                          style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:6, padding:"3px 8px", color:"var(--text3)", cursor:"pointer", fontSize:11, fontFamily:"inherit", flexShrink:0 }}>
+                          style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"3px 8px", color:"var(--text3)", cursor:"pointer", fontSize:11, fontFamily:"inherit", flexShrink:0 }}>
                           ✎ Edit
                         </button>
                       </div>
@@ -530,7 +530,7 @@ function EmployeeTimesheet({ emp, entries, onEditEntry, onClose }) {
 
         {/* Pay details */}
         {emp.deductions>0 && (
-          <div style={{ margin:"0 28px 20px", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:10, padding:"14px 16px" }}>
+          <div style={{ margin:"0 28px 20px", background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"14px 16px" }}>
             <div style={{ fontSize:11, color:"var(--text2)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:10 }}>Pay Calculation</div>
             <div style={{ display:"flex", flexDirection:"column", gap:6, fontSize:13 }}>
               <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--text2)" }}>Gross ({totalHours.toFixed(2)}h × ${(emp.hourly_rate||0).toFixed(2)})</span><span>${gross.toFixed(2)}</span></div>
@@ -711,7 +711,7 @@ export default function StaffManager({ eventId }) {
   return (
     <div className="fade-up">
       <style>{`
-        .staff-tab { background:none; border:none; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text2); border-bottom:2px solid transparent; transition:all 0.15s; }
+        .staff-tab { background:none; border:none; padding:8px 16px; font-size:13px; cursor:pointer; font-family:'Barlow',sans-serif; color:var(--text2); border-bottom:2px solid transparent; transition:all 0.15s; }
         .staff-tab.active { color:var(--text); border-bottom-color:var(--accent); }
         .staff-tab:hover:not(.active) { color:var(--text2); }
       `}</style>
@@ -719,10 +719,10 @@ export default function StaffManager({ eventId }) {
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:4 }}>
         <div>
-          <h1 style={{ fontFamily:"inherit", fontSize:28, fontWeight:700, marginBottom:4 }}>Staff</h1>
+          <h1 style={{ fontFamily:"inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, marginBottom:4 }}>Staff</h1>
           <p style={{ color:"var(--text2)", fontSize:14 }}>{employees.length} employees · {shifts.filter(s=>sameDay(s.start_time,new Date())).length} shifts today</p>
         </div>
-        {tab==="employees" && <button onClick={()=>setEmpModal({})} style={{ background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:9, padding:"9px 18px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>+ Add Employee</button>}
+        {tab==="employees" && <button onClick={()=>setEmpModal({})} style={{ background:"var(--accent)", border:"none", color:"var(--bg)", borderRadius:"var(--radius,3px)", padding:"9px 18px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>+ Add Employee</button>}
       </div>
 
       {/* Tabs */}
@@ -747,7 +747,7 @@ export default function StaffManager({ eventId }) {
         <div>
           {employees.length===0
             ? <div style={{ textAlign:"center", padding:"60px 20px", color:"var(--text3)", fontSize:14 }}>
-                No employees yet. <button onClick={()=>setEmpModal({})} style={{ background:"none", border:"none", color:"var(--accent)", cursor:"pointer", fontSize:14, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Add your first employee →</button>
+                No employees yet. <button onClick={()=>setEmpModal({})} style={{ background:"none", border:"none", color:"var(--accent)", cursor:"pointer", fontSize:14, fontFamily:"'Barlow',sans-serif" }}>Add your first employee →</button>
               </div>
             : <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))", gap:14 }}>
                 {employees.map((emp,i)=>{
@@ -757,7 +757,7 @@ export default function StaffManager({ eventId }) {
                   const { totalHours: wkHrs } = calcPay(thisWeekEntries, emp);
                   const clocked = empEntries.find(e=>!e.clock_out);
                   return (
-                    <div key={emp.id} style={{ background:"var(--bg2)", border:`1px solid ${col}25`, borderRadius:16, padding:"18px 20px", position:"relative", overflow:"hidden" }}>
+                    <div key={emp.id} style={{ background:"var(--bg2)", border:`1px solid ${col}25`, borderRadius:"var(--radiusLg,4px)", padding:"18px 20px", position:"relative", overflow:"hidden" }}>
                       <div style={{ position:"absolute", top:0, left:0, right:0, height:2, background:`linear-gradient(90deg,${col},transparent)` }}/>
                       <div style={{ display:"flex", alignItems:"flex-start", gap:12, marginBottom:14 }}>
                         <div style={{ width:40, height:40, borderRadius:"50%", background:`${col}18`, border:`1.5px solid ${col}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, color:col, fontWeight:700, flexShrink:0 }}>
@@ -767,11 +767,11 @@ export default function StaffManager({ eventId }) {
                           <div style={{ fontSize:15, fontWeight:700, color:"var(--text)", marginBottom:2 }}>{emp.name}</div>
                           <div style={{ fontSize:12, color:"var(--text2)" }}>{emp.role||"Staff"}</div>
                         </div>
-                        {clocked && <span style={{ fontSize:11, padding:"2px 10px", borderRadius:20, background:"rgba(5,150,105,0.1)", color:"var(--success,#059669)", border:"1.5px solid rgba(5,150,105,0.2)", fontWeight:600 }}>● Clocked In</span>}
+                        {clocked && <span style={{ fontSize:11, padding:"2px 10px", borderRadius:"var(--radiusLg,4px)", background:"rgba(5,150,105,0.1)", color:"var(--success,#059669)", border:"1.5px solid rgba(5,150,105,0.2)", fontWeight:600 }}>● Clocked In</span>}
                       </div>
                       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:14 }}>
                         {[["Rate", `$${(emp.hourly_rate||0).toFixed(2)}/hr`],["Tax", `${emp.tax_rate||0}%`],["This Week", `${wkHrs.toFixed(1)}h`]].map(([l,v])=>(
-                          <div key={l} style={{ background:"var(--bg3)", borderRadius:8, padding:"8px 10px" }}>
+                          <div key={l} style={{ background:"var(--bg3)", borderRadius:"var(--radius,3px)", padding:"8px 10px" }}>
                             <div style={{ fontSize:10, color:"var(--text3)", marginBottom:3 }}>{l}</div>
                             <div style={{ fontSize:13, fontWeight:600, color:"var(--text)" }}>{v}</div>
                           </div>
@@ -781,20 +781,20 @@ export default function StaffManager({ eventId }) {
                       <div style={{ display:"flex", gap:8, marginBottom:8 }}>
                         {clocked ? (
                           <button onClick={()=>managerClockOut(emp, clocked)}
-                            style={{ flex:1, background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.3)", color:"var(--success,#059669)", borderRadius:8, padding:"7px 0", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                            style={{ flex:1, background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.3)", color:"var(--success,#059669)", borderRadius:"var(--radius,3px)", padding:"7px 0", fontSize:12, fontWeight:700, cursor:"pointer" }}>
                             ■ Clock Out
                           </button>
                         ) : (
                           <button onClick={()=>managerClockIn(emp)}
-                            style={{ flex:1, background:"var(--accentBg)", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:8, padding:"7px 0", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                            style={{ flex:1, background:"var(--accentBg)", border:"1.5px solid var(--accentBorder)", color:"var(--accent)", borderRadius:"var(--radius,3px)", padding:"7px 0", fontSize:12, fontWeight:700, cursor:"pointer" }}>
                             ▶ Clock In
                           </button>
                         )}
                       </div>
                       <div style={{ display:"flex", gap:8 }}>
-                        <button onClick={()=>copyPortalLink(emp)} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:8, padding:"7px 0", fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>🔗 Portal Link</button>
-                        <button onClick={()=>setTimesheetEmp(emp)} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:8, padding:"7px 0", fontSize:12, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>📋 Timesheet</button>
-                        <button onClick={()=>setEmpModal({...emp})} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:8, padding:"7px 10px", fontSize:12, color:"var(--text2)", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>✎</button>
+                        <button onClick={()=>copyPortalLink(emp)} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:"var(--radius,3px)", padding:"7px 0", fontSize:12, cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>🔗 Portal Link</button>
+                        <button onClick={()=>setTimesheetEmp(emp)} style={{ flex:1, background:"none", border:"1.5px solid var(--border)", color:"var(--text2)", borderRadius:"var(--radius,3px)", padding:"7px 0", fontSize:12, cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>📋 Timesheet</button>
+                        <button onClick={()=>setEmpModal({...emp})} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"7px 10px", fontSize:12, color:"var(--text2)", cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>✎</button>
                         <button onClick={()=>deleteEmployee(emp.id)} style={{ background:"none", border:"none", color:"var(--text3)", cursor:"pointer", fontSize:16 }}>✕</button>
                       </div>
                     </div>
@@ -810,11 +810,11 @@ export default function StaffManager({ eventId }) {
         <div>
           {/* Controls */}
           <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20, flexWrap:"wrap" }}>
-            <button onClick={()=>setTsWeekFilter(addDays(tsWeekFilter,-7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>←</button>
+            <button onClick={()=>setTsWeekFilter(addDays(tsWeekFilter,-7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"7px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>←</button>
             <div style={{ fontSize:14, fontWeight:600 }}>{fmt(tsWeekStart)} – {fmt(addDays(tsWeekStart,6))}</div>
-            <button onClick={()=>setTsWeekFilter(addDays(tsWeekFilter,7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:8, padding:"7px 12px", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>→</button>
+            <button onClick={()=>setTsWeekFilter(addDays(tsWeekFilter,7))} style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"7px 12px", cursor:"pointer", fontFamily:"'Barlow',sans-serif" }}>→</button>
             <select value={tsEmpFilter} onChange={e=>setTsEmpFilter(e.target.value)}
-              style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:9, padding:"7px 12px", color:"var(--text)", fontSize:12, outline:"none", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+              style={{ background:"var(--bg3)", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"7px 12px", color:"var(--text)", fontSize:12, outline:"none", fontFamily:"'Barlow',sans-serif" }}>
               <option value="all">All Employees</option>
               {employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
             </select>
@@ -825,7 +825,7 @@ export default function StaffManager({ eventId }) {
             const pending = entries.filter(e => e.is_exception && e.approved === null && (tsEmpFilter==="all" || e.employee_id===tsEmpFilter));
             if (pending.length === 0) return null;
             return (
-              <div style={{ background:"rgba(245,158,11,0.04)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:14, marginBottom:20, overflow:"hidden" }}>
+              <div style={{ background:"rgba(245,158,11,0.04)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:"var(--radiusLg,4px)", marginBottom:20, overflow:"hidden" }}>
                 <div style={{ padding:"14px 20px", borderBottom:"1px solid rgba(245,158,11,0.1)", display:"flex", gap:10, alignItems:"center" }}>
                   <span style={{ fontSize:16 }}>⚠️</span>
                   <div style={{ flex:1 }}>
@@ -847,11 +847,11 @@ export default function StaffManager({ eventId }) {
                         </div>
                       </div>
                       <button onClick={() => handleApproveException(e.id, false)}
-                        style={{ background:"none", border:"1.5px solid rgba(220,38,38,0.3)", color:"var(--danger,#dc2626)", borderRadius:8, padding:"6px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
+                        style={{ background:"none", border:"1.5px solid rgba(220,38,38,0.3)", color:"var(--danger,#dc2626)", borderRadius:"var(--radius,3px)", padding:"6px 12px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
                         ✗ Reject
                       </button>
                       <button onClick={() => handleApproveException(e.id, true)}
-                        style={{ background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.25)", color:"var(--success,#059669)", borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
+                        style={{ background:"rgba(5,150,105,0.1)", border:"1.5px solid rgba(5,150,105,0.25)", color:"var(--success,#059669)", borderRadius:"var(--radius,3px)", padding:"6px 12px", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"inherit" }}>
                         ✓ Approve
                       </button>
                     </div>
@@ -884,7 +884,7 @@ export default function StaffManager({ eventId }) {
                   <div style={{ textAlign:"right", fontSize:13, color:"#ef4444" }}>${taxAmt.toFixed(2)}</div>
                   <div style={{ textAlign:"right", fontSize:13, color:"#ef4444" }}>${(emp.deductions||0).toFixed(2)}</div>
                   <div style={{ textAlign:"right", fontSize:14, fontWeight:700, color:"#10b981" }}>${net.toFixed(2)}</div>
-                  <button onClick={()=>setTimesheetEmp(emp)} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:6, padding:"4px 8px", color:"var(--text2)", cursor:"pointer", fontSize:11, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>→</button>
+                  <button onClick={()=>setTimesheetEmp(emp)} style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"4px 8px", color:"var(--text2)", cursor:"pointer", fontSize:11, fontFamily:"'Barlow',sans-serif" }}>→</button>
                 </div>
               );
             })}

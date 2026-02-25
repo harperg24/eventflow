@@ -9,27 +9,26 @@ import { supabase } from "../lib/supabase";
 const S = {
   card: {
     background: "var(--bg2)", border: "1.5px solid var(--border)",
-    borderRadius: 14, overflow: "hidden",
+    borderRadius:"var(--radiusLg,4px)", overflow: "hidden",
   },
   inp: {
     width: "100%", boxSizing: "border-box", background: "var(--bg3)",
-    border: "1.5px solid var(--border)", borderRadius: 8,
+    border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)",
     padding: "9px 12px", color: "var(--text)", fontSize: 14,
     outline: "none", fontFamily: "inherit", transition: "border-color 0.15s",
   },
   btn: {
     background: "var(--accent)", border: "none", color: "#fff",
-    borderRadius: 9, padding: "9px 18px", fontSize: 13, fontWeight: 700,
+    borderRadius:"var(--radius,3px)", padding: "9px 18px", fontSize: 13, fontWeight: 700,
     cursor: "pointer", fontFamily: "inherit",
   },
   ghost: {
     background: "none", border: "1.5px solid var(--border)", color: "var(--text2)",
-    borderRadius: 8, padding: "6px 13px", fontSize: 12, fontWeight: 600,
+    borderRadius:"var(--radius,3px)", padding: "6px 13px", fontSize: 12, fontWeight: 600,
     cursor: "pointer", fontFamily: "inherit",
   },
   label: {
-    fontSize: 11, fontWeight: 700, color: "var(--text3)",
-    textTransform: "uppercase", letterSpacing: "0.07em",
+    fontFamily:"'Barlow Condensed',Arial,sans-serif", fontSize:"11px", fontWeight:700, color:"var(--text2)", letterSpacing:"0.16em", textTransform:"uppercase", letterSpacing: "0.07em",
     display: "block", marginBottom: 6,
   },
   sectionHead: {
@@ -44,7 +43,7 @@ const chip = (label, active, onClick, color) => (
       background: active ? (color || "var(--accent)") : "var(--bg3)",
       border: `1.5px solid ${active ? (color || "var(--accent)") : "var(--border)"}`,
       color: active ? "#fff" : "var(--text2)",
-      borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600,
+      borderRadius:"var(--radius,3px)", padding: "5px 12px", fontSize: 12, fontWeight: 600,
       cursor: "pointer", fontFamily: "inherit", transition: "all 0.12s",
     }}>
     {label}
@@ -55,9 +54,9 @@ const chip = (label, active, onClick, color) => (
 function Empty({ icon, title, desc, action, onAction }) {
   return (
     <div style={{ textAlign: "center", padding: "64px 20px", background: "var(--bg2)",
-      border: "1.5px solid var(--border)", borderRadius: 16 }}>
+      border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)" }}>
       <div style={{ fontSize: 48, marginBottom: 14 }}>{icon}</div>
-      <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", marginBottom: 8 }}>{title}</h3>
+      <h3 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing: "-0.02em", marginBottom: 8 }}>{title}</h3>
       <p style={{ color: "var(--text2)", fontSize: 13, maxWidth: 340, margin: "0 auto 20px", lineHeight: 1.6 }}>{desc}</p>
       {action && (
         <button onClick={onAction} style={S.btn}>{action}</button>
@@ -106,7 +105,7 @@ function FileUploader({ eventId, folder, files, onChange }) {
       <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:(files||[]).length ? 10 : 0 }}>
         {(files || []).map((f, i) => (
           <div key={i} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--bg3)",
-            border:"1.5px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+            border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 12px" }}>
             <span style={{ fontSize:20, flexShrink:0 }}>
               {isImage(f.type) ? "🖼" : isPdf(f.type) ? "📄" : "📎"}
             </span>
@@ -148,7 +147,7 @@ function FileList({ files }) {
     <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
       {files.map((f, i) => (
         <div key={i} style={{ display:"flex", alignItems:"center", gap:10, background:"var(--bg3)",
-          border:"1.5px solid var(--border)", borderRadius:10, padding:"10px 12px" }}>
+          border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"10px 12px" }}>
           <span style={{ fontSize:18, flexShrink:0 }}>
             {isImage(f.type) ? "🖼" : isPdf(f.type) ? "📄" : "📎"}
           </span>
@@ -209,7 +208,7 @@ function ShoppingListEditor({ items, onChange }) {
         {(items || []).map((item, i) => (
           <div key={i} style={{ display: "flex", gap: 8, alignItems: "center",
             background: item.done ? "var(--bg3)" : "var(--bg2)",
-            border: "1.5px solid var(--border)", borderRadius: 10, padding: "10px 12px",
+            border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 12px",
             opacity: item.done ? 0.55 : 1, transition: "all 0.15s" }}>
             <input type="checkbox" checked={item.done}
               onChange={e => update(i, { done: e.target.checked })}
@@ -301,7 +300,7 @@ function RidersTab({ eventId }) {
               <div style={{ padding: "16px 18px", display: "flex", alignItems: "center", gap: 14,
                 cursor: "pointer", userSelect: "none" }}
                 onClick={() => setExpandedId(isOpen ? null : r.id)}>
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: "var(--accentBg)",
+                <div style={{ width: 42, height: 42, borderRadius:"var(--radius,3px)", background: "var(--accentBg)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 20, flexShrink: 0 }}>
                   🎤
@@ -339,7 +338,7 @@ function RidersTab({ eventId }) {
                     <div>
                       <div style={S.label}>Notes</div>
                       <div style={{ fontSize: 13, color: "var(--text2)", lineHeight: 1.6,
-                        background: "var(--bg3)", borderRadius: 8, padding: "10px 14px",
+                        background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "10px 14px",
                         whiteSpace: "pre-wrap" }}>
                         {r.notes}
                       </div>
@@ -357,7 +356,7 @@ function RidersTab({ eventId }) {
                           ["🎭 Production",  r.requirements?.production],
                           ["🚐 Transport",   r.requirements?.transport],
                         ].filter(([, v]) => v).map(([label, val]) => (
-                          <div key={label} style={{ background: "var(--bg3)", borderRadius: 10,
+                          <div key={label} style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)",
                             padding: "12px 14px" }}>
                             <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4, color: "var(--text2)" }}>{label}</div>
                             <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{val}</div>
@@ -394,7 +393,7 @@ function RidersTab({ eventId }) {
                             color: "var(--text)" }}>
                             {item.qty} {item.unit} {item.name}
                           </span>
-                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 6,
+                          <span style={{ fontSize: 11, padding: "2px 8px", borderRadius:"var(--radius,3px)",
                             background: "var(--bg3)", color: "var(--text3)" }}>{item.category}</span>
                         </div>
                       ))}
@@ -423,7 +422,7 @@ function RiderForm({ eventId, rider, onSave, onCancel }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em" }}>
+        <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing: "-0.03em" }}>
           {form.id ? "Edit Rider" : "New Rider"}
         </h2>
         <div style={{ display: "flex", gap: 8 }}>
@@ -434,12 +433,12 @@ function RiderForm({ eventId, rider, onSave, onCancel }) {
 
       {/* Sub-nav */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--bg3)",
-        borderRadius: 10, padding: 4, width: "fit-content" }}>
+        borderRadius:"var(--radius,3px)", padding: 4, width: "fit-content" }}>
         {tabs.map(t => (
           <button key={t} onClick={() => setTab(t)}
             style={{ background: tab === t ? "var(--bg2)" : "none",
               border: tab === t ? "1.5px solid var(--border)" : "1.5px solid transparent",
-              borderRadius: 8, padding: "6px 16px", fontSize: 13, fontWeight: 600,
+              borderRadius:"var(--radius,3px)", padding: "6px 16px", fontSize: 13, fontWeight: 600,
               color: tab === t ? "var(--text)" : "var(--text3)", cursor: "pointer",
               fontFamily: "inherit", textTransform: "capitalize" }}>
             {t === "shopping" ? "Shopping List" : t === "files" ? "Files" : t.charAt(0).toUpperCase() + t.slice(1)}
@@ -617,7 +616,7 @@ function InventoryTab({ eventId }) {
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
               {INV_STATUSES.map(s => (
                 <button key={s} onClick={() => updateStatus(item.id, s)}
-                  style={{ fontSize: 11, padding: "3px 9px", borderRadius: 6, fontWeight: 600,
+                  style={{ fontSize: 11, padding: "3px 9px", borderRadius:"var(--radius,3px)", fontWeight: 600,
                     cursor: "pointer", fontFamily: "inherit", transition: "all 0.12s",
                     background: item.status === s ? `${INV_STATUS_COLORS[s]}18` : "var(--bg3)",
                     border: `1.5px solid ${item.status === s ? INV_STATUS_COLORS[s] : "var(--border)"}`,
@@ -642,7 +641,7 @@ function InventoryForm({ item, onSave, onCancel }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800 }}>{form.id ? "Edit Item" : "Add Item"}</h2>
+        <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900 }}>{form.id ? "Edit Item" : "Add Item"}</h2>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onCancel} style={S.ghost}>Cancel</button>
           <button onClick={() => form.name.trim() && onSave(form)} style={S.btn}>Save Item</button>
@@ -833,7 +832,7 @@ function IncidentForm({ eventId, incident, event, onSave, onCancel }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800 }}>{form.id ? "Edit Incident Report" : "Log Incident"}</h2>
+        <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900 }}>{form.id ? "Edit Incident Report" : "Log Incident"}</h2>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onCancel} style={S.ghost}>Cancel</button>
           <button onClick={() => form.description.trim() && onSave(form)}
@@ -1025,7 +1024,7 @@ function HSTab({ eventId, event }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {plans.map(p => (
             <div key={p.id} style={{ ...S.card, padding: "15px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(16,185,129,0.12)",
+              <div style={{ width: 40, height: 40, borderRadius:"var(--radius,3px)", background: "rgba(16,185,129,0.12)",
                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
                 🦺
               </div>
@@ -1112,7 +1111,7 @@ function HSPlanForm({ eventId, plan, event, onSave, onCancel }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800 }}>{form.id ? "Edit H&S Plan" : "New H&S Plan"}</h2>
+        <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900 }}>{form.id ? "Edit H&S Plan" : "New H&S Plan"}</h2>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onCancel} style={S.ghost}>Cancel</button>
           <button onClick={() => form.title.trim() && onSave(form)} style={S.btn}>Save Plan</button>
@@ -1120,12 +1119,12 @@ function HSPlanForm({ eventId, plan, event, onSave, onCancel }) {
       </div>
 
       {/* Section nav */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--bg3)", borderRadius: 10, padding: 4, width: "fit-content" }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: 4, width: "fit-content" }}>
         {sections.map(s => (
           <button key={s} onClick={() => setTab(s)}
             style={{ background: tab === s ? "var(--bg2)" : "none",
               border: tab === s ? "1.5px solid var(--border)" : "1.5px solid transparent",
-              borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600,
+              borderRadius:"var(--radius,3px)", padding: "6px 14px", fontSize: 13, fontWeight: 600,
               color: tab === s ? "var(--text)" : "var(--text3)", cursor: "pointer", fontFamily: "inherit",
               textTransform: "capitalize" }}>
             {s === "emergency" ? "Emergency" : s === "wardens" ? "Wardens & Comms" : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -1184,7 +1183,7 @@ function HSPlanForm({ eventId, plan, event, onSave, onCancel }) {
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {(form.hazards || []).map((h, i) => (
-                <div key={i} style={{ background: "var(--bg3)", borderRadius: 10, padding: "14px", border: "1.5px solid var(--border)" }}>
+                <div key={i} style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "14px", border: "1.5px solid var(--border)" }}>
                   <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
                     <input value={h.hazard} onChange={e => updateHazard(i, { hazard: e.target.value })}
                       style={{ ...S.inp, flex: 1 }} placeholder="Hazard description (e.g. Crowd crush near stage)" />
@@ -1241,7 +1240,7 @@ function HSPlanView({ plan, onBack, onEdit }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={onBack} style={{ ...S.ghost, fontSize: 13 }}>← Back</button>
-          <h2 style={{ fontSize: 20, fontWeight: 800 }}>{plan.title}</h2>
+          <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900 }}>{plan.title}</h2>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => window.print()} style={S.ghost}>🖨 Print</button>
@@ -1249,14 +1248,14 @@ function HSPlanView({ plan, onBack, onEdit }) {
         </div>
       </div>
 
-      <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 16,
+      <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)",
         padding: "32px 36px", maxWidth: 800, fontFamily: "inherit" }}>
 
         {/* Header */}
         <div style={{ borderBottom: "2px solid var(--accent)", paddingBottom: 20, marginBottom: 24 }}>
           <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
             color: "var(--accent)", marginBottom: 6 }}>Health & Safety Plan</div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.03em", marginBottom: 14 }}>{plan.title}</h1>
+          <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing: "-0.03em", marginBottom: 14 }}>{plan.title}</h1>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
             {[
               ["Venue", plan.venue],
@@ -1285,8 +1284,8 @@ function HSPlanView({ plan, onBack, onEdit }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {rows.filter(([, v]) => v).map(([label, val]) => (
-                <div key={label} style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{label}</div>
+                <div key={label} style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "12px 14px" }}>
+                  <div style={{ fontFamily:"'Barlow Condensed',Arial,sans-serif", fontSize:"11px", fontWeight:700, color:"var(--text2)", letterSpacing:"0.16em", textTransform:"uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{label}</div>
                   <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{val}</div>
                 </div>
               ))}
@@ -1302,8 +1301,7 @@ function HSPlanView({ plan, onBack, onEdit }) {
               <thead>
                 <tr style={{ background: "var(--bg3)" }}>
                   {["Hazard", "Likelihood", "Severity", "Risk", "Controls"].map(h => (
-                    <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700,
-                      textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text3)" }}>{h}</th>
+                    <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontFamily:"'Barlow Condensed',Arial,sans-serif", fontSize:"11px", fontWeight:700, color:"var(--text2)", letterSpacing:"0.16em", textTransform:"uppercase", letterSpacing: "0.06em", color: "var(--text3)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1333,7 +1331,7 @@ function HSPlanView({ plan, onBack, onEdit }) {
         {plan.special_requirements && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>📋 Special Requirements</div>
-            <div style={{ background: "var(--bg3)", borderRadius: 10, padding: "12px 14px", fontSize: 13,
+            <div style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "12px 14px", fontSize: 13,
               lineHeight: 1.7, whiteSpace: "pre-wrap", color: "var(--text)" }}>{plan.special_requirements}</div>
           </div>
         )}
@@ -1361,7 +1359,7 @@ function InductionForm({ event, onSave, onCancel }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800 }}>Safety Induction</h2>
+        <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900 }}>Safety Induction</h2>
         <button onClick={onCancel} style={S.ghost}>Cancel</button>
       </div>
 
@@ -1369,7 +1367,7 @@ function InductionForm({ event, onSave, onCancel }) {
         <div style={{ ...S.card, padding: "28px 28px", display: "flex", flexDirection: "column", gap: 20 }}>
 
           {/* Event name banner */}
-          <div style={{ background: "var(--accentBg)", border: "1.5px solid var(--accent)", borderRadius: 10,
+          <div style={{ background: "var(--accentBg)", border: "1.5px solid var(--accent)", borderRadius:"var(--radius,3px)",
             padding: "12px 16px", textAlign: "center" }}>
             <div style={{ fontSize: 13, fontWeight: 800, color: "var(--accent)" }}>
               {event?.name || "Event"} — Safety Induction
@@ -1388,7 +1386,7 @@ function InductionForm({ event, onSave, onCancel }) {
           </div>
 
           {/* Confirmations */}
-          <div style={{ background: "var(--bg3)", borderRadius: 12, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ background: "var(--bg3)", borderRadius:"var(--radius,3px)", padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>
               I confirm that I have been briefed on the following:
             </div>
@@ -1419,7 +1417,7 @@ function InductionForm({ event, onSave, onCancel }) {
 
           {!allConfirmed && (
             <div style={{ background: "rgba(245,158,11,0.08)", border: "1.5px solid rgba(245,158,11,0.3)",
-              borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#92400e" }}>
+              borderRadius:"var(--radius,3px)", padding: "10px 14px", fontSize: 12, color: "#92400e" }}>
               ⚠ Please check all four boxes above before submitting.
             </div>
           )}
@@ -1456,7 +1454,7 @@ export default function Operations({ eventId, event }) {
 
       {/* Page header */}
       <div style={{ marginBottom: 22 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: "-0.04em", marginBottom: 4 }}>
+        <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing: "-0.04em", marginBottom: 4 }}>
           Operations
         </h1>
         <p style={{ color: "var(--text2)", fontSize: 14, margin: 0 }}>
@@ -1466,12 +1464,12 @@ export default function Operations({ eventId, event }) {
 
       {/* Sub-tab nav */}
       <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "var(--bg2)",
-        border: "1.5px solid var(--border)", borderRadius: 12, padding: 5, width: "fit-content" }}>
+        border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: 5, width: "fit-content" }}>
         {OPS_TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             style={{ background: tab === t.id ? "var(--bg3)" : "none",
               border: tab === t.id ? "1.5px solid var(--border)" : "1.5px solid transparent",
-              borderRadius: 9, padding: "8px 18px", fontSize: 13, fontWeight: 600,
+              borderRadius:"var(--radius,3px)", padding: "8px 18px", fontSize: 13, fontWeight: 600,
               color: tab === t.id ? "var(--text)" : "var(--text3)",
               cursor: "pointer", fontFamily: "inherit",
               display: "flex", alignItems: "center", gap: 7, transition: "all 0.12s",

@@ -1592,10 +1592,7 @@ export default function Dashboard() {
     .bm-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75);
       display:flex; align-items:center; justify-content:center;
       z-index:1000; padding:20px; backdrop-filter:blur(4px); }
-    .bm-modal { background:var(--bg2); border:1px solid var(--border);
-      border-radius:var(--radiusLg,4px); padding:28px 32px;
-      width:100%; max-width:460px; max-height:90vh; overflow-y:auto;
-      border-top:3px solid var(--accent); }
+    .bm-modal { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radiusLg,4px); width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; border-top: 3px solid var(--accent); }
     .bm-modal h3 { font-family:'Bebas Neue','Arial Black',Arial,sans-serif;
       font-size:1.8rem; letter-spacing:0.02em; margin-bottom:20px; color:var(--text); }
   `;
@@ -1925,14 +1922,14 @@ export default function Dashboard() {
               .ef-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .ef-field::placeholder { color: var(--text3); }
               .ef-label { display: block; font-family: 'Barlow Condensed',Arial,sans-serif; font-size: 11px; font-weight:700; color: var(--text2); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 7px; font-family: var(--fontBody,'Barlow',sans-serif); }
               .bm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 24px; backdrop-filter: blur(6px); }
-              .bm-modal { background: var(--bg2); border: 1.5px solid var(--border); border-radius: var(--radiusLg,4px); width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; border-top: 3px solid var(--accent); 0.25s cubic-bezier(0.16,1,0.3,1) forwards; }
+              .bm-modal { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radiusLg,4px); width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; border-top: 3px solid var(--accent); }
               .bm-modal-wide { max-width: 560px; }
               @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(12px); } to { opacity:1; transform:scale(1) translateY(0); } }
               .bm-swatch { width: 28px; height: 28px; border-radius: var(--radius,3px); border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; }
-              .bm-swatch:hover { transform: scale(1.15); }
+              .bm-swatch { width: 28px; height: 28px; border-radius: var(--radius,3px); border: 2px solid transparent; cursor: pointer; transition: transform 0.15s; } .bm-swatch:hover { transform: scale(1.15); }
               .bm-swatch.sel { border-color: var(--text); transform: scale(1.1); }
               .bm-icon-btn { width: 36px; height: 36px; border-radius: var(--radius,3px); border: 2px solid transparent; background: var(--bg3); font-size: 17px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-              .bm-icon-btn:hover { border-color: rgba(255,77,0,0.3); background: rgba(255,77,0,0.05); }
+              .bm-icon-btn:hover { border-color: var(--accentBorder); background: var(--accentBg); }
               .bm-icon-btn.sel { border-color: var(--accent); background: var(--accentBg); }
             `}</style>
 
@@ -2648,7 +2645,7 @@ export default function Dashboard() {
               .vm-icon-btn.sel { border-color: var(--accent); background: var(--accentBg); }
             `}</style>
             <div onClick={e => e.stopPropagation()}
-              style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 32px 80px rgba(0,0,0,0.6)", animation: "modalIn 0.25s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+              style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius:"var(--radiusLg,4px)", width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", borderTop: "3px solid var(--accent)" }}>
               <div style={{ padding: "24px 28px 0", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
                   <h2 style={{ fontFamily: "inherit", fontSize: 20, fontWeight: 700, color: "var(--text)", marginBottom: 2 }}>
@@ -2766,7 +2763,7 @@ export default function Dashboard() {
               .tier-card:hover { border-color: var(--accent); }
               .tf { background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--radius,3px); padding: 10px 13px; color: var(--text); font-size: 13px; outline: none; font-family: var(--fontBody,'Barlow',sans-serif); width: 100%; box-sizing: border-box; transition: border-color 0.2s; }
               .tf:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accentBg); } .tf::placeholder { color: var(--text3); }
-              .hub-tab { padding: 8px 16px; border-radius: var(--radius,3px); font-family: 'Barlow Condensed',Arial,sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border: none; font-family: var(--fontBody,'Barlow',sans-serif); transition: all 0.15s; }
+              .hub-tab { padding: 8px 16px; border-radius: var(--radius,3px); font-family: 'Barlow Condensed',Arial,sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.15s; }
               .hub-tab.active { background: var(--accentBg); color: var(--accent); }
               .hub-tab:not(.active) { background: none; color: #5a5a72; }
               .hub-tab:not(.active):hover { color: var(--text); }

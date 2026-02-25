@@ -92,8 +92,20 @@ export default function Home() {
       setUser(user);
       const { data: up } = await supabase.from("user_preferences").select("*").eq("user_id", user.id).single();
       if (up) {
-        const merged = { ...prefs, accent: up.theme_accent || prefs.accent, display_name: up.display_name || "" };
+        // Priority: localStorage > Supabase. Never let Supabase overwrite a locally
+        // saved preference when the user navigates back to /home.
+        const localRaw = localStorage.getItem(BRAND.storageKey);
+        const localPrefs = localRaw ? (() => { try { return JSON.parse(localRaw); } catch { return null; } })() : null;
+        const OLD_PURPLES = ["#4f46e5", "#5b5bd6"];
+        const localIsCustom = localPrefs?.accent && !OLD_PURPLES.includes(localPrefs.accent);
+        const remoteAccent = up.theme_accent && !OLD_PURPLES.includes(up.theme_accent) ? up.theme_accent : BRAND.colors.primary;
+        const resolvedAccent = localIsCustom ? localPrefs.accent : remoteAccent;
+        const merged = { ...prefs, accent: resolvedAccent, display_name: up.display_name || "" };
         updatePrefs(merged);
+        // Push corrected accent back to Supabase if it had old purple
+        if (remoteAccent !== up.theme_accent) {
+          supabase.from("user_preferences").upsert({ user_id: user.id, theme_accent: resolvedAccent, updated_at: new Date().toISOString() });
+        }
         setDisplayName(up.display_name || user.email?.split("@")[0] || "");
       } else {
         setDisplayName(user.email?.split("@")[0] || "");

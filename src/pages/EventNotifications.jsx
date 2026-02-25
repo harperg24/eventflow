@@ -34,20 +34,20 @@ function recipientLabel(v) {
 function Pill({ notif }) {
   const now = new Date();
   if (notif.sent) return (
-    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:700, whiteSpace:"nowrap",
+    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:"var(--radiusLg,4px)", fontWeight:700, whiteSpace:"nowrap",
       background:"rgba(5,150,105,0.08)", border:"1.5px solid rgba(5,150,105,0.25)", color:"#059669" }}>
       ✓ Sent · {notif.sent_count || 0}
     </span>
   );
   if (new Date(notif.send_at) < now) return (
-    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:700, whiteSpace:"nowrap",
+    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:"var(--radiusLg,4px)", fontWeight:700, whiteSpace:"nowrap",
       background:"rgba(245,158,11,0.08)", border:"1.5px solid rgba(245,158,11,0.3)", color:"#d97706" }}>
       ⚠ Overdue
     </span>
   );
   return (
-    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:20, fontWeight:700, whiteSpace:"nowrap",
-      background:"rgba(91,91,214,0.08)", border:"1.5px solid rgba(91,91,214,0.25)", color:"var(--accent,#5b5bd6)" }}>
+    <span style={{ fontSize:11, padding:"3px 10px", borderRadius:"var(--radiusLg,4px)", fontWeight:700, whiteSpace:"nowrap",
+      background:"rgba(255,77,0,0.08)", border:"1.5px solid rgba(255,77,0,0.25)", color:"var(--accent,var(--accent))" }}>
       Scheduled
     </span>
   );
@@ -60,9 +60,9 @@ function NotifCard({ notif, onEdit, onDelete, onSendNow, sending }) {
     : (notif.subject || "Custom notification");
 
   return (
-    <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:14,
+    <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)",
       padding:"16px 18px", display:"flex", alignItems:"center", gap:14 }}>
-      <div style={{ width:44, height:44, borderRadius:12, background:"var(--bg3)",
+      <div style={{ width:44, height:44, borderRadius:"var(--radius,3px)", background:"var(--bg3)",
         flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>
         {isReminder ? "⏰" : (notif.emoji || "📣")}
       </div>
@@ -87,19 +87,19 @@ function NotifCard({ notif, onEdit, onDelete, onSendNow, sending }) {
         <div style={{ display:"flex", gap:6, flexShrink:0 }}>
           <button onMouseDown={() => onSendNow(notif)} disabled={sending === notif.id}
             style={{ background:"none", border:"1.5px solid rgba(5,150,105,0.3)", color:"#059669",
-              borderRadius:8, padding:"5px 11px", fontSize:12, fontWeight:600,
+              borderRadius:"var(--radius,3px)", padding:"5px 11px", fontSize:12, fontWeight:600,
               cursor:sending===notif.id?"wait":"pointer", fontFamily:"inherit",
               opacity:sending===notif.id?0.5:1, whiteSpace:"nowrap" }}>
             {sending === notif.id ? "Sending…" : "Send now"}
           </button>
           <button onMouseDown={() => onEdit(notif)}
             style={{ background:"none", border:"1.5px solid var(--border)", color:"var(--text2)",
-              borderRadius:8, padding:"5px 11px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
+              borderRadius:"var(--radius,3px)", padding:"5px 11px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
             Edit
           </button>
           <button onMouseDown={() => onDelete(notif.id)}
             style={{ background:"none", border:"1.5px solid rgba(220,38,38,0.2)", color:"#dc2626",
-              borderRadius:8, padding:"5px 9px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
+              borderRadius:"var(--radius,3px)", padding:"5px 9px", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>
             ✕
           </button>
         </div>
@@ -107,7 +107,7 @@ function NotifCard({ notif, onEdit, onDelete, onSendNow, sending }) {
       {notif.sent && (
         <button onMouseDown={() => onDelete(notif.id)}
           style={{ background:"none", border:"1.5px solid rgba(220,38,38,0.2)", color:"#dc2626",
-            borderRadius:8, padding:"5px 9px", fontSize:12, cursor:"pointer",
+            borderRadius:"var(--radius,3px)", padding:"5px 9px", fontSize:12, cursor:"pointer",
             fontFamily:"inherit", flexShrink:0 }}>
           ✕
         </button>
@@ -127,7 +127,7 @@ function QuickReminderStrip({ event, existingHours, onAdd }) {
   const existing = new Set(existingHours);
   if (!event?.date) return null;
   return (
-    <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:14,
+    <div style={{ background:"var(--bg2)", border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)",
       padding:"18px 20px", marginBottom:20 }}>
       <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:4 }}>
         ⚡ Quick-add automated reminders
@@ -144,7 +144,7 @@ function QuickReminderStrip({ event, existingHours, onAdd }) {
               style={{ background: added ? "rgba(5,150,105,0.08)" : "var(--bg3)",
                 border: `1.5px solid ${added ? "rgba(5,150,105,0.3)" : "var(--border)"}`,
                 color: added ? "#059669" : "var(--text)",
-                borderRadius:10, padding:"9px 16px", fontSize:13, fontWeight:600,
+                borderRadius:"var(--radius,3px)", padding:"9px 16px", fontSize:13, fontWeight:600,
                 cursor: added ? "default" : "pointer", fontFamily:"inherit",
                 transition:"all 0.15s", display:"flex", alignItems:"center", gap:6 }}>
               {added ? "✓" : r.icon} {r.label} before
@@ -243,7 +243,7 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:24 }}>
         <div>
-          <h1 style={{ fontSize:26, fontWeight:800, letterSpacing:"-0.04em", marginBottom:4 }}>
+          <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, letterSpacing:"-0.04em", marginBottom:4 }}>
             Notifications
           </h1>
           <p style={{ color:"var(--text2)", fontSize:14, margin:0 }}>
@@ -251,7 +251,7 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
           </p>
         </div>
         <button onMouseDown={() => onOpenModal(null)}
-          style={{ background:"var(--accent)", border:"none", color:"#fff", borderRadius:10,
+          style={{ background:"var(--accent)", border:"none", color:"#fff", borderRadius:"var(--radius,3px)",
             padding:"10px 20px", fontSize:14, fontWeight:700, cursor:"pointer",
             fontFamily:"inherit", flexShrink:0, marginTop:4 }}>
           + New Notification
@@ -261,7 +261,7 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
       {/* No-date warning */}
       {!event?.date && (
         <div style={{ background:"rgba(245,158,11,0.06)", border:"1.5px solid rgba(245,158,11,0.3)",
-          borderRadius:12, padding:"14px 18px", marginBottom:20, fontSize:13,
+          borderRadius:"var(--radius,3px)", padding:"14px 18px", marginBottom:20, fontSize:13,
           color:"#92400e", display:"flex", gap:10, alignItems:"flex-start" }}>
           <span style={{ fontSize:20, flexShrink:0 }}>⚠</span>
           <div>
@@ -282,9 +282,9 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
       {/* Empty state */}
       {notifs.length === 0 && (
         <div style={{ textAlign:"center", padding:"72px 20px", background:"var(--bg2)",
-          border:"1.5px solid var(--border)", borderRadius:16 }}>
+          border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)" }}>
           <div style={{ fontSize:52, marginBottom:16 }}>🔔</div>
-          <h2 style={{ fontSize:20, fontWeight:800, marginBottom:8, letterSpacing:"-0.02em" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"1.5rem", letterSpacing:"0.02em", lineHeight:0.95, fontWeight:900, marginBottom:8, letterSpacing:"-0.02em" }}>
             No notifications yet
           </h2>
           <p style={{ color:"var(--text2)", fontSize:14, maxWidth:380, margin:"0 auto 24px", lineHeight:1.6 }}>
@@ -292,7 +292,7 @@ export default function EventNotifications({ eventId, event, onOpenModal, refres
             or send custom announcements whenever you need.
           </p>
           <button onMouseDown={() => onOpenModal(null)}
-            style={{ background:"var(--accent)", border:"none", color:"#fff", borderRadius:10,
+            style={{ background:"var(--accent)", border:"none", color:"#fff", borderRadius:"var(--radius,3px)",
               padding:"12px 28px", fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:"inherit" }}>
             + Create First Notification
           </button>

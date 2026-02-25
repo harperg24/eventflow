@@ -17,7 +17,7 @@ const DEFAULT_ZONES = {
   emergency: { fill:"rgba(220,38,38,0.2)",    stroke:"#dc2626", label:"Emergency" },
   staff:     { fill:"rgba(245,158,11,0.15)",  stroke:"#f59e0b", label:"Staff Only" },
   camping:   { fill:"rgba(5,150,105,0.12)",   stroke:"#059669", label:"Camping" },
-  general:   { fill:"rgba(91,91,214,0.08)",   stroke:"#5b5bd6", label:"General Area" },
+  general:   { fill:"rgba(255,77,0,0.08)",   stroke:"var(--accent)", label:"General Area" },
   custom:    { fill:"rgba(156,163,175,0.15)", stroke:"#9ca3af", label:"Custom" },
 };
 
@@ -50,13 +50,13 @@ const FONT_FAMILIES = [
 ];
 
 const S = {
-  btn:   { background:"var(--accent)", border:"none", color:"#fff", borderRadius:8,
+  btn:   { background:"var(--accent)", border:"none", color:"#fff", borderRadius:"var(--radius,3px)",
            padding:"7px 14px", fontSize:13, fontWeight:700, cursor:"pointer", fontFamily:"inherit" },
   ghost: { background:"none", border:"1.5px solid var(--border)", color:"var(--text2)",
-           borderRadius:8, padding:"6px 12px", fontSize:12, fontWeight:600,
+           borderRadius:"var(--radius,3px)", padding:"6px 12px", fontSize:12, fontWeight:600,
            cursor:"pointer", fontFamily:"inherit" },
   inp:   { width:"100%", boxSizing:"border-box", background:"var(--bg3)",
-           border:"1.5px solid var(--border)", borderRadius:8, padding:"8px 11px",
+           border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"8px 11px",
            color:"var(--text)", fontSize:13, outline:"none", fontFamily:"inherit" },
   lbl:   { fontSize:10, color:"var(--text3)", fontWeight:700, textTransform:"uppercase",
            letterSpacing:"0.06em", display:"block", marginBottom:5 },
@@ -169,7 +169,7 @@ export default function SiteMap({ eventId }) {
 
       {maps.length===0 && (
         <div style={{ textAlign:"center", padding:"72px 20px", background:"var(--bg2)",
-          border:"1.5px solid var(--border)", borderRadius:16 }}>
+          border:"1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)" }}>
           <div style={{ fontSize:56, marginBottom:16 }}>🗺️</div>
           <h3 style={{ fontSize:20, fontWeight:800, marginBottom:8 }}>No site maps yet</h3>
           <p style={{ color:"var(--text2)", fontSize:14, maxWidth:400, margin:"0 auto 24px", lineHeight:1.6 }}>
@@ -182,7 +182,7 @@ export default function SiteMap({ eventId }) {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:14 }}>
         {maps.map(m=>(
           <div key={m.id} style={{ background:"var(--bg2)", border:"1.5px solid var(--border)",
-            borderRadius:14, overflow:"hidden", transition:"border-color 0.15s", cursor:"pointer" }}
+            borderRadius:"var(--radiusLg,4px)", overflow:"hidden", transition:"border-color 0.15s", cursor:"pointer" }}
             onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
             onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border)"}>
             <div onClick={()=>{setActiveId(m.id);setShowEditor(true);}}
@@ -292,7 +292,7 @@ function NewMapModal({ onCreate, onClose }) {
       display:"flex",alignItems:"flex-start",justifyContent:"center",
       overflowY:"auto",padding:"0 16px 40px" }}
       onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:16,
+      <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:"var(--radiusLg,4px)",
         padding:28,width:460,maxHeight:"92vh",overflowY:"auto",
         boxShadow:"0 24px 64px rgba(0,0,0,0.3)",
         display:"flex",flexDirection:"column",alignSelf:"flex-start",
@@ -310,7 +310,7 @@ function NewMapModal({ onCreate, onClose }) {
         <div style={{ marginBottom:16 }}>
           <label style={S.lbl}>Venue Image (optional)</label>
           <label style={{ display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-            background:"var(--bg3)",border:"1.5px dashed var(--border)",borderRadius:10,
+            background:"var(--bg3)",border:"1.5px dashed var(--border)",borderRadius:"var(--radius,3px)",
             cursor:"pointer",transition:"border-color 0.15s" }}
             onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
             onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border)"}>
@@ -318,7 +318,7 @@ function NewMapModal({ onCreate, onClose }) {
             {uploading ? <span style={{ color:"var(--text3)",fontSize:13 }}>Loading…</span>
               : imgData ? (
                 <div style={{ display:"flex",alignItems:"center",gap:10,width:"100%" }}>
-                  <img src={imgData} style={{ width:60,height:40,objectFit:"cover",borderRadius:6 }}/>
+                  <img src={imgData} style={{ width:60,height:40,objectFit:"cover",borderRadius:"var(--radius,3px)" }}/>
                   <span style={{ fontSize:13,color:"var(--text2)",flex:1 }}>Image loaded — canvas auto-sized</span>
                   <button onClick={e=>{e.preventDefault();setImgData(null);}}
                     style={{...S.ghost,padding:"3px 8px",fontSize:11,color:"#dc2626"}}>✕</button>
@@ -339,7 +339,7 @@ function NewMapModal({ onCreate, onClose }) {
                   <button key={v} onClick={()=>setImgMode(v)}
                     style={{ flex:1, background:imgMode===v?"var(--accentBg)":"var(--bg3)",
                       border:`1.5px solid ${imgMode===v?"var(--accent)":"var(--border)"}`,
-                      borderRadius:9, padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
+                      borderRadius:"var(--radius,3px)", padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
                     <div style={{ fontSize:13,fontWeight:700,color:"var(--text)" }}>{label}</div>
                     <div style={{ fontSize:11,color:"var(--text3)",marginTop:2 }}>{desc}</div>
                   </button>
@@ -357,7 +357,7 @@ function NewMapModal({ onCreate, onClose }) {
               <button key={key} onClick={()=>setPreset(key)}
                 style={{ background:preset===key?"var(--accentBg)":"var(--bg3)",
                   border:`1.5px solid ${preset===key?"var(--accent)":"var(--border)"}`,
-                  borderRadius:9, padding:"10px 12px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
+                  borderRadius:"var(--radius,3px)", padding:"10px 12px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
                 <div style={{ fontSize:13,fontWeight:700,color:"var(--text)" }}>{label}</div>
                 <div style={{ fontSize:11,color:"var(--text3)",marginTop:2 }}>{desc}</div>
               </button>
@@ -396,7 +396,7 @@ function ShortcutsModal({ onClose }) {
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:10000,
       display:"flex",alignItems:"center",justifyContent:"center" }}
       onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:16,
+      <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:"var(--radiusLg,4px)",
         padding:28,width:400,maxHeight:"80vh",overflowY:"auto",
         boxShadow:"0 24px 64px rgba(0,0,0,0.3)" }}>
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
@@ -418,7 +418,7 @@ function ShortcutsModal({ onClose }) {
           </tbody>
         </table>
         <div style={{ marginTop:14,padding:"10px 13px",background:"var(--bg3)",
-          borderRadius:10,fontSize:12,color:"var(--text3)",lineHeight:1.65 }}>
+          borderRadius:"var(--radius,3px)",fontSize:12,color:"var(--text3)",lineHeight:1.65 }}>
           <strong style={{ color:"var(--text2)" }}>Note:</strong> Shortcuts are disabled while typing in any input field.
         </div>
       </div>
@@ -526,12 +526,12 @@ function CanvasEditor({ map, onSave, onBack }) {
       const cx=pan.x+(sel.x+(sel.w||0)/2)*zoom;
       const cy=pan.y+sel.y*zoom;
       ctx.save();
-      ctx.strokeStyle="#5b5bd6"; ctx.lineWidth=1.5;
+      ctx.strokeStyle="var(--accent)"; ctx.lineWidth=1.5;
       ctx.setLineDash([4,3]);
       ctx.beginPath(); ctx.moveTo(cx*dpr,cy*dpr); ctx.lineTo(cx*dpr,(cy-30)*dpr); ctx.stroke();
       ctx.setLineDash([]);
       ctx.beginPath(); ctx.arc(cx*dpr,(cy-30)*dpr,8*dpr,0,Math.PI*2);
-      ctx.fillStyle="#5b5bd6"; ctx.fill();
+      ctx.fillStyle="var(--accent)"; ctx.fill();
       ctx.font=`bold ${10*dpr}px sans-serif`;
       ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="middle";
       ctx.fillText("↻",cx*dpr,(cy-30)*dpr);
@@ -791,9 +791,9 @@ function CanvasEditor({ map, onSave, onBack }) {
         style={{ width:40,height:40,display:"flex",alignItems:"center",justifyContent:"center",
           background:active?"var(--accent)":"transparent",
           border:`1.5px solid ${active?"var(--accent)":"transparent"}`,
-          borderRadius:9,cursor:"pointer",transition:"all 0.12s",
+          borderRadius:"var(--radius,3px)",cursor:"pointer",transition:"all 0.12s",
           color:active?"#fff":"var(--text2)",
-          boxShadow:active?"0 2px 10px rgba(91,91,214,0.35)":"none" }}>
+          boxShadow:active?"0 2px 10px rgba(255,77,0,0.35)":"none" }}>
         {Icon?<Icon active={active}/>:t}
       </button>
     );
@@ -870,7 +870,7 @@ function CanvasEditor({ map, onSave, onBack }) {
                     width:"100%",marginBottom:4,
                     background:zoneType===key?zc.fill:"none",
                     border:`1.5px solid ${zoneType===key?zc.stroke:"var(--border)"}`,
-                    borderRadius:7,cursor:"pointer",fontFamily:"inherit" }}>
+                    borderRadius:"var(--radius,3px)",cursor:"pointer",fontFamily:"inherit" }}>
                   <div style={{ width:11,height:11,borderRadius:3,background:zc.stroke,flexShrink:0 }}/>
                   <span style={{ fontSize:12,color:"var(--text)",fontWeight:zoneType===key?700:400 }}>{zc.label}</span>
                 </button>
@@ -889,7 +889,7 @@ function CanvasEditor({ map, onSave, onBack }) {
                     width:"100%",marginBottom:3,
                     background:poiType===pt.id?"var(--accentBg)":"none",
                     border:`1.5px solid ${poiType===pt.id?"var(--accent)":"var(--border)"}`,
-                    borderRadius:7,cursor:"pointer",fontFamily:"inherit" }}>
+                    borderRadius:"var(--radius,3px)",cursor:"pointer",fontFamily:"inherit" }}>
                   <span style={{ fontSize:14 }}>{pt.emoji}</span>
                   <span style={{ fontSize:12,color:"var(--text)",fontWeight:poiType===pt.id?700:400 }}>{pt.label}</span>
                 </button>
@@ -918,7 +918,7 @@ function CanvasEditor({ map, onSave, onBack }) {
               letterSpacing:"0.08em",marginBottom:8 }}>Background</div>
             {bgImage&&(
               <div style={{ marginBottom:10 }}>
-                <img src={bgImage} style={{ width:"100%",borderRadius:7,marginBottom:6,
+                <img src={bgImage} style={{ width:"100%",borderRadius:"var(--radius,3px)",marginBottom:6,
                   border:"1px solid var(--border)" }}/>
                 <div style={{ display:"flex",gap:6,marginBottom:6 }}>
                   {[["canvas","As BG"],["element","As Layer"]].map(([v,l])=>(
@@ -938,11 +938,11 @@ function CanvasEditor({ map, onSave, onBack }) {
               <div style={{ display:"flex",gap:5,flexWrap:"wrap" }}>
                 {["#f8f8f0","#ffffff","#1a1a2e","#0f2027","#e8f4f8","#f0f4e8"].map(c=>(
                   <button key={c} onClick={()=>{setCanvasBg(c);setDirty(true);}}
-                    style={{ width:24,height:24,borderRadius:6,background:c,cursor:"pointer",
+                    style={{ width:24,height:24,borderRadius:"var(--radius,3px)",background:c,cursor:"pointer",
                       border:`2px solid ${canvasBg===c?"var(--accent)":"var(--border)"}` }}/>
                 ))}
                 <input type="color" value={canvasBg} onChange={e=>{setCanvasBg(e.target.value);setDirty(true);}}
-                  style={{ width:24,height:24,borderRadius:6,border:"1.5px solid var(--border)",cursor:"pointer",padding:0 }}/>
+                  style={{ width:24,height:24,borderRadius:"var(--radius,3px)",border:"1.5px solid var(--border)",cursor:"pointer",padding:0 }}/>
               </div>
             )}
           </div>
@@ -970,7 +970,7 @@ function CanvasEditor({ map, onSave, onBack }) {
             onPointerUp={onPointerUp}    onPointerLeave={onPointerUp}/>
           <div style={{ position:"absolute",bottom:12,left:"50%",transform:"translateX(-50%)",
             fontSize:11,color:"var(--text3)",background:"var(--bg2)",
-            border:"1px solid var(--border)",borderRadius:20,
+            border:"1px solid var(--border)",borderRadius:"var(--radiusLg,4px)",
             padding:"4px 14px",pointerEvents:"none",whiteSpace:"nowrap" }}>
             {rotating?"Drag to rotate"
               :tool==="select"?"Click to select · Alt+drag to pan · Scroll to zoom"
@@ -1009,7 +1009,7 @@ function CanvasEditor({ map, onSave, onBack }) {
 // ═════════════════════════════════════════════════════════════
 function AddZoneForm({ onAdd }) {
   const [label, setLabel] = useState("");
-  const [stroke, setStroke] = useState("#5b5bd6");
+  const [stroke, setStroke] = useState("var(--accent)");
   const [alpha, setAlpha] = useState(0.15);
 
   const submit = (e) => {
@@ -1022,7 +1022,7 @@ function AddZoneForm({ onAdd }) {
 
   return (
     <form onSubmit={submit} style={{ background:"var(--bg3)",border:"1.5px solid var(--border)",
-      borderRadius:10,padding:"10px",marginTop:4 }}>
+      borderRadius:"var(--radius,3px)",padding:"10px",marginTop:4 }}>
       <div style={{ fontSize:10,fontWeight:700,color:"var(--text3)",marginBottom:8,
         textTransform:"uppercase",letterSpacing:"0.06em" }}>New Category</div>
       <input value={label} onChange={e=>setLabel(e.target.value)}
@@ -1031,7 +1031,7 @@ function AddZoneForm({ onAdd }) {
         <div>
           <div style={{ fontSize:10,color:"var(--text3)",marginBottom:3 }}>Colour</div>
           <input type="color" value={stroke} onChange={e=>setStroke(e.target.value)}
-            style={{ width:36,height:30,borderRadius:7,border:"1.5px solid var(--border)",
+            style={{ width:36,height:30,borderRadius:"var(--radius,3px)",border:"1.5px solid var(--border)",
               cursor:"pointer",padding:2 }}/>
         </div>
         <div style={{ flex:1 }}>
@@ -1042,7 +1042,7 @@ function AddZoneForm({ onAdd }) {
         </div>
       </div>
       {/* Preview */}
-      <div style={{ height:24,borderRadius:6,marginBottom:8,
+      <div style={{ height:24,borderRadius:"var(--radius,3px)",marginBottom:8,
         background:hexToRgba(stroke,alpha),border:`1.5px solid ${stroke}` }}/>
       <button type="submit" disabled={!label.trim()}
         style={{...S.btn,width:"100%",fontSize:12,padding:"6px",opacity:label.trim()?1:0.4}}>
@@ -1182,7 +1182,7 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
                 return(
                   <button key={field} onClick={()=>onChange({[field]:active?off:on})}
                     style={{ width:38,height:38,display:"flex",alignItems:"center",justifyContent:"center",
-                      borderRadius:8,cursor:"pointer",
+                      borderRadius:"var(--radius,3px)",cursor:"pointer",
                       font:font||undefined,fontSize:font?undefined:15,fontFamily:font?undefined:"inherit",
                       background:active?"var(--accent)":"var(--bg3)",
                       border:`1.5px solid ${active?"var(--accent)":"var(--border)"}`,
@@ -1197,7 +1197,7 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
             <label style={S.lbl}>Colour</label>
             <div style={{ display:"flex",gap:6,alignItems:"center",flexWrap:"wrap" }}>
               <input type="color" value={el.color||"#1d1d1f"} onChange={e=>onChange({color:e.target.value})}
-                style={{ width:34,height:34,borderRadius:8,border:"1.5px solid var(--border)",cursor:"pointer",padding:2 }}/>
+                style={{ width:34,height:34,borderRadius:"var(--radius,3px)",border:"1.5px solid var(--border)",cursor:"pointer",padding:2 }}/>
               {["#1d1d1f","#ffffff","#dc2626","#2563eb","#059669","#f59e0b","#8b5cf6","#ec4899"].map(c=>(
                 <button key={c} onClick={()=>onChange({color:c})}
                   style={{ width:22,height:22,borderRadius:5,background:c,
@@ -1220,7 +1220,7 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
                   style={{ display:"flex",alignItems:"center",gap:7,padding:"5px 8px",
                     background:el.zoneType===key?zc.fill:"none",
                     border:`1.5px solid ${el.zoneType===key?zc.stroke:"var(--border)"}`,
-                    borderRadius:7,cursor:"pointer",fontFamily:"inherit" }}>
+                    borderRadius:"var(--radius,3px)",cursor:"pointer",fontFamily:"inherit" }}>
                   <div style={{ width:10,height:10,borderRadius:2,background:zc.stroke,flexShrink:0 }}/>
                   <span style={{ fontSize:11,color:"var(--text)" }}>{zc.label}</span>
                 </button>
@@ -1232,12 +1232,12 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
           <div style={{ marginBottom:10 }}>
             <label style={S.lbl}>Custom Fill Colour</label>
             <div style={{ display:"flex",gap:8,alignItems:"center" }}>
-              <input type="color" value={el.solidFill||(el.stroke||"#5b5bd6")}
+              <input type="color" value={el.solidFill||(el.stroke||"var(--accent)")}
                 onChange={e=>{
                   const hex=e.target.value;
                   onChange({solidFill:hex, fill:hexToRgba(hex, el.fillAlpha??0.18)});
                 }}
-                style={{ width:36,height:34,borderRadius:8,border:"1.5px solid var(--border)",cursor:"pointer",padding:2 }}/>
+                style={{ width:36,height:34,borderRadius:"var(--radius,3px)",border:"1.5px solid var(--border)",cursor:"pointer",padding:2 }}/>
               <button onClick={()=>onChange({solidFill:"",fill:zones[el.zoneType]?.fill||zones.custom.fill})}
                 style={{...S.ghost,fontSize:11,padding:"4px 8px"}}>Reset</button>
             </div>
@@ -1249,7 +1249,7 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
             <input type="range" min={0} max={1} step={0.02} value={el.fillAlpha??0.18}
               onChange={e=>{
                 const a=parseFloat(e.target.value);
-                const hex=el.solidFill||el.stroke||"#5b5bd6";
+                const hex=el.solidFill||el.stroke||"var(--accent)";
                 onChange({fillAlpha:a, fill:hexToRgba(hex,a)});
               }}
               style={{ width:"100%",accentColor:"var(--accent)" }}/>
@@ -1259,10 +1259,10 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
           <div style={{ marginBottom:10 }}>
             <label style={S.lbl}>Border Colour</label>
             <div style={{ display:"flex",gap:8,alignItems:"center" }}>
-              <input type="color" value={el.stroke||"#5b5bd6"}
+              <input type="color" value={el.stroke||"var(--accent)"}
                 onChange={e=>onChange({stroke:e.target.value})}
-                style={{ width:36,height:34,borderRadius:8,border:"1.5px solid var(--border)",cursor:"pointer",padding:2 }}/>
-              {["#5b5bd6","#ef4444","#f97316","#f59e0b","#10b981","#3b82f6","#8b5cf6","#6b7280"].map(c=>(
+                style={{ width:36,height:34,borderRadius:"var(--radius,3px)",border:"1.5px solid var(--border)",cursor:"pointer",padding:2 }}/>
+              {["var(--accent)","#ef4444","#f97316","#f59e0b","#10b981","#3b82f6","#8b5cf6","#6b7280"].map(c=>(
                 <button key={c} onClick={()=>onChange({stroke:c})}
                   style={{ width:20,height:20,borderRadius:5,background:c,
                     border:`2px solid ${el.stroke===c?"var(--accent)":"transparent"}`,cursor:"pointer" }}/>
@@ -1307,7 +1307,7 @@ function ElementPanel({ el, zones, onChange, onDelete, onDuplicate, onLayer }) {
                 style={{ padding:"5px 6px",display:"flex",alignItems:"center",gap:5,
                   background:el.poiType===pt.id?"var(--accentBg)":"none",
                   border:`1.5px solid ${el.poiType===pt.id?"var(--accent)":"var(--border)"}`,
-                  borderRadius:7,cursor:"pointer",fontFamily:"inherit" }}>
+                  borderRadius:"var(--radius,3px)",cursor:"pointer",fontFamily:"inherit" }}>
                 <span style={{ fontSize:13 }}>{pt.emoji}</span>
                 <span style={{ fontSize:10,color:"var(--text2)" }}>{pt.label}</span>
               </button>
@@ -1362,9 +1362,9 @@ function drawElement(ctx, el, zoom, ox, oy, selected=false, dpr=1) {
     else img.onload=()=>ctx.drawImage(img,0,0,el.w||100,el.h||60);
     ctx.globalAlpha=1;
     if (selected) {
-      ctx.strokeStyle="#5b5bd6"; ctx.lineWidth=2/zoom;
+      ctx.strokeStyle="var(--accent)"; ctx.lineWidth=2/zoom;
       ctx.setLineDash([5/zoom,3/zoom]); ctx.strokeRect(0,0,el.w||100,el.h||60); ctx.setLineDash([]);
-      ctx.fillStyle="#5b5bd6";
+      ctx.fillStyle="var(--accent)";
       [[el.w||100,el.h||60],[el.w||100,0],[0,el.h||60]].forEach(([hx,hy])=>{
         ctx.beginPath(); ctx.arc(hx,hy,5/zoom,0,Math.PI*2); ctx.fill();
       });
@@ -1372,8 +1372,8 @@ function drawElement(ctx, el, zoom, ox, oy, selected=false, dpr=1) {
 
   } else if (el.type==="poi") {
     ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2);
-    ctx.fillStyle=selected?"rgba(91,91,214,0.25)":"rgba(255,255,255,0.92)"; ctx.fill();
-    ctx.strokeStyle=selected?"#5b5bd6":"rgba(0,0,0,0.14)";
+    ctx.fillStyle=selected?"rgba(255,77,0,0.25)":"rgba(255,255,255,0.92)"; ctx.fill();
+    ctx.strokeStyle=selected?"var(--accent)":"rgba(0,0,0,0.14)";
     ctx.lineWidth=selected?2.5/zoom:1/zoom; ctx.stroke();
     ctx.font="14px serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
     ctx.fillText(el.emoji||"📍",0,0);
@@ -1395,15 +1395,15 @@ function drawElement(ctx, el, zoom, ox, oy, selected=false, dpr=1) {
     }
     if (selected) {
       const m=ctx.measureText(txt);
-      ctx.strokeStyle="#5b5bd6"; ctx.lineWidth=1.5/zoom;
+      ctx.strokeStyle="var(--accent)"; ctx.lineWidth=1.5/zoom;
       ctx.setLineDash([4/zoom,3/zoom]); ctx.strokeRect(-3,-3,m.width+6,fs+6); ctx.setLineDash([]);
     }
 
   } else {
     const w=el.w||100, h=el.h||60;
     ctx.globalAlpha=el.opacity??1;
-    ctx.fillStyle=el.fill||"rgba(91,91,214,0.15)";
-    ctx.strokeStyle=el.stroke||"#5b5bd6";
+    ctx.fillStyle=el.fill||"rgba(255,77,0,0.15)";
+    ctx.strokeStyle=el.stroke||"var(--accent)";
     ctx.lineWidth=(selected?2.5:(el.strokeWidth||1.5))/zoom;
 
     if (el.type==="rect") {
@@ -1429,10 +1429,10 @@ function drawElement(ctx, el, zoom, ox, oy, selected=false, dpr=1) {
     if (el.showLabel&&el.label) {
       ctx.font=`bold ${Math.max(9,Math.min(16,h*0.22))}px "Plus Jakarta Sans",sans-serif`;
       ctx.textAlign="center"; ctx.textBaseline="middle";
-      ctx.fillStyle=el.stroke||"#5b5bd6"; ctx.fillText(el.label,w/2,h/2);
+      ctx.fillStyle=el.stroke||"var(--accent)"; ctx.fillText(el.label,w/2,h/2);
     }
     if (selected) {
-      ctx.fillStyle="#5b5bd6";
+      ctx.fillStyle="var(--accent)";
       [[w,h],[w,0],[0,h]].forEach(([hx,hy])=>{
         ctx.beginPath(); ctx.arc(hx,hy,5/zoom,0,Math.PI*2); ctx.fill();
       });
