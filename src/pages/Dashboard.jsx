@@ -12,6 +12,8 @@ import EventNotifications from "./EventNotifications";
 import Operations from "./Operations";
 import SiteMap from "./SiteMap";
 import { useAppTheme } from "./Home";
+import { BRAND } from "./brand";
+const _F = BRAND.fonts;
 import { globalCSS, loadThemePrefs, getTheme } from "./theme";
 import {
   supabase,
@@ -1569,9 +1571,13 @@ export default function Dashboard() {
 
       {/* ── Sidebar (desktop only) ── */}
       {!isMobile && <aside style={{ width: 240, background: "var(--sidebar,var(--bg2))", borderRight: "1.5px solid var(--border)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 2, flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflowY: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 28, paddingLeft: 4 }}>
-          <div style={{ width: 28, height: 28, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, color:"#fff" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)" }}>Oneonetix</span>
+        <div style={{ marginBottom: 24, paddingLeft: 4 }}>
+          <div style={{ fontFamily: _F.display, fontSize: "1.45rem", letterSpacing: "0.04em", lineHeight: 1, color: "var(--text)" }}>
+            ONE<span style={{ color: "var(--accent)" }}>O</span>NETIX
+          </div>
+          <div style={{ fontFamily: _F.condensed, fontSize: ".58rem", fontWeight: 700, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--text3)", marginTop: 3 }}>
+            {BRAND.taglineShort}
+          </div>
         </div>
 
         {/* Event mini card */}

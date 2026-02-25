@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { loadThemePrefs, saveThemePrefs, getTheme, globalCSS, ACCENTS, applyThemeToDOM } from "./theme";
+import { BRAND } from "./brand";
+const F = BRAND.fonts;
 
 // Hook that other pages can import to apply the saved theme on mount
 export function useAppTheme() {
@@ -146,12 +148,15 @@ export default function Home() {
       {/* ── Sidebar ── */}
       <aside className="ef-sidebar">
         {/* Brand */}
-        <div style={{ padding:"24px 20px 20px", borderBottom:`1.5px solid ${t.border}` }}>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:34, height:34, background:t.accent, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            </div>
-            <span style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.03em", color:t.text }}>Oneonetix</span>
+        <div style={{ padding:"22px 20px 18px", borderBottom:`1px solid ${t.border}` }}>
+          <div style={{ fontFamily:F.display, fontSize:"1.55rem", letterSpacing:"0.04em",
+            lineHeight:1, color:t.text }}>
+            ONE<span style={{ color:t.accent }}>O</span>NETIX
+          </div>
+          <div style={{ fontFamily:F.condensed, fontSize:".62rem", fontWeight:700,
+            letterSpacing:".18em", textTransform:"uppercase",
+            color:t.text3, marginTop:4 }}>
+            {BRAND.taglineShort}
           </div>
         </div>
 
