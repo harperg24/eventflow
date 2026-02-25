@@ -66,10 +66,9 @@ export default function EventCreation() {
   const toggleFeature = (id) => setFeatures(f=>f.includes(id)?f.filter(x=>x!==id):[...f,id]);
 
   const hasTickets = features.includes("tickets");
-  const hasGuests  = features.includes("guests");
   const hasBudget  = features.includes("budget");
 
-  const steps = ["Event Type","Features","Details","Venue",...(hasGuests?["Guests"]:[]),(hasTickets?["Tickets"]:[]),...(hasBudget?["Budget"]:[]),"Review"].flat();
+  const steps = ["Event Type","Features","Details","Venue",(hasTickets?["Tickets"]:[]),...(hasBudget?["Budget"]:[]),"Review"].flat();
   const pct = Math.round(((step+1)/steps.length)*100);
 
   // Date/time validation for step 2
@@ -91,8 +90,15 @@ export default function EventCreation() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Sign in required.");
-      const cat = hasTickets ? (hasGuests?"hybrid":"ticketed") : "private";
-      const eventPayload = { ...event, ticketing:cat };
+      const cat = hasTickets ? "ticketed" : "private";
+      const eventPayload = {
+        ...event,
+        ticketing: cat,
+        totalBudget: event.totalBudget ? (parseFloat(String(event.totalBudget).replace(/,/g,"")) || 0) : null,
+        budgetSplit: Object.fromEntries(
+          Object.entries(event.budgetSplit).map(([k,v]) => [k, v ? (parseFloat(String(v).replace(/,/g,"")) || 0) : 0])
+        ),
+      };
       if (!eventPayload.time) eventPayload.time = null;
       if (!eventPayload.end_time) eventPayload.end_time = null;
       if (!eventPayload.end_date || !eventPayload.date_range_mode) eventPayload.end_date = null;
@@ -298,21 +304,6 @@ export default function EventCreation() {
           </div>
         )}
 
-        {/* OPTIONAL: Guests */}
-        {steps[step]==="Guests" && (
-          <div>
-            <p style={{ color:t.text2, fontSize:15, marginBottom:28 }}>Add initial guests — add more from the dashboard later.</p>
-            <div className="ef-form-row">
-              <label className="ef-label">Guest Email</label>
-              <div style={{ display:"flex", gap:10 }}>
-                <input className="ef-input" value={event.guestInput} onChange={e=>update("guestInput",e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){const em=event.guestInput.trim();if(em&&!event.guests.includes(em)){update("guests",[...event.guests,em]);update("guestInput","");}}}} placeholder="guest@email.com" style={{ flex:1 }}/>
-                <button className="ef-btn" onClick={()=>{const em=event.guestInput.trim();if(em&&!event.guests.includes(em)){update("guests",[...event.guests,em]);update("guestInput","");}}}>Add</button>
-              </div>
-            </div>
-            {event.guests.length>0 && <div style={{ display:"flex", flexWrap:"wrap", gap:8 }}>{event.guests.map(g=><div key={g} style={{ display:"flex",alignItems:"center",gap:6,background:t.bg3,border:`1.5px solid ${t.border}`,borderRadius:20,padding:"5px 12px",fontSize:13 }}>{g}<button onClick={()=>update("guests",event.guests.filter(x=>x!==g))} style={{ background:"none",border:"none",color:t.text3,cursor:"pointer",fontSize:14,lineHeight:1,padding:0 }}>×</button></div>)}</div>}
-          </div>
-        )}
-
         {/* OPTIONAL: Tickets */}
         {steps[step]==="Tickets" && (
           <div>
@@ -338,14 +329,14 @@ export default function EventCreation() {
         {steps[step]==="Budget" && (
           <div>
             <p style={{ color:t.text2, fontSize:15, marginBottom:24 }}>Set your overall budget and allocate by category.</p>
-            <div className="ef-form-row"><label className="ef-label">Total Budget (NZD)</label><input type="number" className="ef-input" value={event.totalBudget} onChange={e=>update("totalBudget",e.target.value)} placeholder="10,000" style={{ fontSize:18, padding:"12px 14px" }}/></div>
+            <div className="ef-form-row"><label className="ef-label">Total Budget (NZD)</label><input type="text" inputMode="numeric" className="ef-input" value={event.totalBudget} onChange={e=>update("totalBudget", e.target.value.replace(/[^0-9.]/g,""))} placeholder="e.g. 10000" style={{ fontSize:18, padding:"12px 14px" }}/></div>
             <div className="ef-form-row">
               <label className="ef-label">Allocate by Category</label>
               {BUDGET_CATS.map(cat=>(
                 <div key={cat.id} style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
                   <div style={{ width:10, height:10, borderRadius:"50%", background:cat.color, flexShrink:0 }}/>
                   <span style={{ flex:1, fontSize:14, color:t.text2 }}>{cat.label}</span>
-                  <input type="number" className="ef-input" value={event.budgetSplit[cat.id]} onChange={e=>update("budgetSplit",{...event.budgetSplit,[cat.id]:e.target.value})} placeholder="0" style={{ width:120, textAlign:"right" }}/>
+                  <input type="text" inputMode="numeric" className="ef-input" value={event.budgetSplit[cat.id]} onChange={e=>update("budgetSplit",{...event.budgetSplit,[cat.id]:e.target.value.replace(/[^0-9.]/g,"")})} placeholder="0" style={{ width:120, textAlign:"right" }}/>
                 </div>
               ))}
             </div>

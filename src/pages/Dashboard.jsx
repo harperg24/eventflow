@@ -1722,7 +1722,8 @@ export default function Dashboard() {
                 <div style={{ height: 3, background: "var(--bg3)", borderRadius: 2, marginBottom: 14, overflow: "hidden" }}>
                   <div style={{ width: tasks.length ? `${(tasks.filter(t=>t.done).length/tasks.length)*100}%` : "0%", height: "100%", background: "linear-gradient(90deg,var(--accent),var(--success,#059669))", transition: "width 0.4s" }} />
                 </div>
-                {tasks.slice(0, 6).map(t => (
+                <div style={{ maxHeight: 280, overflowY: "auto", marginRight: -4, paddingRight: 4 }}>
+                {tasks.map(t => (
                   <div key={t.id} className="row-hover" onClick={() => handleToggleTask(t.id, !t.done)}
                     style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius:"var(--radius,3px)" }}>
                     <div style={{ width: 18, height: 18, border: `1.5px solid ${t.done ? "var(--accent)" : "var(--text3)"}`, borderRadius: 5, background: t.done ? "var(--accent)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "var(--bg)", flexShrink: 0, transition: "all 0.2s" }}>
@@ -1732,6 +1733,7 @@ export default function Dashboard() {
                     {t.due_date && <span style={{ fontSize: 11, color: "var(--text3)" }}>{new Date(t.due_date).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}</span>}
                   </div>
                 ))}
+                </div>
               </div>
 
               {/* RSVP */}
