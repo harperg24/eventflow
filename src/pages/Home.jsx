@@ -151,7 +151,7 @@ export default function Home() {
             <div style={{ width:34, height:34, background:t.accent, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </div>
-            <span style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.03em", color:t.text }}>EventFlow</span>
+            <span style={{ fontSize:16, fontWeight:800, letterSpacing:"-0.03em", color:t.text }}>Oneonetix</span>
           </div>
         </div>
 
@@ -311,7 +311,7 @@ export default function Home() {
                     </button>
                   </div>
                   <div style={{ fontSize:12, color:t.text3, marginTop:10 }}>
-                    "Classic" restores the original gold-on-dark EventFlow look.
+                    "Classic" restores the original gold-on-dark Oneonetix look.
                   </div>
                 </div>
 
@@ -351,7 +351,7 @@ export default function Home() {
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div>
                     <div style={{ fontSize:14, fontWeight:600, color:t.text, marginBottom:3 }}>Sign out</div>
-                    <div style={{ fontSize:13, color:t.text2 }}>Sign out of your EventFlow account.</div>
+                    <div style={{ fontSize:13, color:t.text2 }}>Sign out of your Oneonetix account.</div>
                   </div>
                   <button className="ef-btn ef-btn-ghost ef-btn-sm" style={{ color:"var(--danger)", borderColor:"var(--danger)", opacity:0.7 }} onClick={handleSignOut}>Sign Out</button>
                 </div>

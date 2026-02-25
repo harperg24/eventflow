@@ -125,7 +125,7 @@ serve(async (req) => {
     const plRes = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ name: `${eventName} — EventFlow`, description: "Created with EventFlow 🎵", public: false }),
+      body: JSON.stringify({ name: `${eventName} — Oneonetix`, description: "Created with Oneonetix 🎵", public: false }),
     });
     const playlist = await plRes.json();
 

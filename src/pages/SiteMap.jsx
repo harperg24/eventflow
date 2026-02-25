@@ -289,11 +289,14 @@ function NewMapModal({ onCreate, onClose }) {
 
   return (
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:9999,
-      display:"flex",alignItems:"center",justifyContent:"center" }}
+      display:"flex",alignItems:"flex-start",justifyContent:"center",
+      overflowY:"auto",padding:"0 16px 40px" }}
       onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:16,
-        padding:28,width:460,maxHeight:"90vh",overflowY:"auto",
-        boxShadow:"0 24px 64px rgba(0,0,0,0.3)" }}>
+        padding:28,width:460,maxHeight:"92vh",overflowY:"auto",
+        boxShadow:"0 24px 64px rgba(0,0,0,0.3)",
+        display:"flex",flexDirection:"column",alignSelf:"flex-start",
+        marginTop:"4vh" }}>
         <h3 style={{ fontSize:18, fontWeight:800, marginBottom:20 }}>New Site Map</h3>
 
         {/* Name */}
@@ -769,7 +772,7 @@ function CanvasEditor({ map, onSave, onBack }) {
     const wfSize=Math.max(12, Math.round(CW*0.018));
     ctx.font=`600 ${wfSize}px "Plus Jakarta Sans",Arial,sans-serif`;
     ctx.textAlign="right"; ctx.textBaseline="bottom";
-    ctx.fillText("Created with EventFlow", CW-12, CH-10);
+    ctx.fillText("Created with Oneonetix", CW-12, CH-10);
     ctx.globalAlpha=1;
     ctx.restore();
     // download

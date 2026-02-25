@@ -31,7 +31,7 @@ async function getGmailToken(): Promise<string> {
 
 function buildEmail(to: string, subject: string, html: string, from: string): string {
   const safeSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-  const msg = [`From: EventFlow <${from}>`, `To: ${to}`, `Subject: ${safeSubject}`,
+  const msg = [`From: Oneonetix <${from}>`, `To: ${to}`, `Subject: ${safeSubject}`,
     `MIME-Version: 1.0`, `Content-Type: text/html; charset=utf-8`, ``, html].join("\r\n");
   return btoa(unescape(encodeURIComponent(msg))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -50,7 +50,7 @@ async function sendGmail(to: string, subject: string, html: string) {
 function approvedEmailHtml(vendorName: string, eventName: string, eventDate: string, eventVenue: string, message: string): string {
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
   <div style="max-width:540px;margin:0 auto;padding:48px 24px;">
-    <div style="text-align:center;margin-bottom:32px;"><span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ EventFlow</span></div>
+    <div style="text-align:center;margin-bottom:32px;"><span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ Oneonetix</span></div>
     <div style="background:#0a0a14;border:1px solid rgba(16,185,129,0.3);border-radius:18px;padding:36px;margin-bottom:20px;">
       <div style="font-size:32px;text-align:center;margin-bottom:16px;">✅</div>
       <h1 style="font-family:Georgia,serif;font-size:24px;color:#10b981;margin:0 0 6px;text-align:center;">You're confirmed!</h1>
@@ -62,14 +62,14 @@ function approvedEmailHtml(vendorName: string, eventName: string, eventDate: str
       ${message ? `<div style="background:#0d150e;border-left:3px solid #10b981;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px;font-size:14px;color:#8a8278;line-height:1.6;">${message}</div>` : ""}
       <p style="font-size:13px;color:#5a5a72;text-align:center;margin:0;">The organiser will be in touch with further details.</p>
     </div>
-    <p style="text-align:center;font-size:12px;color:#3a3a52;">Powered by EventFlow</p>
+    <p style="text-align:center;font-size:12px;color:#3a3a52;">Powered by Oneonetix</p>
   </div></body></html>`;
 }
 
 function declinedEmailHtml(vendorName: string, eventName: string, message: string): string {
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
   <div style="max-width:540px;margin:0 auto;padding:48px 24px;">
-    <div style="text-align:center;margin-bottom:32px;"><span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ EventFlow</span></div>
+    <div style="text-align:center;margin-bottom:32px;"><span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ Oneonetix</span></div>
     <div style="background:#0a0a14;border:1px solid #1e1e2e;border-radius:18px;padding:36px;margin-bottom:20px;">
       <div style="font-size:32px;text-align:center;margin-bottom:16px;">📬</div>
       <h1 style="font-family:Georgia,serif;font-size:22px;color:#f0e8db;margin:0 0 6px;text-align:center;">Application Update</h1>
@@ -79,7 +79,7 @@ function declinedEmailHtml(vendorName: string, eventName: string, message: strin
       </p>
       ${message ? `<div style="background:#13131f;border-left:3px solid #3a3a52;border-radius:0 8px 8px 0;padding:14px 16px;font-size:14px;color:#8a8278;line-height:1.6;">${message}</div>` : ""}
     </div>
-    <p style="text-align:center;font-size:12px;color:#3a3a52;">Powered by EventFlow</p>
+    <p style="text-align:center;font-size:12px;color:#3a3a52;">Powered by Oneonetix</p>
   </div></body></html>`;
 }
 

@@ -140,7 +140,7 @@ export default function CollabAccept() {
       <div style={{ maxWidth: 440, width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
-          <span style={{ fontSize: 14, color: "var(--text2)" }}>EventFlow</span>
+          <span style={{ fontSize: 14, color: "var(--text2)" }}>Oneonetix</span>
         </div>
 
         <div style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius: 20, overflow: "hidden" }}>

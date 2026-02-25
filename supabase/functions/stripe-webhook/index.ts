@@ -8,7 +8,7 @@ const STRIPE_SECRET   = Deno.env.get("STRIPE_SECRET_KEY")!;
 const WEBHOOK_SECRET  = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 const SUPABASE_URL    = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY    = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const APP_URL         = Deno.env.get("APP_URL") || "https://eventflow-isdd.vercel.app";
+const APP_URL         = Deno.env.get("APP_URL") || "https://oneonetix.app";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -51,7 +51,7 @@ async function getGmailToken(): Promise<string> {
 function buildEmail(to: string, subject: string, html: string, from: string): string {
   // Encode subject as RFC2047 quoted-printable to handle any special chars safely
   const safeSubject = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-  const msg = [`From: EventFlow <${from}>`, `To: ${to}`, `Subject: ${safeSubject}`,
+  const msg = [`From: Oneonetix <${from}>`, `To: ${to}`, `Subject: ${safeSubject}`,
     `MIME-Version: 1.0`, `Content-Type: text/html; charset=utf-8`, ``, html].join("\r\n");
   return btoa(unescape(encodeURIComponent(msg))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -91,7 +91,7 @@ function ticketEmail(buyerName: string, eventName: string, eventDate: string, ti
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
   <div style="max-width:540px;margin:0 auto;padding:48px 24px;">
     <div style="text-align:center;margin-bottom:32px;">
-      <span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ EventFlow</span>
+      <span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ Oneonetix</span>
     </div>
     <div style="background:#0a0a14;border:1px solid #1e1e2e;border-radius:18px;padding:36px;text-align:center;margin-bottom:24px;">
       <div style="font-size:36px;margin-bottom:16px;">🎟</div>

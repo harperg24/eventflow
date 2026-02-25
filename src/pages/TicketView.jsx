@@ -39,7 +39,7 @@ export default function TicketView() {
     const url = "https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=" + encodeURIComponent(window.location.href);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `ticket-${ticket?.ticket_number || "eventflow"}.png`;
+    a.download = `ticket-${ticket?.ticket_number || "oneonetix"}.png`;
     a.click();
   };
 
@@ -80,7 +80,7 @@ export default function TicketView() {
       {/* Logo */}
       <div className="no-print" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
         <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
-        <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
+        <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>Oneonetix</span>
       </div>
 
       {/* Ticket card */}

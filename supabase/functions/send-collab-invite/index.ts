@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-const APP_URL  = Deno.env.get("APP_URL") || "https://eventflow-isdd.vercel.app";
+const APP_URL  = Deno.env.get("APP_URL") || "https://oneonetix.app";
 const cors     = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 
 async function getGmailToken() {
@@ -20,7 +20,7 @@ async function getGmailToken() {
 function buildEmail(to: string, subject: string, html: string): string {
   const from = Deno.env.get("GMAIL_SENDER")!;
   const safe = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-  const msg  = [`From: EventFlow <${from}>`, `To: ${to}`, `Subject: ${safe}`, `MIME-Version: 1.0`, `Content-Type: text/html; charset=utf-8`, ``, html].join("\r\n");
+  const msg  = [`From: Oneonetix <${from}>`, `To: ${to}`, `Subject: ${safe}`, `MIME-Version: 1.0`, `Content-Type: text/html; charset=utf-8`, ``, html].join("\r\n");
   return btoa(unescape(encodeURIComponent(msg))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
 
@@ -59,7 +59,7 @@ serve(async (req) => {
           <table cellpadding="0" cellspacing="0">
             <tr>
               <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
-              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
+              <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">Oneonetix</td>
             </tr>
           </table>
         </td>
@@ -98,7 +98,7 @@ serve(async (req) => {
       <tr>
         <td align="center" style="padding-top:24px;">
           <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#5b5bd6;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;You can decline from within the app after signing in.
+            Powered by <span style="color:#5b5bd6;font-weight:600;">Oneonetix</span>&nbsp;&middot;&nbsp;You can decline from within the app after signing in.
           </p>
         </td>
       </tr>

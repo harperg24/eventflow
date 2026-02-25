@@ -36,7 +36,7 @@ async function getAccessToken(): Promise<string> {
 
 async function sendEmail(to: string, subject: string, html: string, token: string) {
   const msg = [
-    `From: EventFlow <${GMAIL_SENDER}>`,
+    `From: Oneonetix <${GMAIL_SENDER}>`,
     `To: ${to}`,
     `Subject: ${subject}`,
     "MIME-Version: 1.0",
@@ -78,7 +78,7 @@ function notificationTemplate(opts: {
         <tr><td align="center" style="padding-bottom:28px;">
           <table cellpadding="0" cellspacing="0"><tr>
             <td style="background:#5b5bd6;width:28px;height:28px;border-radius:8px;text-align:center;vertical-align:middle;font-size:14px;color:#ffffff;font-weight:700;">✦</td>
-            <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">EventFlow</td>
+            <td style="padding-left:9px;font-size:15px;font-weight:600;color:#1d1d1f;font-family:'Helvetica Neue',Arial,sans-serif;letter-spacing:-0.01em;">Oneonetix</td>
           </tr></table>
         </td></tr>
 
@@ -110,7 +110,7 @@ function notificationTemplate(opts: {
         <!-- Footer -->
         <tr><td align="center" style="padding-top:24px;">
           <p style="font-size:11px;color:#8e8e93;margin:0;font-family:'Helvetica Neue',Arial,sans-serif;line-height:1.6;">
-            Powered by <span style="color:#5b5bd6;font-weight:600;">EventFlow</span>&nbsp;&middot;&nbsp;${footerNote || "You received this because you are on the guest list for this event."}
+            Powered by <span style="color:#5b5bd6;font-weight:600;">Oneonetix</span>&nbsp;&middot;&nbsp;${footerNote || "You received this because you are on the guest list for this event."}
           </p>
         </td></tr>
 

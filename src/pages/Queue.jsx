@@ -18,7 +18,7 @@ function Logo() {
   return (
     <div style={{ textAlign:"center", marginBottom:32, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
       <div style={{ width:28, height:28, background:"var(--accent)", borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, color:"#fff", fontWeight:700 }}>✦</div>
-      <span style={{ fontSize:14, fontWeight:600, color:"var(--text2)", letterSpacing:"0.04em" }}>EventFlow</span>
+      <span style={{ fontSize:14, fontWeight:600, color:"var(--text2)", letterSpacing:"0.04em" }}>Oneonetix</span>
     </div>
   );
 }

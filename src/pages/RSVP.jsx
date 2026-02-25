@@ -405,7 +405,7 @@ export default function RSVP() {
   const Logo = () => (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
       <div style={{ width: 24, height: 24, background: "var(--accent)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff" }}>✦</div>
-      <span style={{ fontSize: 13, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
+      <span style={{ fontSize: 13, color: "var(--text2)", letterSpacing: "0.05em" }}>Oneonetix</span>
     </div>
   );
 
@@ -443,7 +443,7 @@ export default function RSVP() {
             Contact the organiser if you think this is a mistake.
           </div>
         </div>
-        <div style={{ marginTop: 24, fontSize: 12, color: "var(--border)" }}>Powered by <span style={{ color: "var(--accent)" }}>EventFlow</span></div>
+        <div style={{ marginTop: 24, fontSize: 12, color: "var(--border)" }}>Powered by <span style={{ color: "var(--accent)" }}>Oneonetix</span></div>
       </div>
     </div>
   );
@@ -840,7 +840,7 @@ export default function RSVP() {
 
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "24px", borderTop: "1.5px solid var(--border)", fontSize: 12, color: "var(--text3)" }}>
-        Powered by <span style={{ color: "var(--accent)" }}>EventFlow</span>
+        Powered by <span style={{ color: "var(--accent)" }}>Oneonetix</span>
       </div>
     </div>
   );

@@ -107,7 +107,7 @@ export default function TicketPage() {
         <div style={{ maxWidth: 640, margin: "0 auto", textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 32 }}>
             <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
-            <span style={{ fontSize: 13, color: "var(--text2)", letterSpacing: "0.06em" }}>EventFlow</span>
+            <span style={{ fontSize: 13, color: "var(--text2)", letterSpacing: "0.06em" }}>Oneonetix</span>
           </div>
           <h1 style={{ fontSize: "clamp(24px,5vw,40px)", fontWeight: 800, letterSpacing: "-0.04em", color: "var(--text)", margin: "0 0 12px", lineHeight: 1.15 }}>
             {event.name}

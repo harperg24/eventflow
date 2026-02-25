@@ -47,7 +47,7 @@ export default function TicketSuccess() {
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 36, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
           <div style={{ width: 26, height: 26, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "#fff" }}>✦</div>
-          <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>EventFlow</span>
+          <span style={{ fontSize: 14, color: "var(--text2)", letterSpacing: "0.05em" }}>Oneonetix</span>
         </div>
 
         {loading ? (

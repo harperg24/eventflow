@@ -1454,7 +1454,7 @@ export default function Dashboard() {
     const blob = new Blob([csv], { type: "text/csv" });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
-    a.href = url; a.download = `${event?.name || "playlist"}-eventflow.csv`; a.click();
+    a.href = url; a.download = `${event?.name || "playlist"}-oneonetix.csv`; a.click();
     URL.revokeObjectURL(url);
   };
 
@@ -1571,7 +1571,7 @@ export default function Dashboard() {
       {!isMobile && <aside style={{ width: 240, background: "var(--sidebar,var(--bg2))", borderRight: "1.5px solid var(--border)", padding: "24px 16px", display: "flex", flexDirection: "column", gap: 2, flexShrink: 0, position: "sticky", top: 0, height: "100vh", overflowY: "auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 28, paddingLeft: 4 }}>
           <div style={{ width: 28, height: 28, background: "var(--accent)", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, color:"#fff" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)" }}>EventFlow</span>
+          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: "-0.03em", color: "var(--text)" }}>Oneonetix</span>
         </div>
 
         {/* Event mini card */}

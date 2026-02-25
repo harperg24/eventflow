@@ -41,7 +41,7 @@ export default function Auth() {
           <div style={{ width:36, height:36, background:"rgba(255,255,255,0.25)", borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(8px)" }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
-          <span style={{ fontSize:20, fontWeight:800, color:"white", letterSpacing:"-0.03em" }}>EventFlow</span>
+          <span style={{ fontSize:20, fontWeight:800, color:"white", letterSpacing:"-0.03em" }}>Oneonetix</span>
         </div>
 
         <div>
@@ -63,7 +63,7 @@ export default function Auth() {
           </div>
         </div>
 
-        <p style={{ color:"rgba(255,255,255,0.4)", fontSize:13 }}>© 2025 EventFlow</p>
+        <p style={{ color:"rgba(255,255,255,0.4)", fontSize:13 }}>© 2025 Oneonetix</p>
       </div>
 
       {/* Right panel — form */}
@@ -77,7 +77,7 @@ export default function Auth() {
               <div style={{ width:32, height:32, background:t.accent, borderRadius:9, display:"flex", alignItems:"center", justifyContent:"center" }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               </div>
-              <span style={{ fontSize:18, fontWeight:800, color:t.text, letterSpacing:"-0.03em" }}>EventFlow</span>
+              <span style={{ fontSize:18, fontWeight:800, color:t.text, letterSpacing:"-0.03em" }}>Oneonetix</span>
             </div>
           </div>
 
