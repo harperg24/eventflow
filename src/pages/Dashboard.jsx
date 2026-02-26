@@ -752,6 +752,7 @@ export default function Dashboard() {
   // Ticketing
   const [isMobile,       setIsMobile]       = useState(window.innerWidth < 768);
   const [mobileMode,     setMobileMode]     = useState("full"); // "full" | "ticketing"
+  const [showMoreNav,    setShowMoreNav]    = useState(false);
   const [hubTab,         setHubTab]         = useState("tiers"); // tiers | orders | attendees
   const [tiers,          setTiers]          = useState([]);
   const [orders,         setOrders]         = useState([]);
@@ -1579,13 +1580,16 @@ export default function Dashboard() {
     .vote-btn:hover { opacity:1!important; }
 
     /* Mobile nav */
-    .mobile-nav-btn { display:flex; flex-direction:column; align-items:center; gap:3px;
+    .mobile-nav-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
       background:none; border:none; color:var(--text3); cursor:pointer;
-      font-family:inherit; padding:8px 4px; flex:1; transition:color 0.15s; min-width:0; }
+      font-family:inherit; padding:10px 4px 8px; flex:1; transition:color 0.15s; min-width:0;
+      -webkit-tap-highlight-color: transparent; }
     .mobile-nav-btn.active { color:var(--accent); }
-    .mobile-nav-btn span.icon { font-size:18px; }
-    .mobile-nav-btn span.label { font-size:9px; font-weight:700; letter-spacing:0.1em;
-      text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+    .mobile-nav-btn.active span.icon { transform:scale(1.12); }
+    .mobile-nav-btn span.icon { font-size:20px; display:block; transition:transform 0.15s; }
+    .mobile-nav-btn span.label { font-size:9px; font-weight:700; letter-spacing:0.08em;
+      text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:52px; }
+    .mobile-nav-btn.accent-btn { color:var(--accent); }
 
     /* Mode pill */
     .mode-pill { display:flex; background:var(--bg3); border:1px solid var(--border);
@@ -1595,6 +1599,15 @@ export default function Dashboard() {
       font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
       color:var(--text2); cursor:pointer; transition:all 0.15s; background:none; }
     .mode-pill button.active { background:var(--accent); color:var(--accentText,#0a0a0a); }
+
+    /* Mobile stat cards */
+    @media (max-width:767px) {
+      .stat-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
+      .overview-grid { grid-template-columns:1fr !important; }
+      .mobile-hide { display:none !important; }
+      .mobile-full { width:100% !important; }
+      .card { padding:16px !important; }
+    }
 
     /* Modals */
     .bm-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75);
@@ -1617,23 +1630,30 @@ export default function Dashboard() {
   ).slice(0, 5); // show first 5 on mobile bottom nav
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg)", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", color: "var(--text)", flexDirection: isMobile ? "column" : "row" }}>
+    <div style={{ display: "flex", minHeight: isMobile ? "100dvh" : "100vh", background: "var(--bg)", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", color: "var(--text)", flexDirection: isMobile ? "column" : "row" }}>
       <style>{css}</style>
 
       {/* ── Mobile Header ── */}
       {isMobile && (
-        <div style={{ background: "var(--bg2)", borderBottom: "1.5px solid var(--border)", padding: "12px 16px", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={() => navigate("/events")} style={{ background: "none", border: "none", color: "var(--text2)", cursor: "pointer", fontSize: 18, padding: 0, marginRight: 4 }}>←</button>
-            <div style={{ width: 24, height: 24, background: "var(--accent)", borderRadius:"var(--radius,3px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✦</div>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}>{event.name}</div>
-              <div style={{ fontSize: 11, color: "var(--accent)" }}>{new Date(event.date).toLocaleDateString("en-NZ", { day: "numeric", month: "short" })}</div>
+        <div style={{ background: "var(--bg2)", borderBottom: "1px solid var(--border)", padding: "0 16px", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "stretch", minHeight: 54 }}>
+          {/* Back */}
+          <button onClick={() => navigate("/events")} style={{ background: "none", border: "none", borderRight: "1px solid var(--border)", color: "var(--text3)", cursor: "pointer", fontSize: 18, padding: "0 14px 0 0", marginRight: 14, flexShrink: 0, WebkitTapHighlightColor: "transparent" }}>←</button>
+          {/* Event name + date */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0, paddingTop: 2 }}>
+            <div style={{ fontFamily: "'Barlow Condensed',Arial,sans-serif", fontSize: 15, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", lineHeight: 1.1, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{event.name}</div>
+            <div style={{ fontFamily: "'Barlow Condensed',Arial,sans-serif", fontSize: 11, color: "var(--accent)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              {new Date(event.date).toLocaleDateString("en-NZ", { weekday: "short", day: "numeric", month: "short" })}
+              {daysUntil >= 0 && ` · ${daysUntil === 0 ? "TODAY" : `${daysUntil}D`}`}
             </div>
           </div>
-          <div className="mode-pill">
-            <button className={mobileMode === "full" ? "active" : ""} onClick={() => setMobileMode("full")}>Full</button>
-            <button className={mobileMode === "ticketing" ? "active" : ""} onClick={() => setMobileMode("ticketing")}>Door</button>
+          {/* Mode toggle — compact */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0, paddingLeft: 10, borderLeft: "1px solid var(--border)", marginLeft: 10 }}>
+            {[{id:"full",label:"⚙",title:"Manage"},{ id:"ticketing",label:"🚪",title:"Door" }].map(m => (
+              <button key={m.id} onClick={() => setMobileMode(m.id)} title={m.title}
+                style={{ background: mobileMode === m.id ? "var(--accentBg)" : "none", border: "none", borderRadius: "var(--radius,3px)", color: mobileMode === m.id ? "var(--accent)" : "var(--text3)", cursor: "pointer", fontSize: 16, padding: "8px 10px", transition: "all 0.15s", WebkitTapHighlightColor: "transparent" }}>
+                {m.label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -1691,36 +1711,39 @@ export default function Dashboard() {
       </aside>}
 
       {/* ── Main ── */}
-      <main style={{ flex: 1, overflowY: "auto", padding: isMobile ? "16px 16px 90px" : "36px 44px", background: "var(--bg)" }}>
+      <main style={{ flex: 1, overflowY: "auto", padding: isMobile ? "20px 16px 100px" : "36px 44px", background: "var(--bg)" }}>
 
         {/* OVERVIEW */}
         {activeNav === "overview" && (
           <div className="fade-up">
-            <div style={{ marginBottom: 32, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.2rem", letterSpacing:"0.02em", lineHeight:0.95, color:"var(--text)", marginBottom:8 }}>{event.name}</h1>
-                <p style={{ color: "var(--text2)", fontSize: 14 }}>{new Date(event.date).toLocaleDateString("en-NZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} · {event.time?.slice(0,5)} · {event.venue_name}</p>
+            <div style={{ marginBottom: isMobile ? 16 : 32 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize: isMobile ? "1.8rem" : "2.2rem", letterSpacing:"0.02em", lineHeight:0.95, color:"var(--text)", marginBottom: 0 }}>{event.name}</h1>
+                {!isMobile && <button onClick={() => setShowEdit(true)} className="btn-ghost" style={{ flexShrink: 0, marginTop: 4 }}>✎ Edit Event</button>}
               </div>
-              <button onClick={() => setShowEdit(true)} className="btn-ghost" style={{ flexShrink: 0, marginTop: 4 }}>
-                ✎ Edit Event
-              </button>
+              <p style={{ color: "var(--text2)", fontSize: isMobile ? 12 : 14, marginBottom: isMobile ? 10 : 0 }}>
+                {new Date(event.date).toLocaleDateString("en-NZ", { weekday: isMobile ? "short" : "long", year: "numeric", month: "long", day: "numeric" })}
+                {event.time && ` · ${event.time.slice(0,5)}`}
+                {event.venue_name && ` · ${event.venue_name}`}
+              </p>
+              {isMobile && <button onClick={() => setShowEdit(true)} className="btn-ghost" style={{ fontSize: 12, padding: "7px 12px" }}>✎ Edit Event</button>}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: isMobile ? 10 : 14, marginBottom: 20 }}>
               {[
                 { label: "Days Until",    value: daysUntil,                    sub: "event",               accent: "var(--accent)" },
                 { label: "Attending",     value: attending,                     sub: `of ${event.capacity || "∞"}`, accent: "#10b981" },
                 { label: "Pending RSVPs", value: pending,                       sub: "awaiting",            accent: "#f59e0b" },
                 { label: "Budget Used",   value: `$${totalSpent.toLocaleString()}`, sub: `of $${totalBudget.toLocaleString()}`, accent: "#8b5cf6" },
               ].map(s => (
-                <div key={s.label} className="card" style={{ padding: "20px 22px", position: "relative", overflow: "hidden" }}>
+                <div key={s.label} className="card" style={{ padding: isMobile ? "14px 14px" : "20px 22px", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: s.accent, opacity: 0.7 }} />
-                  <div style={{ fontFamily:"\'Bebas Neue\',\'Arial Black\',Arial,sans-serif", fontSize:"2.6rem", lineHeight:1, letterSpacing:"0.01em", color:s.accent, marginBottom:4 }}>{s.value}</div>
-                  <div style={{ fontSize: 13, marginBottom: 2 }}>{s.label}</div>
-                  <div style={{ fontSize: 11, color: "var(--text3)" }}>{s.sub}</div>
+                  <div style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize: isMobile ? "2rem" : "2.6rem", lineHeight:1, letterSpacing:"0.01em", color:s.accent, marginBottom:3 }}>{s.value}</div>
+                  <div style={{ fontSize: isMobile ? 11 : 13, marginBottom: 2 }}>{s.label}</div>
+                  <div style={{ fontSize: 10, color: "var(--text3)" }}>{s.sub}</div>
                 </div>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
               {/* Checklist */}
               <div className="card" style={{ padding: "22px 24px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
@@ -1772,31 +1795,33 @@ export default function Dashboard() {
               </div>
             </div>
             {/* Budget strip */}
-            <div className="card" style={{ padding: "22px 24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-                <h2 style={{ fontFamily: "inherit", fontSize: 17, fontWeight: 700 }}>Budget Snapshot</h2>
-                <button className="btn-ghost" onClick={() => setActiveNav("budget")}>View Details →</button>
+            <div className="card" style={{ padding: isMobile ? "16px" : "22px 24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                <h2 style={{ fontFamily: "inherit", fontSize: isMobile ? 15 : 17, fontWeight: 700 }}>Budget Snapshot</h2>
+                <button className="btn-ghost" onClick={() => setActiveNav("budget")} style={{ fontSize: 12 }}>View →</button>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text2)", marginBottom: 8 }}>
                 <span>Total Spent</span><span style={{ color: "var(--accent)" }}>${totalSpent.toLocaleString()} / ${totalBudget.toLocaleString()}</span>
               </div>
-              <div className="progress-bar" style={{ height: 8, marginBottom: 16 }}>
+              <div className="progress-bar" style={{ height: 8, marginBottom: isMobile ? 0 : 16 }}>
                 <div className="progress-fill" style={{ width: totalBudget ? `${Math.min((totalSpent/totalBudget)*100,100)}%` : "0%", background: "linear-gradient(90deg,var(--accent),var(--warning,#d97706))" }} />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: `repeat(${budget.length},1fr)`, gap: 10 }}>
-                {budget.map(c => {
-                  const pct = c.allocated ? Math.round((c.spent/c.allocated)*100) : 0;
-                  return (
-                    <div key={c.id} style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 16, marginBottom: 4 }}>{c.icon}</div>
-                      <div style={{ height: 40, background: "var(--bg3)", borderRadius: 5, overflow: "hidden", display: "flex", flexDirection: "column-reverse", marginBottom: 4 }}>
-                        <div style={{ height: `${pct}%`, background: c.color, opacity: 0.8, transition: "height 0.6s" }} />
+              {!isMobile && (
+                <div style={{ display: "grid", gridTemplateColumns: `repeat(${budget.length},1fr)`, gap: 10, marginTop: 16 }}>
+                  {budget.map(c => {
+                    const pct = c.allocated ? Math.round((c.spent/c.allocated)*100) : 0;
+                    return (
+                      <div key={c.id} style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 16, marginBottom: 4 }}>{c.icon}</div>
+                        <div style={{ height: 40, background: "var(--bg3)", borderRadius: 5, overflow: "hidden", display: "flex", flexDirection: "column-reverse", marginBottom: 4 }}>
+                          <div style={{ height: `${pct}%`, background: c.color, opacity: 0.8, transition: "height 0.6s" }} />
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--text2)" }}>{c.label}</div>
                       </div>
-                      <div style={{ fontSize: 10, color: "var(--text2)" }}>{c.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1805,121 +1830,152 @@ export default function Dashboard() {
         {activeNav === "guests" && (
           <div className="fade-up">
             {isReadOnly("guests") && <ReadOnlyBanner role={userRole} />}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
-              <div>
-                <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Guest List</h1>
-                <p style={{ color: "var(--text2)", fontSize: 14 }}>{attending} attending · {pending} pending · {declined} declined</p>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {selectedGuests.length > 0 && (
-                  <span style={{ fontSize: 13, color: "var(--accent)" }}>{selectedGuests.length} selected</span>
+
+            {/* Header */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize: isMobile ? "1.8rem" : "2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom: 0 }}>Guest List</h1>
+                {!isMobile && canEdit("guests") && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    {selectedGuests.length > 0 && <span style={{ fontSize: 13, color: "var(--accent)" }}>{selectedGuests.length} selected</span>}
+                    <button className="btn-ghost" onClick={() => setSelectedGuests([])} style={{ display: selectedGuests.length ? "block" : "none", padding: "10px 16px", fontSize: 13 }}>Clear</button>
+                    <button className="btn-gold" onClick={handleSendInvites} disabled={inviting} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {inviting ? "Sending…" : selectedGuests.length > 0 ? `✉ Send to ${selectedGuests.length}` : "✉ Send Uninvited"}
+                    </button>
+                  </div>
                 )}
-                <button className="btn-ghost" onClick={() => setSelectedGuests([])} style={{ display: selectedGuests.length ? "block" : "none", padding: "10px 16px", fontSize: 13 }}>
-                  Clear
-                </button>
-                {canEdit("guests") && <button className="btn-gold" onClick={handleSendInvites} disabled={inviting} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  {inviting ? "Sending…" : selectedGuests.length > 0 ? `✉ Send to ${selectedGuests.length}` : "✉ Send Uninvited"}
-                </button>}
               </div>
+              <p style={{ color: "var(--text2)", fontSize: isMobile ? 12 : 14 }}>{attending} attending · {pending} pending · {declined} declined</p>
             </div>
+
             {inviteResult && (
-              <div style={{ background: inviteResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${inviteResult.success ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`, borderRadius:"var(--radius,3px)", padding: "12px 16px", marginBottom: 20, fontSize: 14, color: inviteResult.success ? "#10b981" : "#ef4444" }}>
+              <div style={{ background: inviteResult.success ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", border: `1px solid ${inviteResult.success ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`, borderRadius:"var(--radius,3px)", padding: "12px 16px", marginBottom: 16, fontSize: 14, color: inviteResult.success ? "#10b981" : "#ef4444" }}>
                 {inviteResult.success ? "✓" : "⚠"} {inviteResult.message}
               </div>
             )}
+
             {/* Requests inbox */}
             {requests.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <div style={{ background: "#ef4444", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, padding: "2px 8px", animation: "pulse 2s infinite" }}>{requests.length}</div>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                  <div style={{ background: "#ef4444", color: "#fff", fontSize: 11, fontWeight: 700, borderRadius: 999, padding: "2px 8px" }}>{requests.length}</div>
                   <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text)" }}>Join Requests</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {requests.map(req => (
-                    <div key={req.id} style={{ background: "rgba(255,77,0,0.04)", border: "1px solid rgba(255,77,0,0.15)", borderRadius:"var(--radiusLg,4px)", padding: "16px 18px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: req.message ? 10 : 0 }}>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 3 }}>{req.name}</div>
-                          <div style={{ fontSize: 12, color: "var(--text2)" }}>
-                            {req.email}
-                            {req.phone && <span> · {req.phone}</span>}
-                            <span style={{ marginLeft: 8, color: "var(--text3)" }}>{new Date(req.created_at).toLocaleDateString("en-NZ")}</span>
-                          </div>
+                    <div key={req.id} style={{ background: "rgba(255,77,0,0.04)", border: "1px solid rgba(255,77,0,0.15)", borderRadius:"var(--radiusLg,4px)", padding: isMobile ? "14px" : "16px 18px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: req.message ? 10 : 0 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 2 }}>{req.name}</div>
+                          <div style={{ fontSize: 12, color: "var(--text2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{req.email}{req.phone && ` · ${req.phone}`}</div>
                         </div>
                         <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                          <button onClick={() => handleRejectRequest(req.id)} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "#ef4444", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(239,68,68,0.18)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(239,68,68,0.1)"}>
-                            Decline
-                          </button>
-                          <button onClick={() => handleApproveRequest(req)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "#10b981", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(16,185,129,0.18)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(16,185,129,0.1)"}>
-                            Approve
-                          </button>
+                          <button onClick={() => handleRejectRequest(req.id)} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius:"var(--radius,3px)", padding: isMobile ? "8px 14px" : "7px 14px", color: "#ef4444", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody,'Barlow',sans-serif)", WebkitTapHighlightColor:"transparent" }}>Decline</button>
+                          <button onClick={() => handleApproveRequest(req)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)", borderRadius:"var(--radius,3px)", padding: isMobile ? "8px 14px" : "7px 14px", color: "#10b981", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody,'Barlow',sans-serif)", WebkitTapHighlightColor:"transparent" }}>Approve</button>
                         </div>
                       </div>
-                      {req.message && (
-                        <div style={{ fontSize: 13, color: "#7a7268", fontStyle: "italic", borderLeft: "2px solid rgba(255,77,0,0.2)", paddingLeft: 12, lineHeight: 1.6 }}>
-                          "{req.message}"
-                        </div>
-                      )}
+                      {req.message && <div style={{ fontSize: 13, color: "#7a7268", fontStyle: "italic", borderLeft: "2px solid rgba(255,77,0,0.2)", paddingLeft: 12, lineHeight: 1.6 }}>"{req.message}"</div>}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Add guest form */}
-            <div className="card" style={{ padding: "18px 22px", marginBottom: 14, display: "flex", gap: 10, alignItems: "flex-end" }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Name</div>
-                <input className="field" placeholder="Guest name" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} />
+            {/* Add guest form — stacks on mobile */}
+            <div className="card" style={{ padding: isMobile ? "14px" : "18px 22px", marginBottom: 14 }}>
+              <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 10, alignItems: isMobile ? "stretch" : "flex-end" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Name</div>
+                  <input className="field" placeholder="Guest name" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} style={{ fontSize: isMobile ? 16 : undefined }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Email</div>
+                  <input className="field" type="email" placeholder="guest@email.com" value={newGuestEmail} onChange={e => setNewGuestEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddGuest()} style={{ fontSize: isMobile ? 16 : undefined }} />
+                </div>
+                {canEdit("guests") && <button className="btn-gold" onClick={handleAddGuest} disabled={!newGuestEmail.trim()} style={{ width: isMobile ? "100%" : undefined, justifyContent: "center", padding: isMobile ? "13px" : undefined }}>Add Guest</button>}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Email</div>
-                <input className="field" type="email" placeholder="guest@email.com" value={newGuestEmail} onChange={e => setNewGuestEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddGuest()} />
-              </div>
-              {canEdit("guests") && <button className="btn-gold" onClick={handleAddGuest} disabled={!newGuestEmail.trim()}>Add Guest</button>}
             </div>
 
-            <div className="card">
-              <div style={{ display: "grid", gridTemplateColumns: "36px 2fr 2fr 1fr 1fr auto", padding: "12px 20px", borderBottom: "1.5px solid var(--border)", alignItems: "center" }}>
-                <input type="checkbox"
-                  checked={selectedGuests.length === guests.filter(g => g.email).length && guests.filter(g => g.email).length > 0}
-                  onChange={e => setSelectedGuests(e.target.checked ? guests.filter(g => g.email).map(g => g.id) : [])}
-                  style={{ accentColor: "var(--accent)", width: 15, height: 15, cursor: "pointer" }}
-                />
-                {["Name", "Email", "Status", "Invited"].map(h => (
-                  <div key={h} style={{ fontSize: 11, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</div>
+            {/* Guest list — card view on mobile, table on desktop */}
+            {isMobile ? (
+              <div className="card" style={{ overflow: "hidden" }}>
+                {/* Mobile send banner */}
+                {canEdit("guests") && (
+                  <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <button className="btn-gold" onClick={handleSendInvites} disabled={inviting} style={{ fontSize: 12, padding: "8px 14px", flex: 1, justifyContent: "center" }}>
+                      {inviting ? "Sending…" : "✉ Send Invites to Uninvited"}
+                    </button>
+                  </div>
+                )}
+                {guests.length === 0 && (
+                  <div style={{ padding: "32px", textAlign: "center", color: "var(--text3)", fontSize: 14 }}>No guests yet — add someone above.</div>
+                )}
+                {guests.map((g, i) => (
+                  <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", borderBottom: i < guests.length - 1 ? "1px solid var(--border)" : "none" }}>
+                    {/* Avatar */}
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", background: "var(--bg3)", border: `1.5px solid ${g.status === "attending" ? "#10b981" : g.status === "declined" ? "#ef444430" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: "var(--text2)", flexShrink: 0 }}>
+                      {(g.name || g.email || "?")[0].toUpperCase()}
+                    </div>
+                    {/* Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name || <span style={{ color:"var(--text3)" }}>No name</span>}</div>
+                      <div style={{ fontSize: 11, color: "var(--text3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 1 }}>{g.email || "No email"}</div>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 4 }}>
+                        <span className={`tag ${g.status === "attending" ? "tag-green" : g.status === "pending" ? "tag-amber" : "tag-red"}`} style={{ fontSize: 10 }}>{g.status}</span>
+                        {g.dietary && g.dietary !== "None" && <span style={{ fontSize: 10, color: "#10b981" }}>🍃 {g.dietary}</span>}
+                      </div>
+                    </div>
+                    {/* Edit button */}
+                    <button onClick={() => setEditingGuest({ ...g })}
+                      style={{ background: "none", border: "1px solid var(--border)", borderRadius: "var(--radius,3px)", padding: "7px 12px", color: "var(--text3)", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody,'Barlow',sans-serif)", flexShrink: 0, WebkitTapHighlightColor: "transparent" }}>
+                      Edit
+                    </button>
+                  </div>
                 ))}
-                <div />
               </div>
-              {guests.length === 0 && (
-                <div style={{ padding: "32px", textAlign: "center", color: "var(--text3)", fontSize: 14 }}>No guests yet — add someone above.</div>
-              )}
-              {guests.map((g, i) => (
-                <div key={g.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 2fr 1fr 1fr auto", padding: "12px 20px", borderBottom: i < guests.length - 1 ? "1px solid #0f0f1a" : "none", alignItems: "center", gap: 8, background: selectedGuests.includes(g.id) ? "rgba(255,77,0,0.03)" : "transparent" }}>
+            ) : (
+              <div className="card">
+                <div style={{ display: "grid", gridTemplateColumns: "36px 2fr 2fr 1fr 1fr auto", padding: "12px 20px", borderBottom: "1.5px solid var(--border)", alignItems: "center" }}>
                   <input type="checkbox"
-                    checked={selectedGuests.includes(g.id)}
-                    disabled={!g.email}
-                    onChange={e => setSelectedGuests(sel => e.target.checked ? [...sel, g.id] : sel.filter(id => id !== g.id))}
-                    style={{ accentColor: "var(--accent)", width: 15, height: 15, cursor: g.email ? "pointer" : "not-allowed", opacity: g.email ? 1 : 0.3 }}
+                    checked={selectedGuests.length === guests.filter(g => g.email).length && guests.filter(g => g.email).length > 0}
+                    onChange={e => setSelectedGuests(e.target.checked ? guests.filter(g => g.email).map(g => g.id) : [])}
+                    style={{ accentColor: "var(--accent)", width: 15, height: 15, cursor: "pointer" }}
                   />
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>{g.name || <span style={{ color: "var(--text3)" }}>No name</span>}</div>
-                  <div style={{ fontSize: 13, color: "var(--text2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.email || <span style={{ color: "var(--text3)" }}>—</span>}</div>
-                  <span className={`tag ${g.status === "attending" ? "tag-green" : g.status === "pending" ? "tag-amber" : "tag-red"}`}>{g.status}</span>
-                  <div>
-                    {g.invited_at
-                      ? <span className="tag" style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8", fontSize: 11 }} title={`Sent ${new Date(g.invited_at).toLocaleDateString("en-NZ")}`}>✓ Sent</span>
-                      : g.email
-                        ? <span className="tag" style={{ background: "var(--bg3)", color: "var(--text3)", fontSize: 11 }}>Not sent</span>
-                        : <span style={{ fontSize: 12, color: "#2a2a38" }}>No email</span>
-                    }
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => setEditingGuest({ ...g })} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>Edit</button>
-                    <button onClick={() => setDeletingGuest(g.id)} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; e.currentTarget.style.color = "#ef4444"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>✕</button>
-                  </div>
+                  {["Name", "Email", "Status", "Invited"].map(h => (
+                    <div key={h} style={{ fontSize: 11, color: "var(--text3)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{h}</div>
+                  ))}
+                  <div />
                 </div>
-              ))}
-            </div>
+                {guests.length === 0 && (
+                  <div style={{ padding: "32px", textAlign: "center", color: "var(--text3)", fontSize: 14 }}>No guests yet — add someone above.</div>
+                )}
+                {guests.map((g, i) => (
+                  <div key={g.id} style={{ display: "grid", gridTemplateColumns: "36px 2fr 2fr 1fr 1fr auto", padding: "12px 20px", borderBottom: i < guests.length - 1 ? "1px solid #0f0f1a" : "none", alignItems: "center", gap: 8, background: selectedGuests.includes(g.id) ? "rgba(255,77,0,0.03)" : "transparent" }}>
+                    <input type="checkbox"
+                      checked={selectedGuests.includes(g.id)}
+                      disabled={!g.email}
+                      onChange={e => setSelectedGuests(sel => e.target.checked ? [...sel, g.id] : sel.filter(id => id !== g.id))}
+                      style={{ accentColor: "var(--accent)", width: 15, height: 15, cursor: g.email ? "pointer" : "not-allowed", opacity: g.email ? 1 : 0.3 }}
+                    />
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{g.name || <span style={{ color: "var(--text3)" }}>No name</span>}</div>
+                    <div style={{ fontSize: 13, color: "var(--text2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.email || <span style={{ color: "var(--text3)" }}>—</span>}</div>
+                    <span className={`tag ${g.status === "attending" ? "tag-green" : g.status === "pending" ? "tag-amber" : "tag-red"}`}>{g.status}</span>
+                    <div>
+                      {g.invited_at
+                        ? <span className="tag" style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8", fontSize: 11 }} title={`Sent ${new Date(g.invited_at).toLocaleDateString("en-NZ")}`}>✓ Sent</span>
+                        : g.email
+                          ? <span className="tag" style={{ background: "var(--bg3)", color: "var(--text3)", fontSize: 11 }}>Not sent</span>
+                          : <span style={{ fontSize: 12, color: "#2a2a38" }}>No email</span>
+                      }
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => setEditingGuest({ ...g })} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--fontBody,'Barlow',sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>Edit</button>
+                      <button onClick={() => setDeletingGuest(g.id)} style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text2)", fontSize: 12, cursor: "pointer", transition: "all 0.15s", fontFamily: "var(--fontBody,'Barlow',sans-serif)" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; e.currentTarget.style.color = "#ef4444"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -3319,69 +3375,115 @@ export default function Dashboard() {
           const inGuests = filtered.filter(g => g.checked_in);
 
           const GuestRow = ({ g }) => (
-            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 20px", borderBottom: "1px solid var(--border)", transition: "background 0.15s" }}
-              onMouseEnter={e => e.currentTarget.style.background="var(--bg3)"}
-              onMouseLeave={e => e.currentTarget.style.background="transparent"}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "var(--bg3)", border: `1.5px solid ${g.checked_in ? "#10b981" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, transition: "all 0.2s" }}>
-                {(g.name || g.email || "?")[0].toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 500, color: g.checked_in ? "#5a8a72" : "var(--text)" }}>{g.name || g.email}</div>
-                <div style={{ fontSize: 11, color: "var(--text3)", display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {g.email && <span>{g.email}</span>}
-                  {g.phone && <span>· {g.phone}</span>}
-                  {g.dietary && g.dietary !== "None" && <span>· 🍃 {g.dietary}</span>}
-                  {g.checked_in && g.checked_in_at && <span style={{ color: "#10b981" }}>· ✓ {new Date(g.checked_in_at).toLocaleTimeString("en-NZ", { hour: "2-digit", minute: "2-digit" })}</span>}
+            isMobile ? (
+              /* Mobile: big tap target, swipe-friendly layout */
+              <div style={{ display:"flex", alignItems:"center", borderBottom:"1px solid var(--border)", WebkitTapHighlightColor:"transparent" }}>
+                {/* Main info - tapping checks in */}
+                <div onClick={() => !g.checked_in && handleCheckIn(g.id)}
+                  style={{ flex:1, display:"flex", alignItems:"center", gap:12, padding:"14px 16px", cursor: g.checked_in ? "default" : "pointer", minWidth:0 }}>
+                  <div style={{ width:40, height:40, borderRadius:"50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "var(--bg3)", border:`2px solid ${g.checked_in ? "#10b981" : "var(--border)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:700, color: g.checked_in ? "#10b981" : "var(--text2)", flexShrink:0, transition:"all 0.2s" }}>
+                    {g.checked_in ? "✓" : (g.name || g.email || "?")[0].toUpperCase()}
+                  </div>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:15, fontWeight:600, color: g.checked_in ? "var(--text3)" : "var(--text)", textDecoration: g.checked_in ? "line-through" : "none", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{g.name || g.email}</div>
+                    <div style={{ fontSize:12, color:"var(--text3)", display:"flex", gap:6, alignItems:"center", marginTop:2, flexWrap:"wrap" }}>
+                      {g.dietary && g.dietary !== "None" && <span style={{ background:"rgba(16,185,129,0.1)", color:"#10b981", borderRadius:"3px", padding:"1px 6px", fontSize:10 }}>🍃 {g.dietary}</span>}
+                      {g.checked_in && g.checked_in_at && <span style={{ color:"#10b981", fontSize:11 }}>✓ {new Date(g.checked_in_at).toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"})}</span>}
+                      {!g.checked_in && g.email && <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:160 }}>{g.email}</span>}
+                    </div>
+                  </div>
                 </div>
+                {/* Action button */}
+                {g.checked_in ? (
+                  <button onClick={() => canEdit("checkin") && handleUnCheckIn(g.id)}
+                    style={{ background:"none", border:"none", padding:"14px 16px", color:"#10b981", cursor: canEdit("checkin") ? "pointer" : "default", fontSize:20, flexShrink:0, WebkitTapHighlightColor:"transparent" }}
+                    title="Undo check-in">✓</button>
+                ) : (
+                  <button onClick={() => handleCheckIn(g.id)}
+                    style={{ background:"rgba(16,185,129,0.1)", border:"none", borderLeft:"1px solid var(--border)", padding:"0 18px", height:"100%", minHeight:68, color:"#10b981", cursor:"pointer", fontSize:13, fontFamily:"'Barlow Condensed',Arial,sans-serif", fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", flexShrink:0, WebkitTapHighlightColor:"transparent" }}>
+                    IN
+                  </button>
+                )}
               </div>
-              <button onClick={() => setQrGuest(g)}
-                style={{ background: "none", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "5px 10px", color: "var(--text3)", cursor: "pointer", fontSize: 12, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s", flexShrink: 0 }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor="var(--text2)"; e.currentTarget.style.color="var(--text2)"; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text3)"; }}>
-                QR
-              </button>
-              {g.checked_in ? (
-                <button onClick={() => canEdit("checkin") && handleUnCheckIn(g.id)}
-                  style={{ background: "rgba(16,185,129,0.1)", border: "1.5px solid #10b981", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "#10b981", cursor: canEdit("checkin") ? "pointer" : "default", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
-                  onMouseEnter={e => { if(canEdit("checkin")){ e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}}
-                  onMouseLeave={e => { e.currentTarget.style.background="rgba(16,185,129,0.1)"; e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
-                  title="Undo check-in">
-                  ✓ In
-                </button>
-              ) : (
-                <button onClick={() => handleCheckIn(g.id)}
-                  style={{ background: "transparent", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "7px 14px", color: "var(--text2)", cursor: "pointer", fontSize: 13, fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 500, transition: "all 0.2s", flexShrink: 0 }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor="var(--text3)"; e.currentTarget.style.color="var(--text2)"; }}>
-                  Check in
-                </button>
-              )}
-            </div>
+            ) : (
+              /* Desktop: original layout */
+              <div style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 20px", borderBottom:"1px solid var(--border)", transition:"background 0.15s" }}
+                onMouseEnter={e => e.currentTarget.style.background="var(--bg3)"}
+                onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+                <div style={{ width:36, height:36, borderRadius:"50%", background: g.checked_in ? "rgba(16,185,129,0.15)" : "var(--bg3)", border:`1.5px solid ${g.checked_in ? "#10b981" : "var(--border)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, flexShrink:0, transition:"all 0.2s" }}>
+                  {(g.name || g.email || "?")[0].toUpperCase()}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:14, fontWeight:500, color: g.checked_in ? "#5a8a72" : "var(--text)" }}>{g.name || g.email}</div>
+                  <div style={{ fontSize:11, color:"var(--text3)", display:"flex", gap:8, flexWrap:"wrap" }}>
+                    {g.email && <span>{g.email}</span>}
+                    {g.phone && <span>· {g.phone}</span>}
+                    {g.dietary && g.dietary !== "None" && <span>· 🍃 {g.dietary}</span>}
+                    {g.checked_in && g.checked_in_at && <span style={{ color:"#10b981" }}>· ✓ {new Date(g.checked_in_at).toLocaleTimeString("en-NZ",{hour:"2-digit",minute:"2-digit"})}</span>}
+                  </div>
+                </div>
+                <button onClick={() => setQrGuest(g)}
+                  style={{ background:"none", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"5px 10px", color:"var(--text3)", cursor:"pointer", fontSize:12, fontFamily:"var(--fontBody,'Barlow',sans-serif)", transition:"all 0.15s", flexShrink:0 }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor="var(--text2)"; e.currentTarget.style.color="var(--text2)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text3)"; }}>QR</button>
+                {g.checked_in ? (
+                  <button onClick={() => canEdit("checkin") && handleUnCheckIn(g.id)}
+                    style={{ background:"rgba(16,185,129,0.1)", border:"1.5px solid #10b981", borderRadius:"var(--radius,3px)", padding:"7px 14px", color:"#10b981", cursor: canEdit("checkin") ? "pointer" : "default", fontSize:13, fontFamily:"var(--fontBody,'Barlow',sans-serif)", fontWeight:500, transition:"all 0.2s", flexShrink:0 }}
+                    onMouseEnter={e => { if(canEdit("checkin")){ e.currentTarget.style.background="rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor="#ef4444"; e.currentTarget.style.color="#ef4444"; }}}
+                    onMouseLeave={e => { e.currentTarget.style.background="rgba(16,185,129,0.1)"; e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                    title="Undo check-in">✓ In</button>
+                ) : (
+                  <button onClick={() => handleCheckIn(g.id)}
+                    style={{ background:"transparent", border:"1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding:"7px 14px", color:"var(--text2)", cursor:"pointer", fontSize:13, fontFamily:"var(--fontBody,'Barlow',sans-serif)", fontWeight:500, transition:"all 0.2s", flexShrink:0 }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor="var(--text3)"; e.currentTarget.style.color="var(--text2)"; }}>Check in</button>
+                )}
+              </div>
+            )
           );
 
           return (
             <div className="fade-up">
               {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-                <div>
-                  <h1 style={{ fontFamily: "inherit", fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Check-in</h1>
-                  <p style={{ color: "var(--text2)", fontSize: 14 }}>{checkedIn} of {attending} checked in tonight</p>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {["ticketed","hybrid"].includes(event?.ticketing) && (
-                    <button onClick={() => navigate("/scanner/" + eventId)}
-                      style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--accentBg)", border: "1px solid rgba(255,77,0,0.3)", color: "var(--accent)", borderRadius:"var(--radius,3px)", padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", fontWeight: 600 }}>
-                      🎟 Ticket Scanner
+              {isMobile ? (
+                <div style={{ marginBottom: 16 }}>
+                  <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.2rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:4 }}>Check-in</h1>
+                  <p style={{ color:"var(--text2)", fontSize:13, marginBottom:14 }}>{checkedIn} of {attending} checked in tonight</p>
+                  <div style={{ display:"flex", gap:10 }}>
+                    {["ticketed","hybrid"].includes(event?.ticketing) && (
+                      <button onClick={() => navigate("/scanner/" + eventId)}
+                        style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:8, background:"var(--accent)", border:"none", color:"#0a0a0a", borderRadius:"var(--radius,3px)", padding:"13px", fontSize:14, cursor:"pointer", fontFamily:"'Barlow Condensed',Arial,sans-serif", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", WebkitTapHighlightColor:"transparent" }}>
+                        📷 Ticket Scanner
+                      </button>
+                    )}
+                    <button onClick={() => setEventQrOpen(true)}
+                      style={{ flex: ["ticketed","hybrid"].includes(event?.ticketing) ? "0 0 auto" : 1, display:"flex", alignItems:"center", justifyContent:"center", gap:8, background:"var(--bg3)", border:"1px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"13px 18px", fontSize:14, cursor:"pointer", fontFamily:"'Barlow Condensed',Arial,sans-serif", fontWeight:700, letterSpacing:"0.06em", textTransform:"uppercase", WebkitTapHighlightColor:"transparent" }}>
+                      QR
                     </button>
-                  )}
-                  <button onClick={() => setEventQrOpen(true)}
-                    style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--bg3)", border: "1.5px solid var(--border)", color: "var(--text)", borderRadius:"var(--radius,3px)", padding: "9px 16px", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text)"; }}>
-                    📷 Event QR Code
-                  </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:24 }}>
+                  <div>
+                    <h1 style={{ fontFamily:"'Bebas Neue','Arial Black',Arial,sans-serif", fontSize:"2.4rem", letterSpacing:"0.02em", lineHeight:0.95, marginBottom:8 }}>Check-in</h1>
+                    <p style={{ color:"var(--text2)", fontSize:14 }}>{checkedIn} of {attending} checked in tonight</p>
+                  </div>
+                  <div style={{ display:"flex", gap:8 }}>
+                    {["ticketed","hybrid"].includes(event?.ticketing) && (
+                      <button onClick={() => navigate("/scanner/" + eventId)}
+                        style={{ display:"flex", alignItems:"center", gap:8, background:"var(--accentBg)", border:"1px solid rgba(255,77,0,0.3)", color:"var(--accent)", borderRadius:"var(--radius,3px)", padding:"9px 16px", fontSize:13, cursor:"pointer", fontFamily:"var(--fontBody,'Barlow',sans-serif)", fontWeight:600 }}>
+                        🎟 Ticket Scanner
+                      </button>
+                    )}
+                    <button onClick={() => setEventQrOpen(true)}
+                      style={{ display:"flex", alignItems:"center", gap:8, background:"var(--bg3)", border:"1.5px solid var(--border)", color:"var(--text)", borderRadius:"var(--radius,3px)", padding:"9px 16px", fontSize:13, cursor:"pointer", fontFamily:"var(--fontBody,'Barlow',sans-serif)", transition:"all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor="#10b981"; e.currentTarget.style.color="#10b981"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor="var(--border)"; e.currentTarget.style.color="var(--text)"; }}>
+                      📷 Event QR Code
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Scan flash */}
               {scanResult && (
@@ -3394,7 +3496,7 @@ export default function Dashboard() {
               )}
 
               {/* Progress */}
-              <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
+              <div className="card" style={{ padding: isMobile ? "14px 16px" : "16px 20px", marginBottom: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "var(--text2)", marginBottom: 8 }}>
                   <span>Checked in</span>
                   <span style={{ color: "#10b981", fontWeight: 600 }}>{checkedIn} / {attending}</span>
@@ -3405,19 +3507,21 @@ export default function Dashboard() {
               </div>
 
               {/* Search + filter */}
-              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-                <div style={{ position: "relative", flex: 1 }}>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ position: "relative", marginBottom: 8 }}>
                   <span style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--text3)", fontSize: 13, pointerEvents: "none" }}>🔍</span>
                   <input value={checkInSearch} onChange={e => setCheckInSearch(e.target.value)}
-                    placeholder="Search by name, email, phone…"
-                    style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: "10px 14px 10px 38px", color: "var(--text)", fontSize: 13, outline: "none", fontFamily: "var(--fontBody, 'Barlow', sans-serif)" }} />
+                    placeholder="Search name, email…"
+                    style={{ width: "100%", boxSizing: "border-box", background: "var(--bg3)", border: "1.5px solid var(--border)", borderRadius:"var(--radius,3px)", padding: isMobile ? "13px 14px 13px 38px" : "10px 14px 10px 38px", color: "var(--text)", fontSize: isMobile ? 16 : 13, outline: "none", fontFamily: "var(--fontBody,'Barlow',sans-serif)" }} />
                 </div>
-                {["all","in","out"].map(f => (
-                  <button key={f} onClick={() => setCheckInFilter(f)}
-                    style={{ background: checkInFilter === f ? "rgba(16,185,129,0.12)" : "transparent", border: `1px solid ${checkInFilter === f ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: checkInFilter === f ? "#10b981" : "var(--text2)", borderRadius:"var(--radius,3px)", padding: "9px 14px", fontSize: 12, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s", textTransform: "capitalize" }}>
-                    {f === "in" ? "✓ In" : f === "out" ? "Not in" : "All"}
-                  </button>
-                ))}
+                <div style={{ display: "flex", gap: 8 }}>
+                  {["all","in","out"].map(f => (
+                    <button key={f} onClick={() => setCheckInFilter(f)}
+                      style={{ flex: isMobile ? 1 : "none", background: checkInFilter === f ? "rgba(16,185,129,0.12)" : "transparent", border: `1px solid ${checkInFilter === f ? "rgba(16,185,129,0.3)" : "var(--border)"}`, color: checkInFilter === f ? "#10b981" : "var(--text2)", borderRadius:"var(--radius,3px)", padding: isMobile ? "10px" : "9px 14px", fontSize: isMobile ? 13 : 12, cursor: "pointer", fontFamily: "'Barlow Condensed',Arial,sans-serif", fontWeight: 700, letterSpacing: "0.06em", transition: "all 0.15s", textTransform: "uppercase", WebkitTapHighlightColor: "transparent" }}>
+                      {f === "in" ? "✓ In" : f === "out" ? "Not In" : "All"}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Not yet checked in */}
@@ -3790,47 +3894,91 @@ export default function Dashboard() {
 
       {/* ── Mobile Bottom Nav ── */}
       {isMobile && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "var(--bg2)", borderTop: "1.5px solid var(--border)", display: "flex", zIndex: 50, padding: "4px 0 env(safe-area-inset-bottom,0)" }}>
-          {(mobileMode === "ticketing"
-            ? MOBILE_TICKETING_NAV
-            : MOBILE_FULL_NAV
-          ).map(n => (
-            <button key={n.id} className={`mobile-nav-btn${activeNav === n.id ? " active" : ""}`}
-              onClick={() => setActiveNav(n.id)}>
-              <span className="icon">{n.icon}</span>
-              <span className="label">{n.label}</span>
-            </button>
-          ))}
-          {mobileMode === "ticketing" && tiers.length > 0 && (
-            <button className="mobile-nav-btn"
-              onClick={() => navigate("/scanner/" + eventId)}
-              style={{ color: "var(--accent)", flex: 1 }}>
-              <span className="icon">📷</span>
-              <span className="label">Scanner</span>
-            </button>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "var(--bg2)", borderTop: "1px solid var(--border)", display: "flex", zIndex: 50, paddingBottom: "env(safe-area-inset-bottom,0)" }}>
+          {mobileMode === "ticketing" ? (
+            /* Door mode: check-in focused */
+            <>
+              {[
+                { id: "checkin",  label: "Check-in", icon: "✓" },
+                { id: "guests",   label: "Guests",   icon: "◎" },
+                { id: "tickets",  label: "Tickets",  icon: "🎟" },
+                { id: "overview", label: "Overview", icon: "⌂" },
+              ].map(n => (
+                <button key={n.id} className={`mobile-nav-btn${activeNav === n.id ? " active" : ""}`}
+                  onClick={() => setActiveNav(n.id)}>
+                  <span className="icon">{n.icon}</span>
+                  <span className="label">{n.label}</span>
+                </button>
+              ))}
+              <button className="mobile-nav-btn accent-btn"
+                onClick={() => navigate("/scanner/" + eventId)}>
+                <span className="icon">📷</span>
+                <span className="label">Scan</span>
+              </button>
+            </>
+          ) : (
+            /* Full mode: show relevant nav items */
+            <>
+              {MOBILE_FULL_NAV.slice(0, 4).map(n => (
+                <button key={n.id} className={`mobile-nav-btn${activeNav === n.id ? " active" : ""}`}
+                  onClick={() => setActiveNav(n.id)}>
+                  <span className="icon">{n.icon}</span>
+                  <span className="label">{n.label}</span>
+                  {n.id === "guests" && requests.length > 0 && (
+                    <span style={{ position:"absolute", top:6, right:"calc(50% - 18px)", background:"#ef4444", borderRadius:"50%", width:8, height:8 }} />
+                  )}
+                </button>
+              ))}
+              {/* More button opens a slide-up sheet */}
+              <button className={`mobile-nav-btn${showMoreNav ? " active" : ""}`}
+                onClick={() => setShowMoreNav(v => !v)}>
+                <span className="icon">···</span>
+                <span className="label">More</span>
+              </button>
+            </>
           )}
         </div>
       )}
 
-      {/* Edit Guest Modal */}
+      {/* Mobile "More" nav sheet */}
+      {isMobile && showMoreNav && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setShowMoreNav(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "var(--bg2)", borderTop: "1px solid var(--border)", borderRadius: "12px 12px 0 0", padding: "8px 0 calc(env(safe-area-inset-bottom,0) + 8px)" }}>
+            <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 16px" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, padding: "0 8px" }}>
+              {NAV.filter(n => canSee(n.id) && (event?.enabled_features ? (n.id === "overview" || event.enabled_features.includes(n.id)) : true) && (!n.ticketed || ["ticketed","hybrid"].includes(event?.ticketing) || tiers.length > 0)).map(n => (
+                <button key={n.id}
+                  onClick={() => { setActiveNav(n.id); setShowMoreNav(false); }}
+                  style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, padding:"14px 8px", background: activeNav === n.id ? "var(--accentBg)" : "none", border:"none", borderRadius:"var(--radius,3px)", cursor:"pointer", WebkitTapHighlightColor:"transparent" }}>
+                  <span style={{ fontSize:22 }}>{n.icon}</span>
+                  <span style={{ fontFamily:"'Barlow Condensed',Arial,sans-serif", fontSize:10, fontWeight:700, letterSpacing:"0.08em", textTransform:"uppercase", color: activeNav === n.id ? "var(--accent)" : "var(--text2)" }}>{n.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Guest Modal — bottom sheet on mobile, centered modal on desktop */}
       {editingGuest && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 24, backdropFilter: "blur(6px)" }} onClick={() => setEditingGuest(null)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1.5px solid var(--border)", borderRadius:"var(--radiusLg,4px)", padding: "28px 32px", width: "100%", maxWidth: 460, boxShadow: "0 32px 80px rgba(0,0,0,0.6)" }}>
-            <h2 style={{ fontFamily: "inherit", fontSize: 20, fontWeight: 700, marginBottom: 20, color: "var(--text)" }}>Edit Guest</h2>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", zIndex: 200, padding: isMobile ? 0 : 24, backdropFilter: "blur(6px)" }} onClick={() => setEditingGuest(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: isMobile ? "16px 16px 0 0" : "var(--radiusLg,4px)", padding: isMobile ? "20px 20px calc(env(safe-area-inset-bottom,0) + 20px)" : "28px 32px", width: "100%", maxWidth: isMobile ? undefined : 460, boxShadow: "0 -8px 40px rgba(0,0,0,0.5)" }}>
+            {isMobile && <div style={{ width: 36, height: 4, background: "var(--border)", borderRadius: 2, margin: "0 auto 18px" }} />}
+            <h2 style={{ fontFamily: "'Bebas Neue','Arial Black',Arial,sans-serif", fontSize: isMobile ? "1.6rem" : 20, letterSpacing: isMobile ? "0.04em" : 0, fontWeight: 700, marginBottom: 18, color: "var(--text)" }}>Edit Guest</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
               <div>
                 <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Name</div>
-                <input className="field" value={editingGuest.name || ""} onChange={e => setEditingGuest(g => ({ ...g, name: e.target.value }))} placeholder="Guest name" />
+                <input className="field" value={editingGuest.name || ""} onChange={e => setEditingGuest(g => ({ ...g, name: e.target.value }))} placeholder="Guest name" style={{ fontSize: isMobile ? 16 : undefined }} />
               </div>
               <div>
                 <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Email</div>
-                <input className="field" type="email" value={editingGuest.email || ""} onChange={e => setEditingGuest(g => ({ ...g, email: e.target.value }))} placeholder="guest@email.com" />
+                <input className="field" type="email" value={editingGuest.email || ""} onChange={e => setEditingGuest(g => ({ ...g, email: e.target.value }))} placeholder="guest@email.com" style={{ fontSize: isMobile ? 16 : undefined }} />
               </div>
               <div>
                 <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Status</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   {["pending", "attending", "declined"].map(s => (
-                    <button key={s} onClick={() => setEditingGuest(g => ({ ...g, status: s }))} style={{ flex: 1, padding: "9px", borderRadius:"var(--radius,3px)", border: `1.5px solid ${editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--border)"}`, background: editingGuest.status === s ? (s === "attending" ? "rgba(16,185,129,0.1)" : s === "declined" ? "rgba(239,68,68,0.08)" : "var(--accentBg)") : "transparent", color: editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody, 'Barlow', sans-serif)", transition: "all 0.15s", textTransform: "capitalize" }}>
+                    <button key={s} onClick={() => setEditingGuest(g => ({ ...g, status: s }))} style={{ flex: 1, padding: isMobile ? "12px 8px" : "9px", borderRadius:"var(--radius,3px)", border: `1.5px solid ${editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--border)"}`, background: editingGuest.status === s ? (s === "attending" ? "rgba(16,185,129,0.1)" : s === "declined" ? "rgba(239,68,68,0.08)" : "var(--accentBg)") : "transparent", color: editingGuest.status === s ? (s === "attending" ? "#10b981" : s === "declined" ? "#ef4444" : "var(--accent)") : "var(--text2)", fontSize: 13, cursor: "pointer", fontFamily: "var(--fontBody,'Barlow',sans-serif)", transition: "all 0.15s", textTransform: "capitalize", WebkitTapHighlightColor: "transparent" }}>
                       {s}
                     </button>
                   ))}
@@ -3838,12 +3986,12 @@ export default function Dashboard() {
               </div>
               <div>
                 <div style={{ fontSize: 11, color: "var(--text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Dietary Requirements</div>
-                <input className="field" value={editingGuest.dietary || ""} onChange={e => setEditingGuest(g => ({ ...g, dietary: e.target.value }))} placeholder="e.g. Vegetarian, Gluten-free" />
+                <input className="field" value={editingGuest.dietary || ""} onChange={e => setEditingGuest(g => ({ ...g, dietary: e.target.value }))} placeholder="e.g. Vegetarian, Gluten-free" style={{ fontSize: isMobile ? 16 : undefined }} />
               </div>
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="btn-ghost" onClick={() => setEditingGuest(null)} style={{ flex: 1 }}>Cancel</button>
-              <button className="btn-gold" onClick={handleEditGuest} style={{ flex: 2 }}>Save Changes</button>
+              <button className="btn-ghost" onClick={() => setEditingGuest(null)} style={{ flex: 1, padding: isMobile ? "13px" : undefined }}>Cancel</button>
+              <button className="btn-gold" onClick={handleEditGuest} style={{ flex: 2, justifyContent: "center", padding: isMobile ? "13px" : undefined }}>Save Changes</button>
             </div>
           </div>
         </div>
