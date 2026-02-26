@@ -73,7 +73,7 @@ export const BRAND = {
   // ── Shape ────────────────────────────────────────────────
   // "sharp" = angular, matches the website (2–4px)
   // "round" = softer SaaS look (8–12px)
-  radiusStyle: "sharp",
+  radiusStyle: "round",
   get radius()   { return this.radiusStyle === "sharp" ? "3px"  : "10px"; },
   get radiusLg() { return this.radiusStyle === "sharp" ? "4px"  : "14px"; },
   get radiusXl() { return this.radiusStyle === "sharp" ? "6px"  : "20px"; },
