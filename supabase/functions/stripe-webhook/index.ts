@@ -71,37 +71,86 @@ async function sendGmail(to: string, subject: string, html: string) {
 }
 
 // ── Ticket email ──────────────────────────────────────────────
-function ticketEmail(buyerName: string, eventName: string, eventDate: string, tickets: { number: string; tier: string; qrToken: string }[]): string {
+function ticketEmail(buyerName: string, eventName: string, eventDate: string, tickets: { number: string | number; tier: string; qrToken: string }[]): string {
+  const firstName = buyerName ? buyerName.split(" ")[0] : "";
   const cards = tickets.map(t => `
-    <div style="background:#13131f;border:1px solid #1e1e2e;border-radius:14px;padding:20px 24px;margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <div>
-          <div style="font-size:16px;font-weight:600;color:#f0e8db;">${t.tier}</div>
-          <div style="font-size:12px;color:#5a5a72;margin-top:2px;">Ticket ${t.number}</div>
-        </div>
-        <div style="font-size:12px;color:#c9a84c;font-weight:600;border:1px solid rgba(201,168,76,0.3);border-radius:6px;padding:4px 10px;">VALID</div>
-      </div>
-      <div style="text-align:center;background:#0a0a14;border-radius:10px;padding:16px;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(APP_URL + '/ticket/' + t.qrToken)}"
-          width="160" height="160" style="display:block;margin:0 auto;" />
-        <div style="font-size:11px;color:#3a3a52;margin-top:8px;">${APP_URL}/ticket/${t.qrToken}</div>
-      </div>
-    </div>`).join("");
+    <tr><td style="padding-bottom:12px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;">
+        <tr><td style="height:3px;background:#ff4d00;font-size:0;">&nbsp;</td></tr>
+        <tr><td style="padding:20px 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <div style="font-family:Arial Black,Arial,sans-serif;font-size:15px;font-weight:900;color:#f5f0e8;text-transform:uppercase;letter-spacing:0.04em;">${t.tier}</div>
+                <div style="font-family:Arial,sans-serif;font-size:11px;color:#888888;margin-top:3px;letter-spacing:0.1em;text-transform:uppercase;">Ticket #${t.number}</div>
+              </td>
+              <td align="right">
+                <span style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#ff4d00;border:1px solid rgba(255,77,0,0.4);border-radius:3px;padding:4px 10px;letter-spacing:0.1em;text-transform:uppercase;">VALID</span>
+              </td>
+            </tr>
+          </table>
+          <div style="text-align:center;background:#0a0a0a;border-radius:3px;padding:20px;margin-top:16px;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=f5f0e8&bgcolor=0a0a0a&data=${encodeURIComponent(APP_URL + "/ticket/" + t.qrToken)}"
+              width="180" height="180" style="display:block;margin:0 auto;" alt="QR Code" />
+            <div style="font-family:Arial,sans-serif;font-size:10px;color:#444444;margin-top:10px;word-break:break-all;">${APP_URL}/ticket/${t.qrToken}</div>
+          </div>
+        </td></tr>
+      </table>
+    </td></tr>`).join("");
 
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#06060e;font-family:'Helvetica Neue',Arial,sans-serif;color:#e2d9cc;">
-  <div style="max-width:540px;margin:0 auto;padding:48px 24px;">
-    <div style="text-align:center;margin-bottom:32px;">
-      <span style="font-size:14px;color:#5a5a72;letter-spacing:0.05em;">✦ Oneonetix</span>
-    </div>
-    <div style="background:#0a0a14;border:1px solid #1e1e2e;border-radius:18px;padding:36px;text-align:center;margin-bottom:24px;">
-      <div style="font-size:36px;margin-bottom:16px;">🎟</div>
-      <h1 style="font-family:Georgia,serif;font-size:24px;color:#f0e8db;margin:0 0 8px;">You're going${buyerName ? `, ${buyerName.split(" ")[0]}` : ""}!</h1>
-      <h2 style="font-family:Georgia,serif;font-size:18px;color:#c9a84c;margin:0 0 6px;">${eventName}</h2>
-      ${eventDate ? `<p style="font-size:13px;color:#5a5a72;margin:0;">${eventDate}</p>` : ""}
-    </div>
-    ${cards}
-    <p style="text-align:center;font-size:12px;color:#3a3a52;margin-top:20px;">Present your QR code at the door · Keep this email safe</p>
-  </div></body></html>`;
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+        <!-- Logo -->
+        <tr><td align="center" style="padding-bottom:28px;">
+          <a href="${APP_URL}" style="text-decoration:none;">
+            <span style="font-family:Arial Black,Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">ONE</span><span style="font-family:Arial Black,Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#ff4d00;">O</span><span style="font-family:Arial Black,Arial,sans-serif;font-size:20px;font-weight:900;letter-spacing:0.06em;color:#f5f0e8;">NETIX</span>
+          </a>
+        </td></tr>
+
+        <!-- Hero -->
+        <tr><td style="background:#111111;border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-bottom:16px;">
+          <div style="height:3px;background:#ff4d00;"></div>
+          <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 36px;">
+            <tr><td align="center" style="padding-bottom:8px;"><span style="font-size:36px;">🎟</span></td></tr>
+            <tr><td align="center" style="padding-bottom:6px;">
+              <span style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#ff4d00;">Your Tickets</span>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:6px;">
+              <h1 style="font-family:Arial Black,Arial,sans-serif;font-size:28px;font-weight:900;color:#f5f0e8;margin:0;text-transform:uppercase;letter-spacing:0.02em;">YOU'RE GOING${firstName ? `, ${firstName.toUpperCase()}` : ""}!</h1>
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:4px;">
+              <div style="font-family:Arial Black,Arial,sans-serif;font-size:16px;font-weight:900;color:#f5f0e8;text-transform:uppercase;letter-spacing:0.04em;">${eventName}</div>
+            </td></tr>
+            ${eventDate ? `<tr><td align="center" style="padding-bottom:0;">
+              <div style="font-family:Arial,sans-serif;font-size:12px;color:#888888;letter-spacing:0.08em;text-transform:uppercase;">${eventDate}</div>
+            </td></tr>` : ""}
+          </table>
+        </td></tr>
+
+        <tr><td style="padding-top:16px;"></td></tr>
+
+        <!-- Ticket cards -->
+        ${cards}
+
+        <!-- Footer -->
+        <tr><td align="center" style="padding:20px 0 40px;">
+          <p style="font-family:Arial,sans-serif;font-size:11px;color:#444444;margin:0;line-height:1.8;letter-spacing:0.05em;text-transform:uppercase;">
+            Present your QR code at the door &nbsp;·&nbsp; Keep this email safe<br>
+            POWERED BY <span style="color:#ff4d00;font-weight:700;">ONEONETIX</span>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
 }
 
 // ── Main ──────────────────────────────────────────────────────
@@ -132,6 +181,14 @@ serve(async (req) => {
     const totalAmount = session.amount_total || 0;
 
     try {
+      // Idempotency: skip if order already created for this session
+      const { data: existing } = await supabase
+        .from("ticket_orders").select("id").eq("stripe_session_id", session.id).maybeSingle();
+      if (existing) {
+        console.log("Order already exists for session", session.id, "— skipping");
+        return new Response(JSON.stringify({ received: true }), { status: 200 });
+      }
+
       // Create order
       const { data: order, error: orderErr } = await supabase
         .from("ticket_orders")
@@ -153,13 +210,18 @@ serve(async (req) => {
         supabase.from("events").select("name, date").eq("id", eventId).single(),
       ]);
 
-      // Create individual tickets
-      const ticketRows = [];
-      for (let i = 0; i < quantity; i++) {
-        const { data: num } = await supabase.rpc("next_ticket_number", { p_event_id: eventId });
-        ticketRows.push({ order_id: order.id, event_id: eventId, tier_id: tierId, ticket_number: num });
-      }
-      const { data: createdTickets } = await supabase.from("tickets").insert(ticketRows).select();
+      // Create individual tickets — use max+1 counter, no RPC needed
+      const { data: existingTickets } = await supabase
+        .from("tickets").select("ticket_number").eq("event_id", eventId)
+        .order("ticket_number", { ascending: false }).limit(1);
+      const startNum = (existingTickets?.[0]?.ticket_number || 0) + 1;
+      const ticketRows = Array.from({ length: quantity }, (_, i) => ({
+        order_id: order.id, event_id: eventId, tier_id: tierId,
+        ticket_number: startNum + i,
+      }));
+      const { data: createdTickets, error: ticketErr } = await supabase
+        .from("tickets").insert(ticketRows).select();
+      if (ticketErr) throw new Error("Ticket insert failed: " + ticketErr.message);
 
       // Increment sold count
       await supabase.from("ticket_tiers")
