@@ -127,10 +127,14 @@ export default function SiteMap({ eventId }) {
       .then(({ data }) => { setMaps(data||[]); setLoading(false); });
   }, [eventId]);
 
+  const creatingRef = useRef(false);
   const createMap = async (name, w, h, bgImage, bgMode) => {
+    if (creatingRef.current) return; // prevent double-insert
+    creatingRef.current = true;
     const row = { event_id:eventId, name, elements:[], canvas_bg:"#f8f8f0",
       width:w, height:h, bg_image:bgImage||null, bg_mode:bgMode||"canvas" };
     const { data, error } = await supabase.from("site_maps").insert(row).select().single();
+    creatingRef.current = false;
     if (error) { alert("Failed: " + error.message); return; }
     setMaps(m=>[...m,data]);
     setActiveId(data.id); setShowEditor(true); setNewOpen(false);
@@ -279,12 +283,16 @@ function NewMapModal({ onCreate, onClose }) {
     reader.readAsDataURL(f);
   };
 
+  const creating = useRef(false); // guard against double-submit
+
   const go = () => {
-    if (!name.trim()) return;
+    if (!name.trim() || creating.current) return;
+    creating.current = true;
     const [pw,ph]=PRESETS[preset];
     const w=preset==="custom"?Math.max(200,parseInt(cw)||1200):pw;
     const h=preset==="custom"?Math.max(200,parseInt(ch)||800):ph;
     onCreate(name.trim(), w, h, imgData, imgMode);
+    // Don't reset creating.current — modal will close on success
   };
 
   return (
@@ -303,7 +311,7 @@ function NewMapModal({ onCreate, onClose }) {
         <div style={{ marginBottom:16 }}>
           <label style={S.lbl}>Map Name</label>
           <input value={name} onChange={e=>setName(e.target.value)} style={S.inp} autoFocus
-            placeholder="e.g. Main Venue Layout" onKeyDown={e=>e.key==="Enter"&&go()}/>
+            placeholder="e.g. Main Venue Layout" onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); go(); }}}/>
         </div>
 
         {/* Image upload */}
@@ -389,7 +397,7 @@ function NewMapModal({ onCreate, onClose }) {
 }
 
 // ═════════════════════════════════════════════════════════════
-//  Shortcuts overlay
+//  Shortcuts overlay (triggered manually via ? key or toolbar)
 // ═════════════════════════════════════════════════════════════
 function ShortcutsModal({ onClose }) {
   return (
@@ -427,6 +435,74 @@ function ShortcutsModal({ onClose }) {
 }
 
 // ═════════════════════════════════════════════════════════════
+//  Welcome shortcuts popup — shown automatically on first open
+//  unless user has ticked "don't show again"
+// ═════════════════════════════════════════════════════════════
+const WELCOME_KEY = "sitemap_shortcuts_seen";
+function WelcomeShortcutsModal({ onClose }) {
+  const [dontShow, setDontShow] = useState(false);
+
+  const handleOk = () => {
+    if (dontShow) localStorage.setItem(WELCOME_KEY, "1");
+    onClose();
+  };
+
+  return (
+    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:10001,
+      display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(3px)" }}>
+      <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",
+        borderRadius:"var(--radiusLg,4px)",padding:"28px 30px",width:420,
+        boxShadow:"0 24px 64px rgba(0,0,0,0.4)" }}>
+
+        {/* Header */}
+        <div style={{ textAlign:"center",marginBottom:20 }}>
+          <div style={{ fontSize:36,marginBottom:8 }}>🗺️</div>
+          <h3 style={{ fontSize:18,fontWeight:800,marginBottom:6 }}>Site Map Editor</h3>
+          <p style={{ fontSize:13,color:"var(--text2)",lineHeight:1.6,margin:0 }}>
+            Here are the keyboard shortcuts to help you work faster. You can always bring this back with <code style={{ background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:4,padding:"1px 6px",fontSize:12,fontFamily:"monospace",color:"var(--accent)" }}>?</code>
+          </p>
+        </div>
+
+        {/* Shortcut table — compact version */}
+        <div style={{ background:"var(--bg3)",border:"1px solid var(--border)",
+          borderRadius:"var(--radius,3px)",marginBottom:18,overflow:"hidden" }}>
+          {SHORTCUTS.map(({key,desc},i)=>(
+            <div key={key} style={{ display:"flex",alignItems:"center",gap:10,
+              padding:"7px 12px",
+              borderBottom: i<SHORTCUTS.length-1?"1px solid var(--border)":"none",
+              background:i%2===0?"transparent":"rgba(255,255,255,0.015)" }}>
+              <code style={{ background:"var(--bg2)",border:"1px solid var(--border)",
+                borderRadius:4,padding:"2px 7px",fontSize:10,
+                fontFamily:"monospace",color:"var(--accent)",fontWeight:700,
+                flexShrink:0,minWidth:90,textAlign:"center" }}>{key}</code>
+              <span style={{ fontSize:12,color:"var(--text2)" }}>{desc}</span>
+            </div>
+          ))}
+          {/* Reminder about inputs */}
+          <div style={{ padding:"8px 12px",background:"rgba(255,77,0,0.05)",
+            borderTop:"1px solid var(--border)",fontSize:11,color:"var(--text3)" }}>
+            ℹ️ Shortcuts are automatically disabled while you're typing in any field.
+          </div>
+        </div>
+
+        {/* Don't show again */}
+        <label style={{ display:"flex",alignItems:"center",gap:9,marginBottom:16,cursor:"pointer" }}>
+          <input type="checkbox" checked={dontShow} onChange={e=>setDontShow(e.target.checked)}
+            style={{ accentColor:"var(--accent)",width:15,height:15,cursor:"pointer" }}/>
+          <span style={{ fontSize:13,color:"var(--text2)" }}>Don't show this again</span>
+        </label>
+
+        <button onClick={handleOk}
+          style={{...S.btn,width:"100%",padding:"11px",fontSize:14,justifyContent:"center",
+            boxShadow:"0 2px 12px rgba(255,77,0,0.3)"}}>
+          Got it — let's go! →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════
 //  Canvas Editor
 // ═════════════════════════════════════════════════════════════
 function CanvasEditor({ map, onSave, onBack }) {
@@ -453,6 +529,7 @@ function CanvasEditor({ map, onSave, onBack }) {
   const [dirty,     setDirty]     = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [showKeys,  setShowKeys]  = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [fullScreen,setFullScreen]= useState(false);
   const [showAddZone,setShowAddZone]= useState(false);
   const [focusedInput, setFocusedInput] = useState(false); // tracks if any input has focus
@@ -469,6 +546,11 @@ function CanvasEditor({ map, onSave, onBack }) {
     img.onload=()=>{ bgImgRef.current=img; draw(); };
     img.src=bgImage;
   },[bgImage]);
+
+  // Show welcome shortcuts popup on first open (unless user opted out)
+  useEffect(()=>{
+    if (!localStorage.getItem(WELCOME_KEY)) setShowWelcome(true);
+  },[]);
 
   // ── Draw ──────────────────────────────────────────────────
   const draw = useCallback(()=>{
@@ -717,10 +799,16 @@ function CanvasEditor({ map, onSave, onBack }) {
   // ── Keyboard — ONLY fire when no input is focused ─────────
   useEffect(()=>{
     const h=(e)=>{
-      // Guard: if any input/textarea/select/contenteditable is focused, do nothing
-      const tag=e.target.tagName;
+      // Guard: use document.activeElement — far more reliable than e.target
+      // because React event bubbling can give wrong e.target inside panels
+      const active=document.activeElement;
+      if(!active) return;
+      const tag=active.tagName;
       if(tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT") return;
-      if(e.target.isContentEditable) return;
+      if(active.isContentEditable) return;
+      // Also guard: if the event originated from an input (belt-and-suspenders)
+      const evTag=e.target?.tagName;
+      if(evTag==="INPUT"||evTag==="TEXTAREA"||evTag==="SELECT") return;
 
       if((e.key==="Delete"||e.key==="Backspace")&&selectedId){
         setElements(p=>p.filter(el=>el.id!==selectedId));
@@ -1000,6 +1088,7 @@ function CanvasEditor({ map, onSave, onBack }) {
         )}
       </div>
       {showKeys&&<ShortcutsModal onClose={()=>setShowKeys(false)}/>}
+      {showWelcome&&<WelcomeShortcutsModal onClose={()=>setShowWelcome(false)}/>}
     </div>
   );
 }
