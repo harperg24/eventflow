@@ -297,95 +297,103 @@ function NewMapModal({ onCreate, onClose }) {
 
   return (
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:9999,
-      display:"flex",alignItems:"flex-start",justifyContent:"center",
-      overflowY:"auto",padding:"0 16px 40px" }}
+      display:"flex",alignItems:"center",justifyContent:"center",padding:"16px" }}
       onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:"var(--radiusLg,4px)",
-        padding:28,width:460,maxHeight:"92vh",overflowY:"auto",
-        boxShadow:"0 24px 64px rgba(0,0,0,0.3)",
-        display:"flex",flexDirection:"column",alignSelf:"flex-start",
-        marginTop:"4vh" }}>
-        <h3 style={{ fontSize:18, fontWeight:800, marginBottom:20 }}>New Site Map</h3>
+        width:"min(460px,100%)",maxHeight:"min(720px,calc(100dvh - 32px))",
+        display:"flex",flexDirection:"column",
+        boxShadow:"0 24px 64px rgba(0,0,0,0.3)" }}>
 
-        {/* Name */}
-        <div style={{ marginBottom:16 }}>
-          <label style={S.lbl}>Map Name</label>
-          <input value={name} onChange={e=>setName(e.target.value)} style={S.inp} autoFocus
-            placeholder="e.g. Main Venue Layout" onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); go(); }}}/>
+        {/* Sticky header */}
+        <div style={{ padding:"22px 28px 14px",flexShrink:0,borderBottom:"1px solid var(--border)" }}>
+          <h3 style={{ fontSize:18, fontWeight:800, margin:0 }}>New Site Map</h3>
         </div>
 
-        {/* Image upload */}
-        <div style={{ marginBottom:16 }}>
-          <label style={S.lbl}>Venue Image (optional)</label>
-          <label style={{ display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
-            background:"var(--bg3)",border:"1.5px dashed var(--border)",borderRadius:"var(--radius,3px)",
-            cursor:"pointer",transition:"border-color 0.15s" }}
-            onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
-            onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border)"}>
-            <input type="file" accept="image/*" onChange={onFile} style={{ display:"none" }}/>
-            {uploading ? <span style={{ color:"var(--text3)",fontSize:13 }}>Loading…</span>
-              : imgData ? (
-                <div style={{ display:"flex",alignItems:"center",gap:10,width:"100%" }}>
-                  <img src={imgData} style={{ width:60,height:40,objectFit:"cover",borderRadius:"var(--radius,3px)" }}/>
-                  <span style={{ fontSize:13,color:"var(--text2)",flex:1 }}>Image loaded — canvas auto-sized</span>
-                  <button onClick={e=>{e.preventDefault();setImgData(null);}}
-                    style={{...S.ghost,padding:"3px 8px",fontSize:11,color:"#dc2626"}}>✕</button>
-                </div>
-              ) : (
-                <span style={{ fontSize:13, color:"var(--text3)" }}>
-                  📸 Click to upload a venue photo or Google Maps screenshot
-                </span>
-              )}
-          </label>
+        {/* Scrollable form body */}
+        <div style={{ overflowY:"auto",flex:1,minHeight:0,padding:"20px 28px 8px" }}>
 
-          {imgData && (
-            <div style={{ marginTop:10 }}>
-              <label style={S.lbl}>Use image as…</label>
-              <div style={{ display:"flex",gap:8 }}>
-                {[["canvas","Canvas background","The image fills the entire canvas"],
-                  ["element","Map element","Placed as a movable/resizable layer"]].map(([v,label,desc])=>(
-                  <button key={v} onClick={()=>setImgMode(v)}
-                    style={{ flex:1, background:imgMode===v?"var(--accentBg)":"var(--bg3)",
-                      border:`1.5px solid ${imgMode===v?"var(--accent)":"var(--border)"}`,
-                      borderRadius:"var(--radius,3px)", padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:"var(--text)" }}>{label}</div>
-                    <div style={{ fontSize:11,color:"var(--text3)",marginTop:2 }}>{desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Canvas size */}
-        <div style={{ marginBottom:20 }}>
-          <label style={S.lbl}>Canvas Size</label>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
-            {Object.entries(PRESETS).map(([key,[,,label,desc]])=>(
-              <button key={key} onClick={()=>setPreset(key)}
-                style={{ background:preset===key?"var(--accentBg)":"var(--bg3)",
-                  border:`1.5px solid ${preset===key?"var(--accent)":"var(--border)"}`,
-                  borderRadius:"var(--radius,3px)", padding:"10px 12px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
-                <div style={{ fontSize:13,fontWeight:700,color:"var(--text)" }}>{label}</div>
-                <div style={{ fontSize:11,color:"var(--text3)",marginTop:2 }}>{desc}</div>
-              </button>
-            ))}
+          {/* Name */}
+          <div style={{ marginBottom:16 }}>
+            <label style={S.lbl}>Map Name</label>
+            <input value={name} onChange={e=>setName(e.target.value)} style={S.inp} autoFocus
+              placeholder="e.g. Main Venue Layout" onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); go(); }}}/>
           </div>
-          {preset==="custom"&&(
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:10 }}>
-              <div>
-                <label style={{...S.lbl,marginBottom:4}}>Width (px)</label>
-                <input type="number" min={200} max={8000} value={cw} onChange={e=>setCw(e.target.value)} style={S.inp}/>
+
+          {/* Image upload */}
+          <div style={{ marginBottom:16 }}>
+            <label style={S.lbl}>Venue Image (optional)</label>
+            <label style={{ display:"flex",alignItems:"center",gap:10,padding:"12px 14px",
+              background:"var(--bg3)",border:"1.5px dashed var(--border)",borderRadius:"var(--radius,3px)",
+              cursor:"pointer",transition:"border-color 0.15s" }}
+              onMouseEnter={e=>e.currentTarget.style.borderColor="var(--accent)"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor="var(--border)"}>
+              <input type="file" accept="image/*" onChange={onFile} style={{ display:"none" }}/>
+              {uploading ? <span style={{ color:"var(--text3)",fontSize:13 }}>Loading…</span>
+                : imgData ? (
+                  <div style={{ display:"flex",alignItems:"center",gap:10,width:"100%" }}>
+                    <img src={imgData} style={{ width:60,height:40,objectFit:"cover",borderRadius:"var(--radius,3px)" }}/>
+                    <span style={{ fontSize:13,color:"var(--text2)",flex:1 }}>Image loaded — canvas auto-sized</span>
+                    <button onClick={e=>{e.preventDefault();setImgData(null);}}
+                      style={{...S.ghost,padding:"3px 8px",fontSize:11,color:"#dc2626"}}>✕</button>
+                  </div>
+                ) : (
+                  <span style={{ fontSize:13, color:"var(--text3)" }}>
+                    📸 Click to upload a venue photo or Google Maps screenshot
+                  </span>
+                )}
+            </label>
+
+            {imgData && (
+              <div style={{ marginTop:10 }}>
+                <label style={S.lbl}>Use image as…</label>
+                <div style={{ display:"flex",gap:8 }}>
+                  {[["canvas","Canvas background","The image fills the entire canvas"],
+                    ["element","Map element","Placed as a movable/resizable layer"]].map(([v,label,desc])=>(
+                    <button key={v} onClick={()=>setImgMode(v)}
+                      style={{ flex:1, background:imgMode===v?"var(--accentBg)":"var(--bg3)",
+                        border:`1.5px solid ${imgMode===v?"var(--accent)":"var(--border)"}`,
+                        borderRadius:"var(--radius,3px)", padding:"10px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
+                      <div style={{ fontSize:13,fontWeight:700,color:"var(--text)" }}>{label}</div>
+                      <div style={{ fontSize:11,color:"var(--text3)",marginTop:2 }}>{desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label style={{...S.lbl,marginBottom:4}}>Height (px)</label>
-                <input type="number" min={200} max={8000} value={ch} onChange={e=>setCh(e.target.value)} style={S.inp}/>
-              </div>
+            )}
+          </div>
+
+          {/* Canvas size */}
+          <div style={{ marginBottom:8 }}>
+            <label style={S.lbl}>Canvas Size</label>
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+              {Object.entries(PRESETS).map(([key,[,,label,desc]])=>(
+                <button key={key} onClick={()=>setPreset(key)}
+                  style={{ background:preset===key?"var(--accentBg)":"var(--bg3)",
+                    border:`1.5px solid ${preset===key?"var(--accent)":"var(--border)"}`,
+                    borderRadius:"var(--radius,3px)", padding:"10px 12px", cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}>
+                  <div style={{ fontSize:13,fontWeight:700,color:"var(--text)" }}>{label}</div>
+                  <div style={{ fontSize:11,color:"var(--text3)",marginTop:2 }}>{desc}</div>
+                </button>
+              ))}
             </div>
-          )}
+            {preset==="custom"&&(
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:10 }}>
+                <div>
+                  <label style={{...S.lbl,marginBottom:4}}>Width (px)</label>
+                  <input type="number" min={200} max={8000} value={cw} onChange={e=>setCw(e.target.value)} style={S.inp}/>
+                </div>
+                <div>
+                  <label style={{...S.lbl,marginBottom:4}}>Height (px)</label>
+                  <input type="number" min={200} max={8000} value={ch} onChange={e=>setCh(e.target.value)} style={S.inp}/>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div style={{ display:"flex",gap:10 }}>
+        {/* Sticky footer with actions */}
+        <div style={{ padding:"14px 28px 22px",borderTop:"1px solid var(--border)",flexShrink:0,
+          display:"flex",gap:10 }}>
           <button onClick={onClose} style={{...S.ghost,flex:1}}>Cancel</button>
           <button onClick={go} disabled={!name.trim()} style={{...S.btn,flex:2,opacity:name.trim()?1:0.4}}>
             Create Map →
@@ -402,32 +410,47 @@ function NewMapModal({ onCreate, onClose }) {
 function ShortcutsModal({ onClose }) {
   return (
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:10000,
-      display:"flex",alignItems:"center",justifyContent:"center" }}
+      display:"flex",alignItems:"center",justifyContent:"center",padding:"16px" }}
       onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",borderRadius:"var(--radiusLg,4px)",
-        padding:28,width:400,maxHeight:"80vh",overflowY:"auto",
+        width:"min(400px,100%)",maxHeight:"min(600px,calc(100dvh - 32px))",
+        display:"flex",flexDirection:"column",
         boxShadow:"0 24px 64px rgba(0,0,0,0.3)" }}>
-        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18 }}>
-          <h3 style={{ fontSize:17,fontWeight:800 }}>⌨️ Keyboard Shortcuts</h3>
+
+        {/* Sticky header */}
+        <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",
+          padding:"18px 22px 14px",flexShrink:0,
+          borderBottom:"1px solid var(--border)" }}>
+          <h3 style={{ fontSize:16,fontWeight:800 }}>⌨️ Keyboard Shortcuts</h3>
           <button onClick={onClose} style={{...S.ghost,padding:"4px 10px"}}>✕</button>
         </div>
-        <table style={{ width:"100%",borderCollapse:"collapse" }}>
-          <tbody>
-            {SHORTCUTS.map(({key,desc})=>(
-              <tr key={key} style={{ borderBottom:"1px solid var(--border)" }}>
-                <td style={{ padding:"8px 0",width:"44%" }}>
-                  <code style={{ background:"var(--bg3)",border:"1px solid var(--border)",
-                    borderRadius:5,padding:"3px 7px",fontSize:11,
-                    fontFamily:"monospace",color:"var(--accent)",fontWeight:700 }}>{key}</code>
-                </td>
-                <td style={{ padding:"8px 0",fontSize:13,color:"var(--text2)" }}>{desc}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{ marginTop:14,padding:"10px 13px",background:"var(--bg3)",
-          borderRadius:"var(--radius,3px)",fontSize:12,color:"var(--text3)",lineHeight:1.65 }}>
-          <strong style={{ color:"var(--text2)" }}>Note:</strong> Shortcuts are disabled while typing in any input field.
+
+        {/* Scrollable content */}
+        <div style={{ overflowY:"auto",flex:1,minHeight:0,padding:"4px 0" }}>
+          <table style={{ width:"100%",borderCollapse:"collapse" }}>
+            <tbody>
+              {SHORTCUTS.map(({key,desc})=>(
+                <tr key={key} style={{ borderBottom:"1px solid var(--border)" }}>
+                  <td style={{ padding:"8px 22px",width:"44%" }}>
+                    <code style={{ background:"var(--bg3)",border:"1px solid var(--border)",
+                      borderRadius:5,padding:"3px 7px",fontSize:11,
+                      fontFamily:"monospace",color:"var(--accent)",fontWeight:700 }}>{key}</code>
+                  </td>
+                  <td style={{ padding:"8px 22px 8px 0",fontSize:13,color:"var(--text2)" }}>{desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ margin:"0 22px 4px",padding:"9px 12px",background:"var(--bg3)",
+            borderRadius:"var(--radius,3px)",fontSize:11,color:"var(--text3)",lineHeight:1.65 }}>
+            <strong style={{ color:"var(--text2)" }}>Note:</strong> Shortcuts are disabled while typing in any input field.
+          </div>
+        </div>
+
+        {/* Sticky footer */}
+        <div style={{ padding:"12px 22px 16px",borderTop:"1px solid var(--border)",flexShrink:0 }}>
+          <button onClick={onClose} style={{...S.btn,width:"100%",padding:"9px",
+            justifyContent:"center"}}>Close</button>
         </div>
       </div>
     </div>
@@ -449,54 +472,61 @@ function WelcomeShortcutsModal({ onClose }) {
 
   return (
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:10001,
-      display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(3px)" }}>
+      display:"flex",alignItems:"center",justifyContent:"center",padding:"16px",
+      backdropFilter:"blur(3px)" }}>
       <div style={{ background:"var(--bg2)",border:"1.5px solid var(--border)",
-        borderRadius:"var(--radiusLg,4px)",padding:"28px 30px",width:420,
+        borderRadius:"var(--radiusLg,4px)",width:"min(420px,100%)",
+        maxHeight:"min(680px,calc(100dvh - 32px))",
+        display:"flex",flexDirection:"column",
         boxShadow:"0 24px 64px rgba(0,0,0,0.4)" }}>
 
-        {/* Header */}
-        <div style={{ textAlign:"center",marginBottom:20 }}>
-          <div style={{ fontSize:36,marginBottom:8 }}>🗺️</div>
-          <h3 style={{ fontSize:18,fontWeight:800,marginBottom:6 }}>Site Map Editor</h3>
-          <p style={{ fontSize:13,color:"var(--text2)",lineHeight:1.6,margin:0 }}>
-            Here are the keyboard shortcuts to help you work faster. You can always bring this back with <code style={{ background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:4,padding:"1px 6px",fontSize:12,fontFamily:"monospace",color:"var(--accent)" }}>?</code>
+        {/* Sticky header */}
+        <div style={{ padding:"22px 24px 16px",textAlign:"center",flexShrink:0 }}>
+          <div style={{ fontSize:32,marginBottom:6 }}>🗺️</div>
+          <h3 style={{ fontSize:17,fontWeight:800,marginBottom:5 }}>Site Map Editor</h3>
+          <p style={{ fontSize:12,color:"var(--text2)",lineHeight:1.6,margin:0 }}>
+            Keyboard shortcuts to help you work faster. Press <code style={{ background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:4,padding:"1px 6px",fontSize:11,fontFamily:"monospace",color:"var(--accent)" }}>?</code> anytime to bring this back.
           </p>
         </div>
 
-        {/* Shortcut table — compact version */}
-        <div style={{ background:"var(--bg3)",border:"1px solid var(--border)",
-          borderRadius:"var(--radius,3px)",marginBottom:18,overflow:"hidden" }}>
-          {SHORTCUTS.map(({key,desc},i)=>(
-            <div key={key} style={{ display:"flex",alignItems:"center",gap:10,
-              padding:"7px 12px",
-              borderBottom: i<SHORTCUTS.length-1?"1px solid var(--border)":"none",
-              background:i%2===0?"transparent":"rgba(255,255,255,0.015)" }}>
-              <code style={{ background:"var(--bg2)",border:"1px solid var(--border)",
-                borderRadius:4,padding:"2px 7px",fontSize:10,
-                fontFamily:"monospace",color:"var(--accent)",fontWeight:700,
-                flexShrink:0,minWidth:90,textAlign:"center" }}>{key}</code>
-              <span style={{ fontSize:12,color:"var(--text2)" }}>{desc}</span>
+        {/* Scrollable shortcut list */}
+        <div style={{ overflowY:"auto",flex:1,minHeight:0 }}>
+          <div style={{ background:"var(--bg3)",border:"1px solid var(--border)",
+            borderRadius:"var(--radius,3px)",margin:"0 24px",overflow:"hidden" }}>
+            {SHORTCUTS.map(({key,desc},i)=>(
+              <div key={key} style={{ display:"flex",alignItems:"center",gap:10,
+                padding:"7px 12px",
+                borderBottom: i<SHORTCUTS.length-1?"1px solid var(--border)":"none",
+                background:i%2===0?"transparent":"rgba(255,255,255,0.015)" }}>
+                <code style={{ background:"var(--bg2)",border:"1px solid var(--border)",
+                  borderRadius:4,padding:"2px 7px",fontSize:10,
+                  fontFamily:"monospace",color:"var(--accent)",fontWeight:700,
+                  flexShrink:0,minWidth:90,textAlign:"center" }}>{key}</code>
+                <span style={{ fontSize:12,color:"var(--text2)" }}>{desc}</span>
+              </div>
+            ))}
+            <div style={{ padding:"8px 12px",background:"rgba(255,77,0,0.05)",
+              borderTop:"1px solid var(--border)",fontSize:11,color:"var(--text3)" }}>
+              ℹ️ Shortcuts are automatically disabled while you're typing in any field.
             </div>
-          ))}
-          {/* Reminder about inputs */}
-          <div style={{ padding:"8px 12px",background:"rgba(255,77,0,0.05)",
-            borderTop:"1px solid var(--border)",fontSize:11,color:"var(--text3)" }}>
-            ℹ️ Shortcuts are automatically disabled while you're typing in any field.
           </div>
+          <div style={{ height:16 }}/>{/* scroll breathing room */}
         </div>
 
-        {/* Don't show again */}
-        <label style={{ display:"flex",alignItems:"center",gap:9,marginBottom:16,cursor:"pointer" }}>
-          <input type="checkbox" checked={dontShow} onChange={e=>setDontShow(e.target.checked)}
-            style={{ accentColor:"var(--accent)",width:15,height:15,cursor:"pointer" }}/>
-          <span style={{ fontSize:13,color:"var(--text2)" }}>Don't show this again</span>
-        </label>
-
-        <button onClick={handleOk}
-          style={{...S.btn,width:"100%",padding:"11px",fontSize:14,justifyContent:"center",
-            boxShadow:"0 2px 12px rgba(255,77,0,0.3)"}}>
-          Got it — let's go! →
-        </button>
+        {/* Sticky footer — always visible */}
+        <div style={{ padding:"14px 24px 20px",borderTop:"1px solid var(--border)",
+          flexShrink:0,background:"var(--bg2)",borderRadius:"0 0 var(--radiusLg,4px) var(--radiusLg,4px)" }}>
+          <label style={{ display:"flex",alignItems:"center",gap:9,marginBottom:12,cursor:"pointer" }}>
+            <input type="checkbox" checked={dontShow} onChange={e=>setDontShow(e.target.checked)}
+              style={{ accentColor:"var(--accent)",width:15,height:15,cursor:"pointer" }}/>
+            <span style={{ fontSize:13,color:"var(--text2)" }}>Don't show this again</span>
+          </label>
+          <button onClick={handleOk}
+            style={{...S.btn,width:"100%",padding:"11px",fontSize:14,
+              boxShadow:"0 2px 12px rgba(255,77,0,0.25)"}}>
+            Got it — let's go! →
+          </button>
+        </div>
       </div>
     </div>
   );
